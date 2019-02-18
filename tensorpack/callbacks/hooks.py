@@ -13,9 +13,13 @@ __all__ = ['CallbackToHook', 'HookToCallback']
 
 
 class CallbackToHook(tfv1.train.SessionRunHook):
-    """ This is only for internal implementation of
-        before_run/after_run callbacks.
-        You shouldn't need to use this.
+    """
+    Hooks are less powerful than callbacks so the conversion is incomplete.
+    It only converts the `before_run/after_run` calls.
+
+    This is only for internal implementation of
+    before_run/after_run callbacks.
+    You shouldn't need to use this.
     """
 
     def __init__(self, cb):

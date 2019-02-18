@@ -174,7 +174,8 @@ class SaverRestoreRelaxed(SaverRestore):
 
         def f(reader, name, v):
             val = reader.get_tensor(name)
-            SessionUpdate.load_value_to_var(v, val)
+            v.load(SessionUpdate.relaxed_value_for_var(val, v))
+
         with sess.as_default():
             self._match_vars(f)
 

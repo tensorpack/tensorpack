@@ -15,6 +15,9 @@ from config import config as cfg
 
 @layer_register(log_shape=True)
 def GroupNorm(x, group=32, gamma_initializer=tf.constant_initializer(1.)):
+    """
+    More code that reproduces the paper can be found at https://github.com/ppwwyyxx/GroupNorm-reproduce/.
+    """
     shape = x.get_shape().as_list()
     ndims = len(shape)
     assert ndims == 4, shape

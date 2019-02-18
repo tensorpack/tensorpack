@@ -17,6 +17,7 @@ from imagenet_utils import ImageNetModel, fbresnet_augmentor, get_imagenet_dataf
 def GroupNorm(x, group, gamma_initializer=tf.constant_initializer(1.)):
     """
     https://arxiv.org/abs/1803.08494
+    More code that reproduces the paper can be found at https://github.com/ppwwyyxx/GroupNorm-reproduce/.
     """
     shape = x.get_shape().as_list()
     ndims = len(shape)

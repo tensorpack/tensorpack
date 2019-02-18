@@ -40,11 +40,13 @@ def timed_operation(msg, log_start=False):
 
             Good stuff finished, time:1sec.
     """
+    assert len(msg)
     if log_start:
         logger.info('Start {} ...'.format(msg))
     start = timer()
     yield
-    logger.info('{} finished, time:{:.4f}sec.'.format(
+    msg = msg[0].upper() + msg[1:]
+    logger.info('{} finished, time:{:.4f} sec.'.format(
         msg, timer() - start))
 
 
