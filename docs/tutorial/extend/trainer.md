@@ -54,7 +54,7 @@ These trainers will take care of step 1 (define the graph), with the following a
 4. A function which returns an optimizer.
 
 These are documented in [SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
-In practice you'll not use this method directly, but use [high-level interface](training-interface.html#with-modeldesc-and-trainconfig) instead.
+In practice you'll not use this method directly, but use [high-level interface](../tutorial/training-interface.html#with-modeldesc-and-trainconfig) instead.
 
 
 ### Write a Trainer

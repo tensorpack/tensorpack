@@ -58,6 +58,26 @@ and
 [launch_train_with_config](../modules/train.html#tensorpack.train.launch_train_with_config)
 for detailed functionalities.
 
+The function `launch_train_with_config(config, trainer)`
+uses the raw trainer interface and is almost equivalent to the following two lines of code:
+```python
+trainer.setup_graph(
+    my_model.get_inputs_desc(), my_input_source,  # or QueueInput(my_dataflow)
+    my_model.build_graph, my_model.get_optimizer)
+trainer.train_with_defaults(
+    callbacks=config.callbacks,
+    monitors=config.monitors,
+    session_creator=config.session_creator,
+    session_init=config.session_init,
+    steps_per_epoch=config.steps_per_epoch,
+    starting_epoch=config.starting_epoch,
+    max_epoch=config.max_epoch,
+    extra_callbacks=config.extra_callbacks)
+```
+If you need more control (e.g., if you want to construct the callbacks after
+setting up the graph), you can write the above two lines by yourself instead.
+
+
 ### Keras Interface
 
 Some wrappers were made on top of tensorpack trainers, to create a Keras-like

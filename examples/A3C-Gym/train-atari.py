@@ -4,13 +4,14 @@
 # Author: Yuxin Wu
 
 import argparse
-import numpy as np
-import os
-import sys
-import uuid
 import cv2
 import gym
+import multiprocessing as mp
+import numpy as np
+import os
 import six
+import sys
+import uuid
 import tensorflow as tf
 from six.moves import queue
 
@@ -40,9 +41,9 @@ LOCAL_TIME_MAX = 5
 STEPS_PER_EPOCH = 6000
 EVAL_EPISODE = 50
 BATCH_SIZE = 128
-PREDICT_BATCH_SIZE = 15     # batch for efficient forward
-SIMULATOR_PROC = 50
-PREDICTOR_THREAD_PER_GPU = 3
+PREDICT_BATCH_SIZE = 16     # batch for efficient forward
+SIMULATOR_PROC = mp.cpu_count() * 2
+PREDICTOR_THREAD_PER_GPU = 4
 PREDICTOR_THREAD = None
 
 NUM_ACTIONS = None

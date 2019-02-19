@@ -3,30 +3,28 @@
 Multi-GPU version of the A3C algorithm in
 [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783).
 
-Results of the same code trained on 47 different Atari games were uploaded to OpenAI Gym.
+Results of the code trained on 47 different Atari games were uploaded to OpenAI Gym and available for download.
 Most of them were the best reproducible results on gym.
-However OpenAI has later completely removed leaderboard from their site.
+However OpenAI has later removed the leaderboard from their site.
 
 ### To train on an Atari game:
 
 `./train-atari.py --env Breakout-v0 --gpu 0`
 
 In each iteration it trains on a batch of 128 new states.
-The speed is about 6~10 iterations/s on 1 GPU plus 12+ CPU cores.
-With 2 TitanX + 20+ CPU cores, by setting `SIMULATOR_PROC=240, PREDICT_BATCH_SIZE=30, PREDICTOR_THREAD_PER_GPU=6`, it can improve to 16 it/s (2K images/s).
+The speed is about 20 iterations/s (2.5k images/s) on 1 V100 GPU plus 12+ CPU cores.
 Note that the network architecture is larger than what's used in the original paper.
 
 The pretrained models are all trained with 4 GPUs for about 2 days.
-But on simple games like Breakout, you can get good performance within several hours.
-Also note that multi-GPU doesn't give you obvious speedup here,
-because the bottleneck in this implementation is not computation but simulation.
+But on simple games like Breakout, you can get decent performance within several hours.
+For example, it takes only __2 hours__ on a V100 to reach 400 average score on Breakout.
 
 Some practicical notes:
 
 1. Prefer Python 3; Windows not supported.
 2. Training with a significant slower speed (e.g. on CPU) will result in very bad score, probably because of the slightly off-policy implementation.
 3. Occasionally, processes may not get terminated completely.
-	If you're using Linux, install [python-prctl](https://pypi.org/project/python-prctl/) to prevent this.
+   If you're using Linux, install [python-prctl](https://pypi.org/project/python-prctl/) to prevent this.
 
 ### To test a model:
 
@@ -66,4 +64,4 @@ The most notable differences are:
 + An episode is limited to 60000 steps.
 + Lost of live is not end of episode.
 
-Also see the DQN implementation [here](../DeepQNetwork)
+Also see the [DQN implementation in tensorpack](../DeepQNetwork)
