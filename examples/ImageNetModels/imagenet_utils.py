@@ -202,7 +202,7 @@ def fbresnet_mapper(isTrain):
         return image
 
     def lighting(image, std, eigval, eigvec):
-        v = tf.random_uniform(shape=[3]) * std * eigval
+        v = tf.random_normal(shape=[3], stddev=std) * eigval
         inc = tf.matmul(eigvec, tf.reshape(v, [3, 1]))
         image = tf.cast(tf.cast(image, tf.float32) + tf.reshape(inc, [3]), image.dtype)
         return image

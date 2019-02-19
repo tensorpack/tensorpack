@@ -8,7 +8,7 @@ following object detection / instance segmentation papers:
 + [Cascade R-CNN: Delving into High Quality Object Detection](https://arxiv.org/abs/1712.00726)
 
 with the support of:
-+ Multi-GPU / distributed training, multi-GPU evaluation
++ Multi-GPU / multi-node distributed training, multi-GPU evaluation
 + Cross-GPU BatchNorm (aka Sync-BN, from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))
@@ -46,7 +46,7 @@ to `annotations/` as well.
 ## Usage
 ### Train:
 
-On a single machine:
+To train on a single machine:
 ```
 ./train.py --config \
     MODE_MASK=True MODE_FPN=True \
@@ -82,7 +82,8 @@ All models are fine-tuned from ImageNet pre-trained R50/R101 models in
 [tensorpack model zoo](http://models.tensorpack.com/FasterRCNN/), unless otherwise noted.
 All models are trained with 8 NVIDIA V100s, unless otherwise noted.
 
-Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be roughly reproduced.
+Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can
+be approximately reproduced.
 
  | Backbone                    | mAP<br/>(box;mask)                                             | Detectron mAP <sup>[1](#ft1)</sup><br/> (box;mask) | Time (on 8 V100s) | Configurations <br/> (click to expand)                                                                                                                                                                                                                                                                                                                                                                        |
  | -                           | -                                                              | -                                                  | -                 | -                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -108,8 +109,9 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
  [R101FPN9xGNCasAugScratch]: http://models.tensorpack.com/FasterRCNN/COCO-R101FPN-MaskRCNN-ScratchGN.npz
 
  <a id="ft1">1</a>: Numbers taken from [Detectron Model Zoo](https://github.com/facebookresearch/Detectron/blob/master/MODEL_ZOO.md).
- We compare models that have identical training & inference cost between the two implementations. However their numbers can be different due to many small implementation details.
-For example, our FPN models are sometimes slightly worse in box AP, which is probably due to batch size.
+ We compare models that have identical training & inference cost between the two implementations. Their numbers can be different due to many small implementation details.
+For example, our FPN models are sometimes slightly worse in box AP, which is
+ mainly due to batch size.
 
  <a id="ft2">2</a>: Numbers taken from Table 5 in [Group Normalization](https://arxiv.org/abs/1803.08494)
 
