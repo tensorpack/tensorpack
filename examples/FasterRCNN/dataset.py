@@ -212,7 +212,7 @@ class DetectionDataset(object):
         height, width: integer
         file_name: str, full path to the image
         boxes: numpy array of kx4 floats, each row is [x1, y1, x2, y2]
-        category: numpy array of k integers, in the range of [1, #categories]
+        class: numpy array of k integers, in the range of [1, #categories], NOT [0, #categories)
         is_crowd: k booleans. Use k False if you don't know what it means.
         segmentation: k lists of numpy arrays (one for each instance).
             Each list of numpy arrays corresponds to the mask for one instance.
