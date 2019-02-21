@@ -12,7 +12,6 @@ import tensorflow as tf
 
 from tensorpack import *
 
-from atari import AtariPlayer
 from atari_wrapper import FireResetEnv, FrameStack, LimitLength, MapState
 from common import Evaluator, eval_model_multithread, play_n_episodes
 from DQNModel import Model as DQNModel
@@ -52,6 +51,7 @@ def get_player(viz=False, train=False):
     if USE_GYM:
         env = gym.make(ENV_NAME)
     else:
+        from atari import AtariPlayer
         env = AtariPlayer(ENV_NAME, frame_skip=ACTION_REPEAT, viz=viz,
                           live_lost_as_eoe=train, max_num_frames=60000)
     env = FireResetEnv(env)

@@ -401,6 +401,7 @@ _DEPRECATED_NAMES = set([
     'average_grads',
     'aggregate_grads',
     'allreduce_grads',
+    'get_checkpoint_path'
 ])
 
 def autodoc_skip_member(app, what, name, obj, skip, options):

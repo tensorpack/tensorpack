@@ -45,7 +45,7 @@ In this implementation, quantized operations are all performed through `tf.float
 
 + Look at the docstring in `*-dorefa.py` to see detailed usage and performance.
 
-Pretrained model for (1,4,32)-ResNet18 and (1,2,6)-AlexNet are available at
+Pretrained model for (1,4,32)-ResNet18 and several AlexNet are available at
 [tensorpack model zoo](http://models.tensorpack.com/DoReFa-Net/).
 They're provided in the format of numpy dictionary.
 The __binary-weight 4-bit-activation ResNet-18__ model has 59.2% top-1 validation accuracy.

@@ -31,7 +31,11 @@ class ReplayMemory(object):
         self._shape3d = (state_shape[0], state_shape[1], self._channel * (history_len + 1))
         self.history_len = int(history_len)
 
-        self.state = np.zeros((self.max_size,) + state_shape, dtype='uint8')
+        state_shape = (self.max_size,) + state_shape
+        logger.info("Creating experience replay buffer of {:.1f} GB ... "
+                    "use a smaller buffer if you don't have enough CPU memory.".format(
+                        np.prod(state_shape) / 1024.0**3))
+        self.state = np.zeros(state_shape, dtype='uint8')
         self.action = np.zeros((self.max_size,), dtype='int32')
         self.reward = np.zeros((self.max_size,), dtype='float32')
         self.isOver = np.zeros((self.max_size,), dtype='bool')
