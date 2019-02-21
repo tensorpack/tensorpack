@@ -5,7 +5,7 @@
 import tensorflow as tf
 
 from ..tfutils.common import get_tf_version_tuple
-from ..utils.argtools import get_data_format, shape2d, shape4d
+from ..utils.argtools import get_data_format, shape2d, shape4d, log_once
 from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
 
@@ -108,11 +108,22 @@ def Conv2D(
         if use_bias:
             b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
 
-        inputs = tf.split(inputs, split, channel_axis)
-        kernels = tf.split(W, split, 3)
-        outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
-                   for i, k in zip(inputs, kernels)]
-        conv = tf.concat(outputs, channel_axis)
+        conv = None
+        if get_tf_version_tuple() >= (1, 13):
+            try:
+                conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
+            except ValueError:
+                conv = None
+                log_once("CUDNN group convolution support is only available with "
+                         "https://github.com/tensorflow/tensorflow/pull/25818 . "
+                         "Will fall back to a loop-based slow implementation instead!", 'warn')
+        if conv is None:
+            inputs = tf.split(inputs, split, channel_axis)
+            kernels = tf.split(W, split, 3)
+            outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
+                       for i, k in zip(inputs, kernels)]
+            conv = tf.concat(outputs, channel_axis)
+
         if activation is None:
             activation = tf.identity
         ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')

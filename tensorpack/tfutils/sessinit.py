@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # File: sessinit.py
 
-
+import os
 import numpy as np
 import six
 import tensorflow as tf
@@ -251,6 +251,7 @@ def get_model_loader(filename):
         :class:`SaverRestore` (otherwise).
     """
     assert isinstance(filename, six.string_types), filename
+    filename = os.path.expanduser(filename)
     if filename.endswith('.npy'):
         assert tf.gfile.Exists(filename), filename
         return DictRestore(np.load(filename, encoding='latin1').item())
