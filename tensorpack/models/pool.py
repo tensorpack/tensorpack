@@ -102,7 +102,7 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
     Returns:
         tf.Tensor: a 4D image tensor.
     """
-    data_format = get_data_format(data_format, tfmode=False)
+    data_format = get_data_format(data_format, keras_mode=False)
     shape = shape2d(shape)
 
     output_shape = StaticDynamicShape(x)

@@ -340,7 +340,7 @@ class HorovodTrainer(SingleCostTrainer):
            for Horovod installation and in the MPI command line.
            See Horovod docs for details.
 
-        2. Due to a TF bug, you must not initialize CUDA context before the trainer starts training.
+        2. Due to a TF bug (#8136), you must not initialize CUDA context before the trainer starts training.
            Therefore TF functions like `is_gpu_available()` or `list_local_devices()`
            must be avoided.
 

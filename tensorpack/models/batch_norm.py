@@ -147,7 +147,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           this case.
     """
     # parse shapes
-    data_format = get_data_format(data_format, tfmode=False)
+    data_format = get_data_format(data_format, keras_mode=False)
     shape = inputs.get_shape().as_list()
     ndims = len(shape)
     assert ndims in [2, 4], ndims

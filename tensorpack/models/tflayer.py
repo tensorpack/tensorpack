@@ -15,7 +15,7 @@ __all__ = []
 def map_common_tfargs(kwargs):
     df = kwargs.pop('data_format', None)
     if df is not None:
-        df = get_data_format(df, tfmode=True)
+        df = get_data_format(df, keras_mode=True)
         kwargs['data_format'] = df
 
     old_nl = kwargs.pop('nl', None)

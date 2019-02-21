@@ -98,7 +98,7 @@ def BatchNorm(inputs, training=None, momentum=0.9, epsilon=1e-5,
                 don't want to fine tune the EMA. EMA will not be updated in
                 this case.
     """
-    data_format = get_data_format(data_format, tfmode=False)
+    data_format = get_data_format(data_format, keras_mode=False)
     shape = inputs.get_shape().as_list()
     ndims = len(shape)
     assert ndims in [2, 4]
