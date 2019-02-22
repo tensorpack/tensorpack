@@ -62,8 +62,10 @@ The function `launch_train_with_config(config, trainer)`
 uses the raw trainer interface and is almost equivalent to the following two lines of code:
 ```python
 trainer.setup_graph(
-    my_model.get_inputs_desc(), my_input_source,  # or QueueInput(my_dataflow)
-    my_model.build_graph, my_model.get_optimizer)
+    my_model.get_inputs_desc(),
+    my_input_source,  # or QueueInput(my_dataflow)
+    my_model.build_graph,
+    my_model.get_optimizer)
 trainer.train_with_defaults(
     callbacks=config.callbacks,
     monitors=config.monitors,
@@ -76,7 +78,8 @@ trainer.train_with_defaults(
 ```
 If you need more control (e.g., if you want to construct the callbacks after
 setting up the graph), you can write the above two lines by yourself instead.
-
+You don't need to construct a `TrainConfig` any more in that case.
+The function `launch_train_with_config` exists mainly for historical reasons.
 
 ### Keras Interface
 

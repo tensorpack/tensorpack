@@ -63,7 +63,7 @@ The example in [examples/basics/export-model.py](../examples/basics/export-model
 ### Exporter
 
 In addition to the standard checkpoint format tensorpack saved for you during training,
-you can also save your models into other formats so it may be more friendly for inference.
+you can also save your models into other formats after training, so it may be more friendly for inference.
 
 1. Export to `SavedModel` format for TensorFlow Serving:
 
@@ -133,7 +133,7 @@ with TowerContext('', is_training=False):
 ```
 
 ```eval_rst
-.. note:: **Do not use metagraph for inference!**. 
+.. note:: **Do not use metagraph for inference!**
 
 	Metagraph is the wrong abstraction for a "model". 
 	It stores the entire graph which contains not only the mathematical model, but also all the
@@ -155,7 +155,7 @@ with TowerContext('', is_training=False):
 ### Step 2: load the checkpoint
 
 You can just use `tf.train.Saver` for all the work.
-Alternatively, use tensorpack's `SaverRestore(path).init(tf.get_default_session())`
+Alternatively, use tensorpack's `get_model_loader(path).init(tf.get_default_session())`
 
 Now, you've already built a graph for inference, and the checkpoint is loaded. 
 You may now:

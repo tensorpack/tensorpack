@@ -67,9 +67,34 @@ Speed:
 
 Possible Future Enhancements:
 
-1. Define a better interface to load custom dataset.
+1. Define a better interface to load different datasets.
 
-1. Support batch>1 per GPU.
+1. Support batch>1 per GPU. Batching with inconsistent shapes is
+   non-trivial to implement in TensorFlow.
 
 1. Use dedicated ops to improve speed. (e.g. a TF implementation of ROIAlign op
    can be found in [light-head RCNN](https://github.com/zengarden/light_head_rcnn/tree/master/lib/lib_kernel))
+
+
+### TensorFlow version notes
+
+TensorFlow ≥ 1.6 supports most common features in this R-CNN implementation.
+However, each version of TensorFlow has bugs that I either reported or fixed,
+and this implementation touches many of those bugs.
+Therefore, not every version of TF ≥ 1.6 supports every feature in this implementation.
+
+This implementation contains workaround for some of those TF bugs.
+However, note that the workaround needs to check your TF version by `tf.VERSION`
+and may not detect bugs properly if your TF version is not an official release
+(e.g., if you use a nighly build).
+
+1. TF < 1.6: Nothing works due to lack of support for empty tensors
+   ([PR](https://github.com/tensorflow/tensorflow/pull/15264))
+   and `FrozenBN` training
+   ([PR](https://github.com/tensorflow/tensorflow/pull/12580)).
+1. TF < 1.10: `SyncBN` with NCCL will fail ([PR](https://github.com/tensorflow/tensorflow/pull/20360)).
+1. TF 1.11 & 1.12: multithread inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/22750)).
+   Latest tensorpack will apply a workaround.
+1. TF > 1.12: MKL inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/24650)).
+1. TF > 1.12: Horovod training will fail ([issue](https://github.com/tensorflow/tensorflow/issues/25946)).
+   Latest tensorpack will apply a workaround.
