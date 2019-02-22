@@ -101,7 +101,7 @@ def predict_image(img, model_func):
         # fill with none
         masks = [None] * len(boxes)
 
-    results = [DetectionResult(*args) for args in zip(boxes, probs, labels, masks)]
+    results = [DetectionResult(*args) for args in zip(boxes, probs, labels.tolist(), masks)]
     return results
 
 
@@ -129,7 +129,7 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
             for r in results:
                 res = {
                     'image_id': img_id,
-                    'category_id': r.class_id,
+                    'category_id': int(r.class_id),  # int() to make it json-serializable
                     'bbox': list(r.box),
                     'score': round(float(r.score), 4),
                 }

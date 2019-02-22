@@ -384,13 +384,16 @@ class ImageNetModel(ModelDesc):
 
     @staticmethod
     def compute_loss_and_error(logits, label, label_smoothing=0.):
-        if label_smoothing == 0.:
+        if label_smoothing != 0.:
+            nclass = logits.shape[-1]
+            label = tf.one_hot(label, nclass) if label.shape.ndims == 1 else label
+
+        if label.shape.ndims == 1:
             loss = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         else:
-            nclass = logits.shape[-1]
             loss = tf.losses.softmax_cross_entropy(
-                tf.one_hot(label, nclass),
-                logits, label_smoothing=label_smoothing, reduction=tf.losses.Reduction.NONE)
+                label, logits, label_smoothing=label_smoothing,
+                reduction=tf.losses.Reduction.NONE)
         loss = tf.reduce_mean(loss, name='xentropy-loss')
 
         def prediction_incorrect(logits, label, topk=1, name='incorrect_vector'):
