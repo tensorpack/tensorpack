@@ -8,7 +8,6 @@ if STATICA_HACK:
     from .model_desc import *
     from .training import *
     from .distributed import *
-    from .predict import *
     from .utils import *
 
 from pkgutil import iter_modules

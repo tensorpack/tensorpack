@@ -89,8 +89,8 @@ class RandomCropRandomShape(TransformAugmentorBase):
 class GoogleNetRandomCropAndResize(ImageAugmentor):
     """
     The random crop and resize augmentation proposed in
-    Sec. 6 of `Going Deeper with Convolutions` by Google.
-    This implementation follows the details in `fb.resnet.torch`.
+    Sec. 6 of "Going Deeper with Convolutions" by Google.
+    This implementation follows the details in ``fb.resnet.torch``.
 
     It attempts to crop a random rectangle with 8%~100% area of the original image,
     and keep the aspect ratio between 3/4 to 4/3. Then it resize this crop to the target shape.

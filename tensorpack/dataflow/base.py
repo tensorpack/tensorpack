@@ -75,9 +75,10 @@ class DataFlow(object):
         * For many dataflow, the :meth:`__iter__` method is non-reentrant, which means for an dataflow
           instance ``df``, :meth:`df.__iter__` cannot be called before the previous
           :meth:`df.__iter__` call has finished (iteration has stopped).
-          If a dataflow is non-reentrant, :meth:`df.__iter__` should throw an exception if
+          When it is non-reentrant, :meth:`df.__iter__` should throw an exception if
           called before the previous call has finished.
-          If you need to use the same dataflow in two places, you can simply create two dataflow instances.
+          For such non-reentrant dataflows, if you need to use the same dataflow in two places,
+          you need to create two dataflow instances.
 
         Yields:
             list: The datapoint, i.e. list of components.
@@ -93,10 +94,11 @@ class DataFlow(object):
 
         * It returns an integer representing the size of the dataflow.
           The return value **may not be accurate or meaningful** at all.
-          When it's accurate, it means that :meth:`__iter__` will always yield this many of datapoints.
+          When saying the length is "accurate", it means that
+          :meth:`__iter__` will always yield this many of datapoints.
 
         * There could be many reasons why :meth:`__len__` is inaccurate.
-          For example, some dataflow has dynamic size.
+          For example, some dataflow has dynamic size, if it throws away datapoints on the fly.
           Some dataflow mixes the datapoints between consecutive passes over
           the dataset, due to parallelism and buffering.
           In this case it does not make sense to stop the iteration anywhere.
@@ -108,7 +110,7 @@ class DataFlow(object):
             it yourself, especially when using data-parallel trainer.
           + The length of progress bar when processing a dataflow.
           + Used by :class:`InferenceRunner` to get the number of iterations in inference.
-            In this case users are **responsible** for making sure that :meth:`__len__` is accurate.
+            In this case users are **responsible** for making sure that :meth:`__len__` is "accurate".
             This is to guarantee that inference is run on a fixed set of images.
 
         Returns:

@@ -61,6 +61,8 @@ def CaffeBilinearUpSample(x, shape):
     inp_shape = x.shape.as_list()
     ch = inp_shape[1]
     assert ch == 1, "This layer only works for channel=1"
+    # for a version that supports >1 channels, see:
+    # https://github.com/tensorpack/tensorpack/issues/1040#issuecomment-452798180
 
     shape = int(shape)
     filter_shape = 2 * shape
@@ -77,6 +79,7 @@ def CaffeBilinearUpSample(x, shape):
             for y in range(s):
                 ret[x, y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
         return ret
+
     w = bilinear_conv_filler(filter_shape)
     w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
 

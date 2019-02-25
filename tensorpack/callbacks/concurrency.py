@@ -26,7 +26,7 @@ class StartProcOrThread(Callback):
             stop_at_last (bool): whether to stop the processes or threads
                 after training. It will use :meth:`Process.terminate()` or
                 :meth:`StoppableThread.stop()`, but will do nothing on normal
-                `threading.Thread` or other startable objects.
+                ``threading.Thread`` or other startable objects.
         """
         if not isinstance(startable, list):
             startable = [startable]

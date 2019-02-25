@@ -257,13 +257,13 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         self._hooks.append(h)
         self._hooks_parallel.append(h)
 
-    class InferencerToHookDataParallel(InferencerToHook):
+    class _InferencerToHookDataParallel(InferencerToHook):
         def __init__(self, inf, fetches, size):
             """
             Args:
                 size(int): number of tensors to fetch per tower
             """
-            super(DataParallelInferenceRunner.InferencerToHookDataParallel, self).__init__(inf, fetches)
+            super(DataParallelInferenceRunner._InferencerToHookDataParallel, self).__init__(inf, fetches)
             assert len(self._fetches) % size == 0
             self._sz = size
 
@@ -277,7 +277,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
         out_names = inf.get_fetches()
         sz = len(out_names)
         fetches = list(itertools.chain(*[t.get_tensors(out_names) for t in self._handles]))
-        return self.InferencerToHookDataParallel(inf, fetches, sz)
+        return self._InferencerToHookDataParallel(inf, fetches, sz)
 
     def _build_hook(self, inf):
         out_names = inf.get_fetches()

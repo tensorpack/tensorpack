@@ -16,7 +16,7 @@ class ColorSpace(ImageAugmentor):
     def __init__(self, mode, keepdims=True):
         """
         Args:
-            mode: OpenCV color space conversion code (e.g., `cv2.COLOR_BGR2HSV`)
+            mode: OpenCV color space conversion code (e.g., ``cv2.COLOR_BGR2HSV``)
             keepdims (bool): keep the dimension of image unchanged if OpenCV
                 changes it.
         """

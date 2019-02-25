@@ -15,7 +15,6 @@ if STATICA_HACK:
     from .remote import *
     from . import imgaug
     from . import dataset
-    from . import dftools
 
 
 from pkgutil import iter_modules
@@ -37,7 +36,7 @@ def _global_import(name):
                 __all__.append(k)
 
 
-__SKIP = set(['dftools', 'dataset', 'imgaug'])
+__SKIP = set(['dataset', 'imgaug'])
 _CURR_DIR = os.path.dirname(__file__)
 for _, module_name, __ in iter_modules(
         [os.path.dirname(__file__)]):
@@ -54,4 +53,4 @@ globals()['imgaug'] = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgau
 
 del LazyLoader
 
-__all__.extend(['imgaug', 'dftools', 'dataset'])
+__all__.extend(['imgaug', 'dataset'])

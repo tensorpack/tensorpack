@@ -20,7 +20,7 @@ __all__ = ['ScalarStats', 'Inferencer',
 class Inferencer(Callback):
     """ Base class of Inferencer.
     Inferencer is a special kind of callback that should be called by :class:`InferenceRunner`.
-    It has the methods `_get_fetches` and `_on_fetches` which are like
+    It has the methods ``_get_fetches`` and ``_on_fetches`` which are like
     :class:`SessionRunHooks`, except that they will be used only by :class:`InferenceRunner`.
 
     .. document private functions
@@ -142,7 +142,7 @@ class ClassificationError(Inferencer):
     You can use ``tf.nn.in_top_k`` to produce this vector.
 
     This Inferencer produces the "true" error, which could be different from
-    `ScalarStats('error_rate')`.
+    ``ScalarStats('error_rate')``.
     It takes account of the fact that batches might not have the same size in
     testing (because the size of test set might not be a multiple of batch size).
     Therefore the result can be different from averaging the error rate of each batch.

@@ -11,8 +11,7 @@ from .common import layer_register
 from .shape_utils import StaticDynamicShape
 from .tflayer import convert_to_tflayer_args
 
-__all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling',
-           'BilinearUpSample']
+__all__ = ['MaxPooling', 'FixedUnPooling', 'AvgPooling', 'GlobalAvgPooling']
 
 
 @layer_register(log_shape=True)
@@ -141,7 +140,7 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
     return ret
 
 
-@layer_register(log_shape=True)
+# Removed (not importable) already; leave it here just for testing purposes.
 def BilinearUpSample(x, shape):
     """
     Deterministic bilinearly-upsample the input images.
@@ -158,7 +157,7 @@ def BilinearUpSample(x, shape):
     log_deprecated("BilinearUpsample", "Please implement it in your own code instead!", "2019-03-01")
     inp_shape = x.shape.as_list()
     ch = inp_shape[3]
-    assert ch is not None
+    assert ch is not None and ch == 1
 
     shape = int(shape)
     filter_shape = 2 * shape
@@ -222,7 +221,7 @@ class TestPool(TestModel):
         inp = self.make_variable(mat)
         inp = tf.reshape(inp, [1, h, w, 1])
 
-        output = BilinearUpSample('upsample', inp, scale)
+        output = BilinearUpSample(inp, scale)
         res = self.run_variable(output)[0, :, :, 0]
 
         from skimage.transform import rescale

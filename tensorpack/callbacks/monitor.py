@@ -118,8 +118,8 @@ class Monitors(Callback):
     Merge monitors together for trainer to use.
 
     In training, each trainer will create a :class:`Monitors` instance,
-    and you can access it through `trainer.monitors`.
-    You should use `trainer.monitors` for logging and it will dispatch your
+    and you can access it through ``trainer.monitors``.
+    You should use ``trainer.monitors`` for logging and it will dispatch your
     logs to each sub-monitor.
     """
 
@@ -575,13 +575,14 @@ class CometMLMonitor(MonitorBase):
     @property
     def experiment(self):
         """
-        Returns: the :class:`comet_ml.Experiment` instance.
+        The :class:`comet_ml.Experiment` instance.
         """
         return self._exp
 
     def _before_train(self):
         self._exp.set_model_graph(tf.get_default_graph())
 
+    @HIDE_DOC
     def process_scalar(self, name, val):
         self._exp.log_metric(name, val, step=self.global_step)
 

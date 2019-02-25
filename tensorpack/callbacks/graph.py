@@ -28,7 +28,7 @@ class RunOp(Callback):
         """
         Args:
             op (tf.Operation or function): an Op, or a function that returns the Op in the graph.
-                The function will be called after the main graph has been created (in the `setup_graph` callback).
+                The function will be called after the main graph has been created (in the :meth:`setup_graph` callback).
             run_before (bool): run the Op before training
             run_as_trigger (bool): run the Op on every :meth:`trigger()` call.
             run_step (bool): run the Op every step (along with training)
@@ -76,8 +76,11 @@ class RunOp(Callback):
 class RunUpdateOps(RunOp):
     """
     Run ops from the collection UPDATE_OPS every step.
-    The ops will be hooked to `trainer.hooked_sess` and run along with
-    each `sess.run` call.
+    The ops will be hooked to ``trainer.hooked_sess`` and run along with
+    each ``hooked_sess.run`` call.
+
+    Be careful when using ``UPDATE_OPS`` if your model contains more than one sub-networks.
+    Perhaps not all updates are supposed to be executed in every iteration.
     """
 
     def __init__(self, collection=None):
@@ -105,7 +108,7 @@ class ProcessTensors(Callback):
     """
     Fetch extra tensors **along with** each training step,
     and call some function over the values.
-    It uses `_{before,after}_run` method to inject `tf.train.SessionRunHooks`
+    It uses ``_{before,after}_run`` method to inject ``tf.train.SessionRunHooks``
     to the session.
     You can use it to print tensors, save tensors to file, etc.
 

@@ -23,7 +23,7 @@ __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
 class GPUUtilizationTracker(Callback):
     """ Summarize the average GPU utilization within an epoch.
 
-    It will start a process to run `nvidia-smi` every second
+    It will start a process to run ``nvidia-smi`` every second
     within the epoch (the trigger_epoch time was not included),
     and write average utilization to monitors.
 

@@ -6,7 +6,6 @@ import tensorflow as tf
 from six.moves import map
 
 from ..utils.argtools import graph_memoized
-from ..utils.develop import deprecated
 
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
@@ -25,8 +24,8 @@ def get_default_sess_config(mem_fraction=0.99):
 
     Args:
         mem_fraction(float): see the `per_process_gpu_memory_fraction` option
-        in TensorFlow's GPUOptions protobuf:
-        https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/protobuf/config.proto
+            in TensorFlow's GPUOptions protobuf:
+            https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/protobuf/config.proto
 
     Returns:
         tf.ConfigProto: the config to use.
@@ -63,8 +62,7 @@ def get_default_sess_config(mem_fraction=0.99):
 def get_global_step_var():
     """
     Returns:
-        tf.Tensor: the global_step variable in the current graph. Create if
-            doesn't exist.
+        tf.Tensor: the global_step variable in the current graph. Create if doesn't exist.
     """
     scope = tf.VariableScope(reuse=False, name='')  # the root vs
     with tf.variable_scope(scope):
@@ -147,11 +145,6 @@ def gpu_available_in_session():
         if dev.device_type.lower() == 'gpu':
             return True
     return False
-
-
-@deprecated("Use get_tf_version_tuple instead.", "2019-01-31")
-def get_tf_version_number():
-    return float('.'.join(tf.__version__.split('.')[:2]))
 
 
 def get_tf_version_tuple():

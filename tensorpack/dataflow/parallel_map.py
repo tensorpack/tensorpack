@@ -96,19 +96,19 @@ class MultiThreadMapData(_ParallelMapData):
     This is useful when the mapping function is the bottleneck, but you don't
     want to start processes for the entire dataflow pipeline.
 
-    The semantics of this class is __identical__ to :class:`MapData` except for the ordering.
+    The semantics of this class is **identical** to :class:`MapData` except for the ordering.
     Threads run in parallel and can take different time to run the
     mapping function. Therefore the order of datapoints won't be preserved.
 
-    When `strict=True`, `MultiThreadMapData(df, ...)`
-    is guaranteed to produce the exact set of data as `MapData(df, ...)`,
-    if both are iterated until `StopIteration`. But the produced data will have different ordering.
-    The behavior of strict mode is undefined if the given dataflow `df` is infinite.
+    When ``strict=True``, ``MultiThreadMapData(df, ...)``
+    is guaranteed to produce the exact set of data as ``MapData(df, ...)``,
+    if both are iterated until ``StopIteration``. But the produced data will have different ordering.
+    The behavior of strict mode is undefined if the given dataflow ``df`` is infinite.
 
-    When `strict=False`, the data that's produced by `MultiThreadMapData(df, ...)`
-    is a reordering of the data produced by `RepeatedData(MapData(df, ...), -1)`.
-    In other words, first pass of `MultiThreadMapData.__iter__` may contain
-    datapoints from the second pass of `df.__iter__`.
+    When ``strict=False``, the data that's produced by ``MultiThreadMapData(df, ...)``
+    is a reordering of the data produced by ``RepeatedData(MapData(df, ...), -1)``.
+    In other words, first pass of ``MultiThreadMapData.__iter__`` may contain
+    datapoints from the second pass of ``df.__iter__``.
 
 
     Note:
@@ -212,19 +212,19 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
     Same as :class:`MapData`, but start processes to run the mapping function,
     and communicate with ZeroMQ pipe.
 
-    The semantics of this class is __identical__ to :class:`MapData` except for the ordering.
+    The semantics of this class is **identical** to :class:`MapData` except for the ordering.
     Processes run in parallel and can take different time to run the
     mapping function. Therefore the order of datapoints won't be preserved.
 
-    When `strict=True`, `MultiProcessMapData(df, ...)`
-    is guaranteed to produce the exact set of data as `MapData(df, ...)`,
-    if both are iterated until `StopIteration`. But the produced data will have different ordering.
-    The behavior of strict mode is undefined if the given dataflow `df` is infinite.
+    When ``strict=True``, ``MultiProcessMapData(df, ...)``
+    is guaranteed to produce the exact set of data as ``MapData(df, ...)``,
+    if both are iterated until ``StopIteration``. But the produced data will have different ordering.
+    The behavior of strict mode is undefined if the given dataflow ``df`` is infinite.
 
-    When `strict=False`, the data that's produced by `MultiProcessMapData(df, ...)`
-    is a reordering of the data produced by `RepeatedData(MapData(df, ...), -1)`.
-    In other words, first pass of `MultiProcessMapData.__iter__` may contain
-    datapoints from the second pass of `df.__iter__`.
+    When ``strict=False``, the data that's produced by ``MultiProcessMapData(df, ...)``
+    is a reordering of the data produced by ``RepeatedData(MapData(df, ...), -1)``.
+    In other words, first pass of ``MultiProcessMapData.__iter__`` may contain
+    datapoints from the second pass of ``df.__iter__``.
     """
     class _Worker(mp.Process):
         def __init__(self, identity, map_func, pipename, hwm):

@@ -11,7 +11,6 @@ from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized_method
-from tensorpack.utils.develop import deprecated
 
 
 class GANModelDesc(ModelDescBase):
@@ -148,16 +147,6 @@ class GANTrainer(TowerTrainer):
                                      colocate_gradients_with_ops=True, name='d_op')
         # Define the training iteration
         self.train_op = d_min
-
-
-class MultiGPUGANTrainer(GANTrainer):
-    """
-    A replacement of GANTrainer (optimize d and g one by one) with multi-gpu support.
-    """
-
-    @deprecated("Please use GANTrainer and set num_gpu", "2019-01-31")
-    def __init__(self, num_gpu, input, model):
-        super(MultiGPUGANTrainer, self).__init__(input, model, 1)
 
 
 class SeparateGANTrainer(TowerTrainer):

@@ -11,15 +11,14 @@ from ..utils import logger
 from ..utils.argtools import log_once
 from ..utils.compatible_serialize import loads
 from ..utils.develop import create_dummy_class  # noqa
-from ..utils.develop import log_deprecated
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.timer import timed_operation
 from ..utils.utils import get_tqdm
-from .base import DataFlow, DataFlowReentrantGuard, RNGDataFlow
+from .base import DataFlowReentrantGuard, RNGDataFlow
 from .common import MapData
 
-__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint',
-           'CaffeLMDB', 'SVMLightData', 'TFRecordData']
+__all__ = ['HDF5Data', 'LMDBData', 'LMDBDataDecoder',
+           'CaffeLMDB', 'SVMLightData']
 
 """
 Adapters for different data format.
@@ -165,21 +164,6 @@ class LMDBDataDecoder(MapData):
         super(LMDBDataDecoder, self).__init__(lmdb_data, f)
 
 
-class LMDBDataPoint(MapData):
-    def __init__(self, *args, **kwargs):
-        log_deprecated("LMDBDataPoint", "Use LMDBSerializer.load() instead!", "2019-01-31")
-        if isinstance(args[0], DataFlow):
-            ds = args[0]
-            assert len(args) == 1 and len(kwargs) == 0, \
-                "No more arguments are allowed if LMDBDataPoint is called with a LMDBData instance!"
-        else:
-            ds = LMDBData(*args, **kwargs)
-
-        def f(dp):
-            return loads(dp[1])
-        super(LMDBDataPoint, self).__init__(ds, f)
-
-
 def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
     """
     Read a Caffe LMDB file where each value contains a ``caffe.Datum`` protobuf.
@@ -243,23 +227,6 @@ class SVMLightData(RNGDataFlow):
             yield [self.X[id, :], self.y[id]]
 
 
-class TFRecordData(DataFlow):
-    def __init__(self, path, size=None):
-        log_deprecated("TFRecordData", "Use TFRecordSerializer.load instead!", "2019-01-31")
-        self._path = path
-        self._size = int(size)
-
-    def __len__(self):
-        if self._size:
-            return self._size
-        return len(super(TFRecordData, self))
-
-    def __iter__(self):
-        gen = tf.python_io.tf_record_iterator(self._path)
-        for dp in gen:
-            yield loads(dp)
-
-
 try:
     import h5py
 except ImportError:
@@ -268,10 +235,5 @@ except ImportError:
 try:
     import lmdb
 except ImportError:
-    for klass in ['LMDBData', 'LMDBDataDecoder', 'LMDBDataPoint', 'CaffeLMDB']:
+    for klass in ['LMDBData', 'LMDBDataDecoder', 'CaffeLMDB']:
         globals()[klass] = create_dummy_class(klass, 'lmdb')
-
-try:
-    import tensorflow as tf
-except ImportError:
-    TFRecordData = create_dummy_class('TFRecordData', 'tensorflow')   # noqa

@@ -14,11 +14,3 @@ Relevant tutorials: :doc:`../tutorial/dataflow`, :doc:`../tutorial/input-source`
     :members:
     :undoc-members:
     :show-inheritance:
-
-tensorpack.dataflow.dftools module
-----------------------------------
-
-.. automodule:: tensorpack.dataflow.dftools
-    :members:
-    :undoc-members:
-    :show-inheritance:

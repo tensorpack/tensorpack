@@ -2,7 +2,6 @@
 # File: trigger.py
 
 
-from ..utils.develop import log_deprecated
 from .base import Callback, ProxyCallback
 
 __all__ = ['PeriodicTrigger', 'PeriodicCallback', 'EnableCallbackIf']
@@ -61,38 +60,6 @@ class PeriodicTrigger(ProxyCallback):
 
     def __str__(self):
         return "PeriodicTrigger-" + str(self.cb)
-
-
-class PeriodicRunHooks(ProxyCallback):
-    """
-    Enable the ``{before,after}_run`` methods of a callback every k global steps.
-    All other methods are untouched.
-    """
-
-    def __init__(self, callback, every_k_steps):
-        """
-        Args:
-            callback (Callback):
-            every_k_steps(int): call ``{before,after}_run`` when
-                ``global_step % k == 0``.
-        """
-        self._every_k_steps = int(every_k_steps)
-        super(PeriodicRunHooks, self).__init__(callback)
-        log_deprecated("PeriodicRunHooks", "Use PeriodicCallback instead!", "2019-02-28")
-
-    def _before_run(self, ctx):
-        if self.global_step % self._every_k_steps == 0:
-            self._enabled = True
-            return self.cb._before_run(ctx)
-        else:
-            self._enabled = False
-
-    def _after_run(self, ctx, rv):
-        if self._enabled:
-            self.cb._after_run(ctx, rv)
-
-    def __str__(self):
-        return "PeriodicRunHooks-" + str(self.cb)
 
 
 class EnableCallbackIf(ProxyCallback):

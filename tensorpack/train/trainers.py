@@ -18,7 +18,7 @@ from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TrainTowerContext
 from ..utils import logger
 from ..utils.argtools import map_arg
-from ..utils.develop import HIDE_DOC, log_deprecated
+from ..utils.develop import HIDE_DOC
 from .tower import SingleCostTrainer
 
 __all__ = ['NoOpTrainer', 'SimpleTrainer',
@@ -162,7 +162,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
     """
 
     @map_arg(gpus=_int_to_range)
-    def __init__(self, gpus, average=True, mode=None, use_nccl=None):
+    def __init__(self, gpus, average=True, mode=None):
         """
         Args:
             gpus (int or [int]): list of GPU ids.
@@ -172,13 +172,9 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
                 Default to pick automatically by heuristics.
                 These modes may have slight (within 5%) differences in speed.
                 "hierarchical" mode was designed for DGX-like 8GPU machines.
-            use_nccl: deprecated option
         """
         self.devices = gpus
 
-        if use_nccl is not None:
-            mode = 'nccl' if use_nccl else None
-            log_deprecated("use_nccl option", "Use the `mode` option instead!", "2019-01-31")
         if mode is None:
             mode = 'hierarchical' if len(gpus) == 8 else 'nccl'
         mode = mode.lower()

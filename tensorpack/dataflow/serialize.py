@@ -31,7 +31,7 @@ class LMDBSerializer():
     Serialize a Dataflow to a lmdb database, where the keys are indices and values
     are serialized datapoints.
 
-    You will need to `pip install lmdb` to use it.
+    You will need to ``pip install lmdb`` to use it.
     """
     @staticmethod
     def save(df, path, write_frequency=5000):

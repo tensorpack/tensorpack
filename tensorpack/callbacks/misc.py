@@ -37,7 +37,7 @@ class InjectShell(Callback):
     and iteratively debug the training.
     Once the :meth:`trigger` method is called, it detects whether the file exists, and opens an
     IPython/pdb shell if yes.
-    In the shell, `self` is this callback, `self.trainer` is the trainer, and
+    In the shell, ``self`` is this callback, ``self.trainer`` is the trainer, and
     from that you can access everything else.
 
     Example:

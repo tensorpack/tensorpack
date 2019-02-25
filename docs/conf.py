@@ -371,26 +371,20 @@ def process_signature(app, what, name, obj, options, signature,
 _DEPRECATED_NAMES = set([
     # deprecated stuff:
     'QueueInputTrainer',
-    'SimplePredictBuilder',
-    'LMDBDataPoint',
-    'TFRecordData',
-    'dump_dataflow_to_lmdb',
-    'dump_dataflow_to_tfrecord',
-    'IntBox', 'FloatBox',
     'dump_dataflow_to_process_queue',
     'PrefetchOnGPUs',
+    'DistributedTrainerReplicated',
+    'DistributedTrainerParameterServer',
 
     # renamed items that should not appear in docs
     'DumpTensor',
     'DumpParamAsImage',
-    'PeriodicRunHooks',
     'get_nr_gpu',
     'start_test',  # TestDataSpeed
     'ThreadedMapData',
     'TrainingMonitor',
 
     # deprecated or renamed symbolic code
-    'BilinearUpSample',
     'Deconv2D', 'psnr',
 
     # shouldn't appear in doc:
@@ -416,7 +410,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Hide some names that are deprecated or not intended to be used
     if name in _DEPRECATED_NAMES:
         return True
-    if name in ['__iter__', '__len__', 'reset_state']:
+    if name in ['__iter__', '__len__', 'reset_state', 'get_data', 'size']:
         # skip these methods with empty docstring
         if not obj.__doc__ and inspect.isfunction(obj):
             # https://stackoverflow.com/questions/3589311/get-defining-class-of-unbound-method-object-in-python-3

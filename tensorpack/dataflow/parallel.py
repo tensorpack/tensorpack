@@ -11,18 +11,16 @@ import uuid
 import weakref
 from contextlib import contextmanager
 import zmq
-from six.moves import queue, range, zip
+from six.moves import queue, range
 
 from ..utils import logger
 from ..utils.concurrency import (
-    StoppableThread, enable_death_signal, ensure_proc_terminate, mask_sigint, start_proc_mask_signal)
-from ..utils.develop import log_deprecated
-from ..utils.gpu import change_gpu
+    StoppableThread, enable_death_signal, ensure_proc_terminate, start_proc_mask_signal)
 from ..utils.serialize import dumps, loads
 from .base import DataFlow, DataFlowReentrantGuard, DataFlowTerminated, ProxyDataFlow
 
 __all__ = ['PrefetchData', 'MultiProcessPrefetchData',
-           'PrefetchDataZMQ', 'PrefetchOnGPUs', 'MultiThreadPrefetchData']
+           'PrefetchDataZMQ', 'MultiThreadPrefetchData']
 
 
 def _repeat_iter(get_itr):
@@ -339,30 +337,6 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         self._procs = [PrefetchDataZMQ._Worker(self.ds, pipename, self._hwm, idx)
                        for idx in range(self.nr_proc)]
         self._start_processes()
-
-
-class PrefetchOnGPUs(PrefetchDataZMQ):
-    """
-    Similar to :class:`PrefetchDataZMQ`,
-    but prefetch with each process having its own ``CUDA_VISIBLE_DEVICES`` variable
-    mapped to one GPU.
-    """
-
-    def __init__(self, ds, gpus):
-        """
-        Args:
-            ds (DataFlow): input DataFlow.
-            gpus (list[int]): list of GPUs to use. Will also start this number of processes.
-        """
-        log_deprecated("PrefetchOnGPUs", "It does not seem useful, and please implement it yourself.", "2019-02-28")
-        self.gpus = gpus
-        super(PrefetchOnGPUs, self).__init__(ds, len(gpus))
-
-    def _start_processes(self):
-        with mask_sigint():
-            for gpu, proc in zip(self.gpus, self._procs):
-                with change_gpu(gpu):
-                    proc.start()
 
 
 # TODO renamed to MultiThreadDataFlow if separated to a new project

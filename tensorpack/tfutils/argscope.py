@@ -85,7 +85,7 @@ def enable_argscope_for_function(func, log_shape=True):
             shape should be printed once.
 
     Remarks:
-        If the function `func` returns multiple input or output tensors,
+        If the function ``func`` returns multiple input or output tensors,
         only the first input/output tensor shape is displayed during logging.
 
     Returns:
@@ -126,7 +126,7 @@ def enable_argscope_for_module(module, log_shape=True):
     Overwrite all functions of a given module to support argscope.
     Note that this function monkey-patches the module and therefore could
     have unexpected consequences.
-    It has been only tested to work well with `tf.layers` module.
+    It has been only tested to work well with ``tf.layers`` module.
 
     Example:
 
