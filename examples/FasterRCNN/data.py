@@ -305,8 +305,13 @@ def get_train_dataflow():
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         im = im.astype('float32')
+        height, width = im.shape[:2]
         # assume floatbox as input
         assert boxes.dtype == np.float32, "Loader has to return floating point boxes!"
+
+        if not cfg.DATA.ABSOLUTE_COORD:
+            boxes[:, 0::2] *= width
+            boxes[:, 1::2] *= height
 
         # augmentation:
         im, params = aug.augment_return_params(im)
@@ -346,7 +351,10 @@ def get_train_dataflow():
             # Apply augmentation on polygon coordinates.
             # And produce one image-sized binary mask per box.
             masks = []
+            width_height = np.asarray([width, height], dtype=np.float32)
             for polys in segmentation:
+                if not cfg.DATA.ABSOLUTE_COORD:
+                    polys = [p * width_height for p in polys]
                 polys = [aug.augment_coords(p, params) for p in polys]
                 masks.append(segmentation_to_mask(polys, im.shape[0], im.shape[1]))
             masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
@@ -380,7 +388,7 @@ def get_eval_dataflow(name, shard=0, num_shards=1):
     img_range = (shard * img_per_shard, (shard + 1) * img_per_shard if shard + 1 < num_shards else num_imgs)
 
     # no filter for training
-    ds = DataFromListOfDict(roidbs[img_range[0]: img_range[1]], ['file_name', 'id'])
+    ds = DataFromListOfDict(roidbs[img_range[0]: img_range[1]], ['file_name', 'image_id'])
 
     def f(fname):
         im = cv2.imread(fname, cv2.IMREAD_COLOR)

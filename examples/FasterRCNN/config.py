@@ -82,12 +82,14 @@ _C.MODE_FPN = False
 # dataset -----------------------
 _C.DATA.BASEDIR = '/path/to/your/DATA/DIR'
 # All TRAIN dataset will be concatenated for training.
-_C.DATA.TRAIN = ['train2014', 'valminusminival2014']   # i.e. trainval35k, AKA train2017
+_C.DATA.TRAIN = ('train2014', 'valminusminival2014')   # i.e. trainval35k, AKA train2017
 # Each VAL dataset will be evaluated separately (instead of concatenated)
 _C.DATA.VAL = ('minival2014', )  # AKA val2017
 # This two config will be populated later by the dataset loader:
 _C.DATA.NUM_CATEGORY = 0  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
+# whether the coordinates in the annotations are absolute pixel values, or a relative value in [0, 1]
+_C.DATA.ABSOLUTE_COORD = True
 
 # basemodel ----------------------
 _C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz

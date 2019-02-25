@@ -4,6 +4,7 @@
 
 import operator
 import os
+import numpy as np
 from abc import ABCMeta, abstractmethod
 from collections import deque
 import six
@@ -272,7 +273,7 @@ class ScheduledHyperParamSetter(HyperParamSetter):
         for p in range(0, self._current_point() + 1):
             v = self._get_value_to_set_at_point(p) or v
         actual_value = self.param.get_value()
-        if v is not None and v != actual_value:
+        if v is not None and not np.isclose(v, actual_value):
             logger.warn("According to scheduler {}, parameter '{}' should become {} at the current point. "
                         "However its current value is {}. "
                         "If this is the only scheduler being used, you may want to check whether your "

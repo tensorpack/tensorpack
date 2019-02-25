@@ -127,10 +127,11 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
         for img, img_id in df:
             results = predict_image(img, model_func)
             for r in results:
+                # int()/float() to make it json-serializable
                 res = {
                     'image_id': img_id,
-                    'category_id': int(r.class_id),  # int() to make it json-serializable
-                    'bbox': list(r.box),
+                    'category_id': int(r.class_id),
+                    'bbox': [round(float(x), 4) for x in r.box],
                     'score': round(float(r.score), 4),
                 }
 

@@ -96,8 +96,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
         sync_statistics (str or None): one of None, "nccl", or "horovod".
 
-          By default (None), it uses statistics of the input tensor to normalize.
-          This is the standard way BatchNorm was done in most frameworks.
+          By default (None), it uses statistics of the input tensor to normalize during training.
+          This is the standard way BatchNorm was implemented in most frameworks.
 
           When set to "nccl", this layer must be used under tensorpack's multi-GPU trainers.
           It uses the aggregated statistics of the whole batch (across all GPUs) to normalize.
@@ -106,7 +106,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
           It uses the aggregated statistics of the whole batch (across all MPI ranks) to normalize.
           Note that on single machine this is significantly slower than the "nccl" implementation.
 
-          If not None, per-GPU E[x] and E[x^2] among all GPUs are averaged to compute
+          When enabled, per-GPU E[x] and E[x^2] among all GPUs are averaged to compute
           global mean & variance. Therefore each GPU needs to have the same batch size.
 
           The synchronization is based on the current variable scope + the name of the layer
@@ -119,7 +119,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
              If different GPUs execute one BatchNorm layer for different number of times
              (e.g., if some GPUs do not execute it), this layer may hang.
 
-          This option only has effect in standard training mode.
+          This option only has effect when `training == get_current_tower_context().training == True`.
 
           This option is also known as "Cross-GPU BatchNorm" as mentioned in:
           `MegDet: A Large Mini-Batch Object Detector <https://arxiv.org/abs/1711.07240>`_.

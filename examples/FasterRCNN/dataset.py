@@ -14,7 +14,7 @@ from config import config as cfg
 __all__ = ['COCODetection', 'DetectionDataset']
 
 
-class COCODetection(object):
+class COCODetection:
     # handle the weird (but standard) split of train and val
     _INSTANCE_TO_BASEDIR = {
         'valminusminival2014': 'val2014',
@@ -32,6 +32,7 @@ class COCODetection(object):
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
 
     def __init__(self, basedir, name):
+        basedir = os.path.expanduser(basedir)
         self.name = name
         self._imgdir = os.path.realpath(os.path.join(
             basedir, self._INSTANCE_TO_BASEDIR.get(name, name)))
@@ -81,7 +82,7 @@ class COCODetection(object):
 
         Returns:
             a list of dict, each has keys including:
-                'height', 'width', 'id', 'file_name',
+                'id', 'file_name',
                 and (if add_gt is True) 'boxes', 'class', 'is_crowd', and optionally
                 'segmentation'.
         """
@@ -118,8 +119,8 @@ class COCODetection(object):
 
         # clean-up boxes
         valid_objs = []
-        width = img['width']
-        height = img['height']
+        width = img.pop('width')
+        height = img.pop('height')
         for objid, obj in enumerate(objs):
             if obj.get('ignore', 0) == 1:
                 continue
@@ -162,6 +163,7 @@ class COCODetection(object):
         img['boxes'] = boxes        # nx4
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
+        img['image_id'] = img.pop('id')
         if add_mask:
             # also required to be float32
             img['segmentation'] = [
@@ -183,7 +185,7 @@ class COCODetection(object):
         return ret
 
 
-class DetectionDataset(object):
+class DetectionDataset:
     """
     A singleton to load datasets, evaluate results, and provide metadata.
 
@@ -209,7 +211,6 @@ class DetectionDataset(object):
         Produce "roidbs" as a list of dict, each dict corresponds to one image with k>=0 instances.
         and the following keys are expected for training:
 
-        height, width: integer
         file_name: str, full path to the image
         boxes: numpy array of kx4 floats, each row is [x1, y1, x2, y2]
         class: numpy array of k integers, in the range of [1, #categories], NOT [0, #categories)
@@ -225,7 +226,7 @@ class DetectionDataset(object):
             Include this field only if training Mask R-CNN.
         """
         return COCODetection.load_many(
-            cfg.DATA.BASEDIR, cfg.DATA.TRAIN, add_gt=True, add_mask=cfg.MODE_MASK)
+            cfg.DATA.BASEDIR, names, add_gt=True, add_mask=cfg.MODE_MASK)
 
     def load_inference_roidbs(self, name):
         """
@@ -239,7 +240,7 @@ class DetectionDataset(object):
             following keys in the dict are expected:
 
             file_name (str): full path to the image
-            id (str): an id for the image. The inference results will be stored with this id.
+            image_id (str): an id for the image. The inference results will be stored with this id.
         """
         return COCODetection.load_many(cfg.DATA.BASEDIR, name, add_gt=False)
 
@@ -274,7 +275,7 @@ class DetectionDataset(object):
         assert output is not None, "COCO evaluation requires an output file!"
         with open(output, 'w') as f:
             json.dump(results, f)
-        if len(output):
+        if len(results):
             # sometimes may crash if the results are empty?
             return COCODetection(cfg.DATA.BASEDIR, dataset).print_coco_metrics(output)
         else:
@@ -290,6 +291,7 @@ class DetectionDataset(object):
 
 
 if __name__ == '__main__':
+    cfg.DATA.BASEDIR = '~/data/coco'
     c = COCODetection(cfg.DATA.BASEDIR, 'train2014')
-    gt_boxes = c.load(add_gt=True, add_mask=True)
-    print("#Images:", len(gt_boxes))
+    roidb = c.load(add_gt=True, add_mask=True)
+    print("#Images:", len(roidb))
