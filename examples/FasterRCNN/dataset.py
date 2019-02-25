@@ -82,7 +82,7 @@ class COCODetection:
 
         Returns:
             a list of dict, each has keys including:
-                'id', 'file_name',
+                'image_id', 'file_name',
                 and (if add_gt is True) 'boxes', 'class', 'is_crowd', and optionally
                 'segmentation'.
         """
@@ -95,6 +95,7 @@ class COCODetection:
             imgs = self.coco.loadImgs(img_ids)
 
             for img in tqdm.tqdm(imgs):
+                img['image_id'] = img.pop('id')
                 self._use_absolute_file_name(img)
                 if add_gt:
                     self._add_detection_gt(img, add_mask)
@@ -113,9 +114,9 @@ class COCODetection:
         Add 'boxes', 'class', 'is_crowd' of this image to the dict, used by detection.
         If add_mask is True, also add 'segmentation' in coco poly format.
         """
-        # ann_ids = self.coco.getAnnIds(imgIds=img['id'])
+        # ann_ids = self.coco.getAnnIds(imgIds=img['image_id'])
         # objs = self.coco.loadAnns(ann_ids)
-        objs = self.coco.imgToAnns[img['id']]  # equivalent but faster than the above two lines
+        objs = self.coco.imgToAnns[img['image_id']]  # equivalent but faster than the above two lines
 
         # clean-up boxes
         valid_objs = []
@@ -163,7 +164,6 @@ class COCODetection:
         img['boxes'] = boxes        # nx4
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
-        img['image_id'] = img.pop('id')
         if add_mask:
             # also required to be float32
             img['segmentation'] = [
