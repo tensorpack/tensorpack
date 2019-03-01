@@ -20,9 +20,9 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-On one (Maxwell) TitanX, Double-DQN took ~18 hours of training to reach a score of 400 on breakout.
-
-Double-DQN with nature paper setting runs at 60 batches (3840 trained frames, 240 seen frames, 960 game frames) per second on TitanX.
+On one GTX 1080Ti, the ALE version took ~3 hours of training to reach 21 (maximum) score on
+Pong, ~15 hours of training to reach 400 score on Breakout.
+It runs at 50 batches (~3.2k trained frames, 200 seen frames, 800 game frames) per second on GTX 1080Ti.
 
 ## How to use
 

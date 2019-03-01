@@ -56,7 +56,7 @@ def launch_train_with_config(config, trainer):
     2. Call `trainer.setup_graph` with the input as well as `config.model`.
     3. Call `trainer.train` with rest of the attributes of config.
 
-    See tutorial at
+    See the `related tutorial
     <https://tensorpack.readthedocs.io/tutorial/training-interface.html#with-modeldesc-and-trainconfig>`_
     to learn more.
 

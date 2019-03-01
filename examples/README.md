@@ -9,14 +9,15 @@ Github is full of deep learning code that "implements" but does not "reproduce"
 methods, and you'll not know whether the implementation is actually correct.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
 
-We refuse toy examples.
-Instead of showing you 10 arbitrary networks trained on toy datasets with random final performance,
-tensorpack examples try to faithfully replicate experiments and performance in the paper,
+We refuse toy examples. We refuse low-quality implementations.
+Unlike most open source repos which only __implement__ methods,
+[Tensorpack examples](examples) faithfully __reproduce__ 
+experiments and performance in the paper,
 so you're confident that they are correct.
 
 
 ## Getting Started:
-These are all the toy examples in tensorpack. They are supposed to be just demos.
+These are the only toy examples in tensorpack. They are supposed to be just demos.
 + [An illustrative MNIST example with explanation of the framework](basics/mnist-convnet.py)
 + Tensorpack supports any symbolic libraries. See the same MNIST example written with [tf.layers](basics/mnist-tflayers.py), [tf-slim](basics/mnist-tfslim.py), and [with weights visualizations](basics/mnist-visualizations.py)
 + A tiny [Cifar ConvNet](basics/cifar-convnet.py) and [SVHN ConvNet](basics/svhn-digit-convnet.py)
@@ -27,7 +28,7 @@ These are all the toy examples in tensorpack. They are supposed to be just demos
 | Name                                                                                                                                                  | Performance        |
 | ---                                                                                                                                                   | ---                |
 | Train [ResNet](ResNet), [ShuffleNet and other models](ImageNetModels) on ImageNet                                                                     | reproduce paper    |
-| [Train Mask/Faster R-CNN on COCO](FasterRCNN)                                                                                                   | reproduce paper    |
+| [Train Mask/Faster R-CNN on COCO](FasterRCNN)                                                                                                         | reproduce paper    |
 | [Generative Adversarial Network(GAN) variants](GAN), including DCGAN, InfoGAN, <br/> Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN | visually reproduce |
 | [DoReFa-Net: training binary / low-bitwidth CNN on ImageNet](DoReFa-Net)                                                                              | reproduce paper    |
 | [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](HED)                                                                        | visually reproduce |
@@ -37,7 +38,7 @@ These are all the toy examples in tensorpack. They are supposed to be just demos
 | Single-image super-resolution using [EnhanceNet](SuperResolution)                                                                                     |                    |
 | Learn steering filters with [Dynamic Filter Networks](DynamicFilterNetwork)                                                                           | visually reproduce |
 | Load a pre-trained [AlexNet, VGG, or Convolutional Pose Machines](CaffeModels)                                                                        |                    |
-| Load a pre-trained [FlowNet2-S, FlowNet2-C, FlowNet2](OpticalFlow) | |
+| Load a pre-trained [FlowNet2-S, FlowNet2-C, FlowNet2](OpticalFlow)                                                                                    |                    |
 
 ## Reinforcement Learning:
 | Name                                                                                                     | Performance     |

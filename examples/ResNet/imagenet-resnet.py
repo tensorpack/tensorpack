@@ -103,16 +103,25 @@ def get_config(model):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    # generic:
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use. Default to use all available ones')
-    parser.add_argument('--data', help='ILSVRC dataset dir')
+    parser.add_argument('--eval', action='store_true', help='run offline evaluation instead of training')
     parser.add_argument('--load', help='load a model for training or evaluation')
+
+    # data:
+    parser.add_argument('--data', help='ILSVRC dataset dir')
     parser.add_argument('--fake', help='use FakeData to debug or benchmark this model', action='store_true')
     parser.add_argument('--symbolic', help='use symbolic data loader', action='store_true')
-    parser.add_argument('--data-format', help='image data format',
+
+    # model:
+    parser.add_argument('--data-format', help='the image data layout used by the model',
                         default='NCHW', choices=['NCHW', 'NHWC'])
     parser.add_argument('-d', '--depth', help='ResNet depth',
                         type=int, default=50, choices=[18, 34, 50, 101, 152])
-    parser.add_argument('--eval', action='store_true', help='run offline evaluation instead of training')
+    parser.add_argument('--weight-decay-norm', action='store_true',
+                        help="apply weight decay on normalization layers (gamma & beta)."
+                             "This is used in torch/pytorch, and slightly "
+                             "improves validation accuracy of large models.")
     parser.add_argument('--batch', default=256, type=int,
                         help="total batch size. "
                         "Note that it's best to keep per-GPU batch size in [32, 64] to obtain the best accuracy."
@@ -126,6 +135,9 @@ if __name__ == '__main__':
 
     model = Model(args.depth, args.mode)
     model.data_format = args.data_format
+    if model.weight_decay_norm:
+        model.weight_decay_pattern = ".*/W|.*/gamma|.*/beta"
+
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_imagenet_dataflow(args.data, 'val', batch)

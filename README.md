@@ -34,9 +34,9 @@ See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/ind
 
 ## Examples:
 
-We refuse toy examples.
-Instead of showing you 10 arbitrary networks trained on toy datasets,
-[Tensorpack examples](examples) faithfully replicate papers and care about reproducing numbers,
+We refuse toy examples. We refuse low-quality implementations.
+Unlike most open source repos which only __implement__ papers,
+[Tensorpack examples](examples) faithfully __reproduce__ papers,
 demonstrating its __flexibility__ for actual research.
 
 ### Vision:

@@ -226,7 +226,7 @@ def is_training_name(name):
         return True
     if name.endswith('/Adagrad'):
         return True
-    if name.startswith('EMA/'):  # all the moving average summaries
+    if name.startswith('EMA/') or '/EMA/' in name:  # all the moving average summaries
         return True
     if name.startswith('AccumGrad') or name.endswith('/AccumGrad'):
         return True
