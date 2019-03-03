@@ -1,18 +1,25 @@
 # -*- coding: utf-8 -*-
 # File: base.py
 
-
+import os
 import inspect
 import pprint
 from abc import ABCMeta, abstractmethod
 import six
 from six.moves import zip
+import weakref
 
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
 from ..image import check_dtype
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
+
+
+def _reset_augmentor_after_fork(aug_ref):
+    aug = aug_ref()
+    if aug:
+        aug.reset_state()
 
 
 @six.add_metaclass(ABCMeta)
@@ -22,6 +29,11 @@ class Augmentor(object):
     def __init__(self):
         self.reset_state()
 
+        # only available on Unix after Python 3.7
+        if hasattr(os, 'register_at_fork'):
+            os.register_at_fork(
+                after_in_child=lambda: _reset_augmentor_after_fork(weakref.ref(self)))
+
     def _init(self, params=None):
         if params:
             for k, v in params.items():
@@ -29,7 +41,19 @@ class Augmentor(object):
                     setattr(self, k, v)
 
     def reset_state(self):
-        """ reset rng and other state """
+        """
+        Reset rng and other state of the augmentor.
+
+        Similar to :meth:`DataFlow.reset_state`, the caller of Augmentor
+        is responsible for calling this method (once or more times) in the **process that uses the augmentor**
+        before using it.
+
+        If you use tensorpack's built-in augmentation dataflow (:class:`AugmentImageComponent`, etc),
+        this method will be called in the dataflow's own `reset_state` method.
+
+        If you use Python≥3.7 on Unix, this method will be automatically called after fork,
+        and you do not need to bother calling it.
+        """
         self.rng = get_rng(self)
 
     def augment(self, d):
@@ -199,5 +223,6 @@ class AugmentorList(ImageAugmentor):
 
     def reset_state(self):
         """ Will reset state of each augmentor """
+        super(AugmentorList, self).reset_state()
         for a in self.augmentors:
             a.reset_state()

@@ -22,7 +22,7 @@ It's Yet Another TF high-level API, with __speed__, and __flexibility__ built to
     some benchmark scripts.
 
 2. Focus on __large datasets__.
-	+ [You don't usually need `tf.data`](http://tensorpack.readthedocs.io/tutorial/input-source.html#tensorflow-reader-cons).
+	+ [You don't usually need `tf.data`](http://tensorpack.readthedocs.io/tutorial/extend/input-source.html#tensorflow-reader-cons).
     Symbolic programming often makes data processing harder.
 	  Tensorpack helps you efficiently process large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
 

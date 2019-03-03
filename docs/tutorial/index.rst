@@ -7,14 +7,13 @@ Introduction
 
 .. include:: intro.rst
 
-User Tutorials
+Basic Tutorials
 ========================
 
 .. toctree::
   :maxdepth: 1
 
   dataflow
-  input-source
   symbolic
   trainer
   training-interface
@@ -24,6 +23,18 @@ User Tutorials
   inference
   faq
 
+Advanced Tutorials
+==================
+
+.. toctree::
+  :maxdepth: 1
+
+  extend/dataflow
+  extend/input-source
+  extend/augmentor
+  extend/model
+  extend/callback
+  extend/trainer
 
 Performance
 ============
@@ -33,16 +44,3 @@ Performance
 
   efficient-dataflow
   performance-tuning
-
-
-Extend Tensorpack
-==================
-
-.. toctree::
-  :maxdepth: 1
-
-  extend/dataflow
-  extend/augmentor
-  extend/model
-  extend/callback
-  extend/trainer

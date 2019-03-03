@@ -22,7 +22,7 @@ Some things to know before reading:
 	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
 2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
-	 [previous tutorial](input-source.html).
+	 [InputSource tutorial](extend/input-source.html).
 3. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
 	 data distribution roughly stays the same.

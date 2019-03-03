@@ -126,7 +126,7 @@ class DataFlow(object):
 
     def reset_state(self):
         """
-        * It's guaranteed that :meth:`reset_state` should be called **once and only once**
+        * The caller must guarantee that :meth:`reset_state` should be called **once and only once**
           by the **process that uses the dataflow** before :meth:`__iter__` is called.
           The caller thread of this method should stay alive to keep this dataflow alive.
 
@@ -139,8 +139,13 @@ class DataFlow(object):
         * A dataflow is not fork-safe after :meth:`reset_state` is called (because this will violate the guarantee).
           A few number of dataflow is not fork-safe anytime, which will be mentioned in the docs.
 
-        * You should follow the above guarantee if you're using a dataflow yourself
-          (either outside of tensorpack, or writing a wrapper dataflow)
+        * Tensorpack's built-in forking dataflows (:class:`MultiProcessPrefetchData`, :class:`MultiProcessMapData`, etc)
+          and other component that uses dataflows (:class:`InputSource`)
+          already take care of the responsibility of calling this method.
+
+        * You should take the responsibility and follow the above guarantee if you're the caller of a dataflow yourself
+          (either if you're using dtaflow outside of tensorpack,
+          or if you're writing a wrapper dataflow).
         """
         pass
 

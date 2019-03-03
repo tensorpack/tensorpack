@@ -13,7 +13,7 @@ There are several places where you might want to do something else:
 * Between epochs (e.g. save the model, run some validation)
 * After the training (e.g. send the model somewhere, send a message to your phone)
 
-We found people traditionally tend to write the training loop together with these extra features.
+People normally would write the training loop together with these extra features.
 This makes the loop lengthy, and the code for the same feature probably get separated (imagine a
 feature which needs initialization in the beginning and then some actual work between iterations).
 
@@ -72,6 +72,9 @@ monitors=[        # monitors are a special kind of callbacks. these are also ena
 Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluate part of the summaries at a different frequency, etc.
+Similar concepts also exists in other frameworks, such as Keras callbacks, or
+`tf.train.SessionRunHook`. But tensorpack callbacks have more functionalities in
+design, and can achive much more features, as you can see above.
 
 These features are not always necessary, but think about how messy the main loop would look like if you
 were to write these logic together with the loops, and how easy your life will be if you could enable

@@ -45,25 +45,26 @@ with all the data preprocessing.
 Unless you are working with standard data types (image folders, LMDB, etc),
 you would usually want to write the source DataFlow (`MyDataFlow` in the above example) for your data format.
 See [another tutorial](extend/dataflow.html) for simple instructions on writing a DataFlow.
-Once you have the source reader, all the [existing DataFlows](../modules/dataflow.html) are ready for you to complete
-the rest of the data pipeline.
+Once you have the source reader, all the [existing
+DataFlows](../modules/dataflow.html) are ready for you to build up the rest of the data pipeline.
 
 ### Why DataFlow
 
 1. It's easy: write everything in pure Python, and reuse existing utilities.
 	 On the contrary, writing data loaders in TF operators is usually painful, and performance is hard to tune.
-	 See more discussions in [Python Reader or TF Reader](input-source.html#python-reader-or-tf-reader).
+	 See more discussions in [Python Reader or TF Reader](extend/input-source.html#python-reader-or-tf-reader).
 2. It's fast: see [Efficient DataFlow](efficient-dataflow.html)
 	on how to build a fast DataFlow with parallelism.
-	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](input-source.html)
+	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](extend/input-source.html)
 	on how tensorpack further accelerates data loading in the graph.
 
 Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
 
-### Use DataFlow outside Tensorpack
+### Use DataFlow in Your Own Code
 
-Normally, tensorpack `InputSource` interface links DataFlow to the graph for training.
-If you use DataFlow in other places such as your custom code, call `reset_state()` first to initialize it,
+Normally, tensorpack `InputSource` interface runs the DataFlow during training.
+However, DataFlow can also be used without other tensorpack components.
+If you need to run the DataFlow by yourself, call `reset_state()` first to initialize it,
 and then use the generator however you like:
 ```python
 df = SomeDataFlow()
