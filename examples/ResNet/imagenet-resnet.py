@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     model = Model(args.depth, args.mode)
     model.data_format = args.data_format
-    if model.weight_decay_norm:
+    if args.weight_decay_norm:
         model.weight_decay_pattern = ".*/W|.*/gamma|.*/beta"
 
     if args.eval:
