@@ -23,19 +23,21 @@ Experience = namedtuple('Experience',
 
 class ReplayMemory(object):
     def __init__(self, max_size, state_shape, history_len):
+        """
+        Args:
+            state_shape (tuple[int]): shape (without history) of state
+        """
         self.max_size = int(max_size)
         self.state_shape = state_shape
-        assert len(state_shape) == 3, state_shape
-        # self._state_transpose = list(range(1, len(state_shape) + 1)) + [0]
-        self._channel = state_shape[2] if len(state_shape) == 3 else 1
-        self._shape3d = (state_shape[0], state_shape[1], self._channel * (history_len + 1))
+        assert len(state_shape) in [1, 2, 3], state_shape
+        self._output_shape = self.state_shape + (history_len + 1, )
         self.history_len = int(history_len)
 
-        state_shape = (self.max_size,) + state_shape
+        all_state_shape = (self.max_size,) + state_shape
         logger.info("Creating experience replay buffer of {:.1f} GB ... "
                     "use a smaller buffer if you don't have enough CPU memory.".format(
-                        np.prod(state_shape) / 1024.0**3))
-        self.state = np.zeros(state_shape, dtype='uint8')
+                        np.prod(all_state_shape) / 1024.0**3))
+        self.state = np.zeros(all_state_shape, dtype='uint8')
         self.action = np.zeros((self.max_size,), dtype='int32')
         self.reward = np.zeros((self.max_size,), dtype='float32')
         self.isOver = np.zeros((self.max_size,), dtype='bool')
@@ -70,7 +72,8 @@ class ReplayMemory(object):
 
     def sample(self, idx):
         """ return a tuple of (s,r,a,o),
-            where s is of shape [H, W, (hist_len+1) * channel]"""
+            where s is of shape self._output_shape, which is
+            [H, W, (hist_len+1) * channel] if input is (H, W, channel)"""
         idx = (self._curr_pos + idx) % self._curr_size
         k = self.history_len + 1
         if idx + k <= self._curr_size:
@@ -95,8 +98,8 @@ class ReplayMemory(object):
                 state = copy.deepcopy(state)
                 state[:k + 1].fill(0)
                 break
-        # move the first dim to the last
-        state = state.transpose(1, 2, 0, 3).reshape(self._shape3d)
+        # move the first dim (history) to the last
+        state = np.moveaxis(state, 0, -1)
         return (state, reward[-2], action[-2], isOver[-2])
 
     def _slice(self, arr, start, end):
@@ -140,13 +143,13 @@ class ExpReplay(DataFlow, Callback):
             predictor_io_names (tuple of list of str): input/output names to
                 predict Q value from state.
             player (gym.Env): the player.
-            state_shape (tuple): h, w, c
+            state_shape (tuple):
             history_len (int): length of history frames to concat. Zero-filled
                 initial frames.
             update_frequency (int): number of new transitions to add to memory
                 after sampling a batch of transitions for training.
         """
-        assert len(state_shape) == 3, state_shape
+        assert len(state_shape) in [1, 2, 3], state_shape
         init_memory_size = int(init_memory_size)
 
         for k, v in locals().items():
@@ -207,7 +210,7 @@ class ExpReplay(DataFlow, Callback):
             # build a history state
             history = self.mem.recent_state()
             history.append(old_s)
-            history = np.concatenate(history, axis=-1)  # H,W,HistxC
+            history = np.stack(history, axis=-1)  # state_shape + (Hist,)
             history = np.expand_dims(history, axis=0)
 
             # assume batched network
@@ -216,7 +219,9 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)
         if isOver:
-            if info['ale.lives'] == 0:  # only record score when a whole game is over (not when an episode is over)
+            # handle ale-specific information
+            if info.get('ale.lives', -1) == 0:
+                # only record score when a whole game is over (not when an episode is over)
                 self._player_scores.feed(self._current_game_score.sum)
                 self._current_game_score.reset()
             self.player.reset()
@@ -226,6 +231,7 @@ class ExpReplay(DataFlow, Callback):
         import cv2
 
         def view_state(comb_state):
+            # this function assumes comb_state is 3D
             state = comb_state[:, :, :-1]
             next_state = comb_state[:, :, 1:]
             r = np.concatenate([state[:, :, k] for k in range(self.history_len)], axis=1)

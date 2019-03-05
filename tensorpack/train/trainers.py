@@ -194,6 +194,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             run_before=True,
             run_as_trigger=self.BROADCAST_EVERY_EPOCH,
             verbose=True)
+        cb.name_scope = "SyncVariables"
         return [cb]
 
 

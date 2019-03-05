@@ -19,7 +19,7 @@ from expreplay import ExpReplay
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
-IMAGE_CHANNEL = None  # 3 in gym and 1 in our own wrapper
+STATE_SHAPE = None    # IMAGE_SIZE + (3,) in gym, and IMAGE_SIZE in ALE
 FRAME_HISTORY = 4
 ACTION_REPEAT = 4   # aka FRAME_SKIP
 UPDATE_FREQ = 4
@@ -39,8 +39,7 @@ METHOD = None
 
 
 def resize_keepdims(im, size):
-    # Opencv's resize remove the extra dimension for grayscale images.
-    # We add it back.
+    # Opencv's resize remove the extra dimension for grayscale images. We add it back.
     ret = cv2.resize(im, size)
     if im.ndim == 3 and ret.ndim == 2:
         ret = ret[:, :, np.newaxis]
@@ -65,10 +64,20 @@ def get_player(viz=False, train=False):
 
 
 class Model(DQNModel):
+    """
+    A DQN model for 2D/3D (image) observations.
+    """
     def __init__(self):
-        super(Model, self).__init__(IMAGE_SIZE, IMAGE_CHANNEL, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
+        assert len(STATE_SHAPE) in [2, 3]
+        super(Model, self).__init__(STATE_SHAPE, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
 
     def _get_DQN_prediction(self, image):
+        assert image.shape.rank in [4, 5], image.shape
+        # image: N, H, W, (C), Hist
+        if image.shape.rank == 5:
+            # merge C & Hist
+            image = tf.reshape(image, [-1] + list(STATE_SHAPE[:2]) + [STATE_SHAPE[2] * FRAME_HISTORY])
+
         image = image / 255.0
         with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
             l = (LinearWrap(image)
@@ -102,7 +111,7 @@ def get_config():
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),
-        state_shape=IMAGE_SIZE + (IMAGE_CHANNEL,),
+        state_shape=STATE_SHAPE,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
@@ -152,7 +161,7 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
     ENV_NAME = args.env
     USE_GYM = not ENV_NAME.endswith('.bin')
-    IMAGE_CHANNEL = 3 if USE_GYM else 1
+    STATE_SHAPE = IMAGE_SIZE + (3, ) if USE_GYM else IMAGE_SIZE
     METHOD = args.algo
     # set num_actions
     NUM_ACTIONS = get_player().action_space.n

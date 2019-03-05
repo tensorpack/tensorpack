@@ -44,10 +44,16 @@ class Callback(object):
 
     _chief_only = True
 
+    name_scope = ""
+    """
+    A name scope for ops created inside this callback.
+    By default to the name of the class, but can be set per-instance.
+    """
+
     def setup_graph(self, trainer):
         self.trainer = trainer
         self.graph = tf.get_default_graph()
-        scope_name = type(self).__name__
+        scope_name = self.name_scope or type(self).__name__
         scope_name = scope_name.replace('_', '')
         with tf.name_scope(scope_name):
             self._setup_graph()

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 # File: common.py
 # Author: Yuxin Wu
+
 import multiprocessing
+import numpy as np
 import random
 import time
 from six.moves import queue
@@ -19,7 +21,8 @@ def play_one_episode(env, func, render=False):
         """
         Map from observation to action, with 0.01 greedy.
         """
-        act = func(s[None, :, :, :])[0][0].argmax()
+        s = np.expand_dims(s, 0)  # batch
+        act = func(s)[0][0].argmax()
         if random.random() < 0.01:
             spc = env.action_space
             act = spc.sample()

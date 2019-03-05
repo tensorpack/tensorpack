@@ -34,8 +34,7 @@ else:
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4
 GAMMA = 0.99
-CHANNEL = FRAME_HISTORY * 3
-IMAGE_SHAPE3 = IMAGE_SIZE + (CHANNEL,)
+STATE_SHAPE = IMAGE_SIZE + (3, )
 
 LOCAL_TIME_MAX = 5
 STEPS_PER_EPOCH = 6000
@@ -70,13 +69,17 @@ class MySimulatorWorker(SimulatorProcess):
 class Model(ModelDesc):
     def inputs(self):
         assert NUM_ACTIONS is not None
-        return [tf.placeholder(tf.uint8, (None,) + IMAGE_SHAPE3, 'state'),
+        return [tf.placeholder(tf.uint8, (None,) + STATE_SHAPE + (FRAME_HISTORY, ), 'state'),
                 tf.placeholder(tf.int64, (None,), 'action'),
                 tf.placeholder(tf.float32, (None,), 'futurereward'),
                 tf.placeholder(tf.float32, (None,), 'action_prob'),
                 ]
 
-    def _get_NN_prediction(self, image):
+    def _get_NN_prediction(self, state):
+        assert state.shape.rank == 5  # Batch, H, W, Channel, History
+        state = tf.transpose(state, [0, 1, 2, 4, 3])  # swap channel & history, to be compatible with old models
+        image = tf.reshape(state, [-1] + list(STATE_SHAPE[:2]) + [STATE_SHAPE[2] * FRAME_HISTORY])
+
         image = tf.cast(image, tf.float32) / 255.0
         with argscope(Conv2D, activation=tf.nn.relu):
             l = Conv2D('conv0', image, 32, 5)

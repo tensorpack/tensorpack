@@ -251,11 +251,13 @@ class QueueInput(FeedfreeInput):
             # in TF there is no API to get queue capacity, so we can only summary the size
             size = tf.cast(self.queue.size(), tf.float32, name='queue_size')
         size_ema_op = add_moving_summary(size, collection=None, decay=0.5)[0].op
-        return RunOp(
+        ret = RunOp(
             lambda: size_ema_op,
             run_before=False,
             run_as_trigger=False,
             run_step=True)
+        ret.name_scope = "InputSource/EMA"
+        return ret
 
     def _get_callbacks(self):
         from ..callbacks.concurrency import StartProcOrThread

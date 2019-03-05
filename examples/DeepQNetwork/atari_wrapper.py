@@ -4,7 +4,6 @@
 import numpy as np
 from collections import deque
 import gym
-from gym import spaces
 
 _v0, _v1 = gym.__version__.split('.')[:2]
 assert int(_v0) > 0 or int(_v1) >= 10, gym.__version__
@@ -27,17 +26,13 @@ class MapState(gym.ObservationWrapper):
 
 class FrameStack(gym.Wrapper):
     """
-    Buffer observations and stack across channels (last axis).
-    The output observation has shape (H, W, History * Channel)
+    Buffer consecutive k observations and stack them on a new last axis.
+    The output observation has shape `original_shape + (k, )`.
     """
     def __init__(self, env, k):
         gym.Wrapper.__init__(self, env)
         self.k = k
         self.frames = deque([], maxlen=k)
-        shp = env.observation_space.shape
-        chan = 1 if len(shp) == 2 else shp[2]
-        self.observation_space = spaces.Box(
-            low=0, high=255, shape=(shp[0], shp[1], chan * k), dtype=np.uint8)
 
     def reset(self):
         """Clear buffer and re-fill by duplicating the first observation."""
@@ -54,10 +49,7 @@ class FrameStack(gym.Wrapper):
 
     def observation(self):
         assert len(self.frames) == self.k
-        if self.frames[-1].ndim == 2:
-            return np.stack(self.frames, axis=-1)
-        else:
-            return np.concatenate(self.frames, axis=2)
+        return np.stack(self.frames, axis=-1)
 
 
 class _FireResetEnv(gym.Wrapper):
