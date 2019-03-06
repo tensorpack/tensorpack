@@ -19,12 +19,8 @@ from expreplay import ExpReplay
 
 BATCH_SIZE = 64
 IMAGE_SIZE = (84, 84)
-STATE_SHAPE = None    # IMAGE_SIZE + (3,) in gym, and IMAGE_SIZE in ALE
 FRAME_HISTORY = 4
-ACTION_REPEAT = 4   # aka FRAME_SKIP
 UPDATE_FREQ = 4
-
-GAMMA = 0.99
 
 MEMORY_SIZE = 1e6
 # will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
@@ -32,10 +28,8 @@ INIT_MEMORY_SIZE = MEMORY_SIZE // 20
 STEPS_PER_EPOCH = 100000 // UPDATE_FREQ  # each epoch is 100k played frames
 EVAL_EPISODE = 50
 
-NUM_ACTIONS = None
 USE_GYM = False
 ENV_NAME = None
-METHOD = None
 
 
 def resize_keepdims(im, size):
@@ -51,7 +45,8 @@ def get_player(viz=False, train=False):
         env = gym.make(ENV_NAME)
     else:
         from atari import AtariPlayer
-        env = AtariPlayer(ENV_NAME, frame_skip=ACTION_REPEAT, viz=viz,
+        # frame_skip=4 is what's used in the original paper
+        env = AtariPlayer(ENV_NAME, frame_skip=4, viz=viz,
                           live_lost_as_eoe=train, max_num_frames=60000)
     env = FireResetEnv(env)
     env = MapState(env, lambda im: resize_keepdims(im, IMAGE_SIZE))
@@ -67,16 +62,14 @@ class Model(DQNModel):
     """
     A DQN model for 2D/3D (image) observations.
     """
-    def __init__(self):
-        assert len(STATE_SHAPE) in [2, 3]
-        super(Model, self).__init__(STATE_SHAPE, FRAME_HISTORY, METHOD, NUM_ACTIONS, GAMMA)
-
     def _get_DQN_prediction(self, image):
         assert image.shape.rank in [4, 5], image.shape
         # image: N, H, W, (C), Hist
         if image.shape.rank == 5:
             # merge C & Hist
-            image = tf.reshape(image, [-1] + list(STATE_SHAPE[:2]) + [STATE_SHAPE[2] * FRAME_HISTORY])
+            image = tf.reshape(
+                image,
+                [-1] + list(self.state_shape[:2]) + [self.state_shape[2] * FRAME_HISTORY])
 
         image = image / 255.0
         with argscope(Conv2D, activation=lambda x: PReLU('prelu', x), use_bias=True):
@@ -107,22 +100,23 @@ class Model(DQNModel):
         return tf.identity(Q, name='Qvalue')
 
 
-def get_config():
+def get_config(model):
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
         player=get_player(train=True),
-        state_shape=STATE_SHAPE,
+        state_shape=model.state_shape,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
         init_exploration=1.0,
         update_frequency=UPDATE_FREQ,
-        history_len=FRAME_HISTORY
+        history_len=FRAME_HISTORY,
+        state_dtype=model.state_dtype.as_numpy_dtype
     )
 
     return TrainConfig(
         data=QueueInput(expreplay),
-        model=Model(),
+        model=model,
         callbacks=[
             ModelSaver(),
             PeriodicTrigger(
@@ -130,7 +124,7 @@ def get_config():
                 every_k_steps=10000 // UPDATE_FREQ),    # update target network every 10k steps
             expreplay,
             ScheduledHyperParamSetter('learning_rate',
-                                      [(60, 4e-4), (100, 2e-4), (500, 5e-5)]),
+                                      [(0, 1e-3), (60, 4e-4), (100, 2e-4), (500, 5e-5)]),
             ScheduledHyperParamSetter(
                 ObjAttrParam(expreplay, 'exploration'),
                 [(0, 1), (10, 0.1), (320, 0.01)],   # 1->0.1 in the first million steps
@@ -156,33 +150,35 @@ if __name__ == '__main__':
     parser.add_argument('--algo', help='algorithm',
                         choices=['DQN', 'Double', 'Dueling'], default='Double')
     args = parser.parse_args()
-
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+
     ENV_NAME = args.env
     USE_GYM = not ENV_NAME.endswith('.bin')
-    STATE_SHAPE = IMAGE_SIZE + (3, ) if USE_GYM else IMAGE_SIZE
-    METHOD = args.algo
+
     # set num_actions
-    NUM_ACTIONS = get_player().action_space.n
-    logger.info("ENV: {}, Num Actions: {}".format(ENV_NAME, NUM_ACTIONS))
+    num_actions = get_player().action_space.n
+    logger.info("ENV: {}, Num Actions: {}".format(args.env, num_actions))
+
+    state_shape = IMAGE_SIZE + (3, ) if USE_GYM else IMAGE_SIZE
+    model = Model(state_shape, FRAME_HISTORY, args.algo, num_actions)
 
     if args.task != 'train':
         assert args.load is not None
         pred = OfflinePredictor(PredictConfig(
-            model=Model(),
+            model=model,
             session_init=get_model_loader(args.load),
             input_names=['state'],
             output_names=['Qvalue']))
         if args.task == 'play':
-            play_n_episodes(get_player(viz=0.01), pred, 100)
+            play_n_episodes(get_player(viz=0.01), pred, 100, render=True)
         elif args.task == 'eval':
             eval_model_multithread(pred, EVAL_EPISODE, get_player)
     else:
         logger.set_logger_dir(
             os.path.join('train_log', 'DQN-{}'.format(
-                os.path.basename(ENV_NAME).split('.')[0])))
-        config = get_config()
+                os.path.basename(args.env).split('.')[0])))
+        config = get_config(model)
         if args.load:
             config.session_init = get_model_loader(args.load)
         launch_train_with_config(config, SimpleTrainer())

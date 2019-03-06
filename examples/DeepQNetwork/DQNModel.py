@@ -13,29 +13,29 @@ from tensorpack.utils import logger
 
 class Model(ModelDesc):
 
-    learning_rate = 1e-3
-
     state_dtype = tf.uint8
 
-    def __init__(self, state_shape, history, method, num_actions, gamma):
+    # reward discount factor
+    gamma = 0.99
+
+    def __init__(self, state_shape, history, method, num_actions):
         """
         Args:
             state_shape (tuple[int]),
             history (int):
         """
-        self._state_shape = tuple(state_shape)
-        self._stacked_state_shape = (-1, ) + self._state_shape + (history, )
+        self.state_shape = tuple(state_shape)
+        self._stacked_state_shape = (-1, ) + self.state_shape + (history, )
         self.history = history
         self.method = method
         self.num_actions = num_actions
-        self.gamma = gamma
 
     def inputs(self):
         # When we use h history frames, the current state and the next state will have (h-1) overlapping frames.
         # Therefore we use a combined state for efficiency:
         # The first h are the current state, and the last h are the next state.
         return [tf.placeholder(self.state_dtype,
-                               (None,) + self._state_shape + (self.history + 1, ),
+                               (None,) + self.state_shape + (self.history + 1, ),
                                'comb_state'),
                 tf.placeholder(tf.int64, (None,), 'action'),
                 tf.placeholder(tf.float32, (None,), 'reward'),
@@ -101,7 +101,7 @@ class Model(ModelDesc):
         return cost
 
     def optimizer(self):
-        lr = tf.get_variable('learning_rate', initializer=self.learning_rate, trainable=False)
+        lr = tf.get_variable('learning_rate', initializer=1e-3, trainable=False)
         opt = tf.train.RMSPropOptimizer(lr, epsilon=1e-5)
         return optimizer.apply_grad_processors(opt, [gradproc.SummaryGradient()])
 

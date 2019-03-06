@@ -140,6 +140,9 @@ class AtariPlayer(gym.Env):
             self._restart_episode()
         return self._current_state()
 
+    def render(self, *args, **kwargs):
+        pass  # visualization for this env is through the viz= argument when creating the player
+
     def step(self, act):
         oldlives = self.ale.lives()
         r = 0

@@ -22,22 +22,24 @@ Experience = namedtuple('Experience',
 
 
 class ReplayMemory(object):
-    def __init__(self, max_size, state_shape, history_len):
+    def __init__(self, max_size, state_shape, history_len, dtype='uint8'):
         """
         Args:
             state_shape (tuple[int]): shape (without history) of state
+            dtype: numpy dtype for the state
         """
         self.max_size = int(max_size)
         self.state_shape = state_shape
         assert len(state_shape) in [1, 2, 3], state_shape
         self._output_shape = self.state_shape + (history_len + 1, )
         self.history_len = int(history_len)
+        self.dtype = dtype
 
         all_state_shape = (self.max_size,) + state_shape
         logger.info("Creating experience replay buffer of {:.1f} GB ... "
                     "use a smaller buffer if you don't have enough CPU memory.".format(
                         np.prod(all_state_shape) / 1024.0**3))
-        self.state = np.zeros(all_state_shape, dtype='uint8')
+        self.state = np.zeros(all_state_shape, dtype=self.dtype)
         self.action = np.zeros((self.max_size,), dtype='int32')
         self.reward = np.zeros((self.max_size,), dtype='float32')
         self.isOver = np.zeros((self.max_size,), dtype='bool')
@@ -66,7 +68,7 @@ class ReplayMemory(object):
     def recent_state(self):
         """ return a list of ``hist_len-1`` elements, each of shape ``self.state_shape`` """
         lst = list(self._hist)
-        states = [np.zeros(self.state_shape, dtype='uint8')] * (self._hist.maxlen - len(lst))
+        states = [np.zeros(self.state_shape, dtype=self.dtype)] * (self._hist.maxlen - len(lst))
         states.extend([k.state for k in lst])
         return states
 
@@ -137,7 +139,8 @@ class ExpReplay(DataFlow, Callback):
                  batch_size,
                  memory_size, init_memory_size,
                  init_exploration,
-                 update_frequency, history_len):
+                 update_frequency, history_len,
+                 state_dtype='uint8'):
         """
         Args:
             predictor_io_names (tuple of list of str): input/output names to
@@ -219,9 +222,12 @@ class ExpReplay(DataFlow, Callback):
         self._current_ob, reward, isOver, info = self.player.step(act)
         self._current_game_score.feed(reward)
         if isOver:
-            # handle ale-specific information
-            if info.get('ale.lives', -1) == 0:
-                # only record score when a whole game is over (not when an episode is over)
+            if 'ale.lives' in info:  # if running Atari, do something special for logging:
+                if info['ale.lives'] == 0:
+                    # only record score when a whole game is over (not when an episode is over)
+                    self._player_scores.feed(self._current_game_score.sum)
+                    self._current_game_score.reset()
+            else:
                 self._player_scores.feed(self._current_game_score.sum)
                 self._current_game_score.reset()
             self.player.reset()
@@ -244,7 +250,7 @@ class ExpReplay(DataFlow, Callback):
             view_state(sample[0])
 
     def _process_batch(self, batch_exp):
-        state = np.asarray([e[0] for e in batch_exp], dtype='uint8')
+        state = np.asarray([e[0] for e in batch_exp], dtype=self.state_dtype)
         reward = np.asarray([e[1] for e in batch_exp], dtype='float32')
         action = np.asarray([e[2] for e in batch_exp], dtype='int8')
         isOver = np.asarray([e[3] for e in batch_exp], dtype='bool')
