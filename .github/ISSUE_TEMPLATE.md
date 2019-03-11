@@ -6,11 +6,11 @@ https://github.com/tensorpack/tensorpack/issues/new?template=unexpected-problems
 Otherwise, you can post here for:
 1. Feature Requests:
   + Note that you can implement a lot of features by extending Tensorpack
-   (See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
+   (See http://tensorpack.readthedocs.io/tutorial/index.html#extend-tensorpack).
    It does not have to be added to Tensorpack unless you have a good reason.
 
 2. Questions on Using/Understanding Tensorpack:
-  + Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials). Read it first.
+  + Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials). Read it first.
   + We answer "HOW to do X with Tensorpack" for a well-defined X.
     We also answer "HOW/WHY Tensorpack does X" for some X that Tensorpack or its examples are doing.
 

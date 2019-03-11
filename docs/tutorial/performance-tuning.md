@@ -1,11 +1,12 @@
 
 # Performance Tuning
 
-__We do not know why your training is slow__ (and most of the times it's not a tensorpack problem).
+__We do not know why your training is slow__ 
+(and most of the times it's not due to issues in tensorpack).
 
 Tensorpack is designed to be high-performance, as can be seen in the [benchmarks](https://github.com/tensorpack/benchmarks).
 But performance is different across machines and tasks,
-so it's not easy to understand what goes wrong without doing some investigations by your own.
+so it's not easy to let others understand what goes wrong without doing some investigations by your own.
 Tensorpack has some tools to make it easier to understand the performance.
 Here is a list of things you can do to understand why your training is slow.
 
@@ -42,8 +43,9 @@ A benchmark will give you more precise information about which part you should i
 ## Investigate DataFlow
 
 Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
-Then, make modifications and benchmark to understand what in the data pipeline is your bottleneck.
-Do __NOT__ look at training speed when you benchmark a DataFlow, only use the output of `TestDataSpeed`.
+Then, make modifications and benchmark your modifications to understand which
+part in the data pipeline is your bottleneck.
+Do __NOT__ look at training speed when you benchmark a DataFlow. Only look at the output of `TestDataSpeed`.
 
 A DataFlow could be blocked by CPU/disk/network/IPC bandwidth.
 Do __NOT__ optimize the DataFlow before knowing what it is blocked on.
@@ -55,8 +57,8 @@ dataflow, you can usually do the following:
    augmentations), then the pre-processing is the bottleneck.
 1. Without pre-processing, your dataflow is just reading + parallelism, which
    includes both reading cost and the multiprocess communication cost.
-   You can now let your reader produce only a single float after reading a large
-   amount of data, so that the pipeline contains only parallel reading, but negligible
+   You can now let your reader produce only a single integer after reading a large
+   amount of data, so that the pipeline contains only parallel reading cost, but negligible
    communication cost any more. 
    
    If this becomes fast enough, it means that communication is the bottleneck.
@@ -64,7 +66,8 @@ dataflow, you can usually do the following:
 1. In practice the dataflow can be more complicated and you'll need to design
    your own strategies to understand its performance.
    
-Once you've understand what is the bottleneck, you can try some improvements such as:
+Once you've understood which part is the bottleneck, 
+you can start optimizing the specific part by methods such as:
 
 1. Use single-file database to avoid random read on hard disk.
 2. Use fewer pre-processings or write faster ones with whatever tools you have.
@@ -74,19 +77,21 @@ Once you've understand what is the bottleneck, you can try some improvements suc
 
 ## Investigate TensorFlow
 
-When you're sure that data is not a bottleneck (e.g. when the logs show that queue is almost full), you can start to
-worry about the model.
+When you're sure that data is not a bottleneck (e.g. when the logs show that queue is almost full), 
+you can investigate and optimize the model.
 
 A naive but effective way is to remove ops from your model to understand how much time they cost.
-Or you can use `GraphProfiler` callback to benchmark the graph. It will
+
+Alternatively, you can use `GraphProfiler` callback to benchmark the graph. It will
 dump runtime tracing information (to either TensorBoard or chrome) to help diagnose the issue.
-Remember not to use the first several iterations.
+
+Remember to not use the first several iterations.
 
 ### Slow on single-GPU
 This is literally saying TF ops are slow. Usually there isn't much you can do, except to optimize the kernels.
 But there may be something cheap you can try:
 
-1. Visualize copies across devices in chrome.
+1. Visualize copies across devices in the profiler.
 	 It may help to change device placement to avoid some CPU-GPU copies.
 	 It may help to replace some CPU-only ops with equivalent GPU ops to avoid copies.
 

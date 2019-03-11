@@ -38,7 +38,9 @@ For example, CPU/GPU utilization, output images, tensorboard curves, if relevant
 
 ### 3. What you expected, if not obvious.
 
-If you expect higher speed, please first read http://tensorpack.readthedocs.io/en/latest/tutorial/performance-tuning.html
+If you expect higher speed, please read
+http://tensorpack.readthedocs.io/tutorial/performance-tuning.html 
+before posting.
 
 If you expect higher accuracy, only in one of the two conditions can we help with it:
 (1) You're unable to match the accuracy documented in tensorpack examples.

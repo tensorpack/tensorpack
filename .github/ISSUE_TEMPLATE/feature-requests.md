@@ -5,7 +5,7 @@ about: Suggest an idea for Tensorpack
 ---
 
 + Note that you can implement a lot of features by extending Tensorpack
-  (See http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#extend-tensorpack).
+  (See http://tensorpack.readthedocs.io/tutorial/index.html#extend-tensorpack).
   It does not have to be added to Tensorpack unless you have a good reason.
 
 + "Could you improve/implement an example/paper ?"

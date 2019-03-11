@@ -7,7 +7,7 @@ about: More general questions about Tensorpack.
 + If you did something with tensorpack and it failed, please use the "Unexpected Problems /
   Bugs" category.
 
-+ Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/en/latest/tutorial/index.html#user-tutorials). Read it first.
++ Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials). Read it first.
 
 + We answer "HOW to do X with Tensorpack" for a well-defined specific X.
   X must be something that you conceptually know how to do, but are unable to do due to lack of knowledge about Tensorpack.
