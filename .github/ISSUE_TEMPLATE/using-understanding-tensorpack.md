@@ -4,7 +4,7 @@ about: More general questions about Tensorpack.
 
 ---
 
-+ If you did something with tensorpack and it failed, please use the "Unexpected Problems /
++ If you did something with tensorpack and it failed, PLEASE STOP HERE and use the "Unexpected Problems /
   Bugs" category.
 
 + Your question is probably answered in [tutorials](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials). Read it first.
@@ -23,6 +23,7 @@ Some typical questions that we DO NOT answer:
   We have no plans to do so. We don't consider feature
   requests for examples or implement a paper for you.
   If you don't know how to do something yourself, you may ask a usage question.
+
 + "The examples do not perform as expected after I change the models/dataset/parameters/etc.":
 
   Tensorpack maintainers make sure the examples perform well without modifications.

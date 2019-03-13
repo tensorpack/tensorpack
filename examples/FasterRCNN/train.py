@@ -393,7 +393,7 @@ def do_predict(pred_func, input_file):
     final = draw_final_outputs(img, results)
     viz = np.concatenate((img, final), axis=1)
     cv2.imwrite("output.png", viz)
-    logger.info("Inference output written to output.png")
+    logger.info("Inference output for {} written to output.png".format(input_file))
     tpviz.interactive_imshow(viz)
 
 
@@ -405,7 +405,7 @@ if __name__ == '__main__':
     parser.add_argument('--evaluate', help="Run evaluation. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
-                                          "This argument is the path to the input image file")
+                                          "This argument is the path to the input image file", nargs='+')
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
 
@@ -440,7 +440,9 @@ if __name__ == '__main__':
                 input_names=MODEL.get_inference_tensor_names()[0],
                 output_names=MODEL.get_inference_tensor_names()[1])
             if args.predict:
-                do_predict(OfflinePredictor(predcfg), args.predict)
+                predictor = OfflinePredictor(predcfg)
+                for image_file in args.predict:
+                    do_predict(predictor, image_file)
             elif args.evaluate:
                 assert args.evaluate.endswith('.json'), args.evaluate
                 do_evaluate(predcfg, args.evaluate)

@@ -63,7 +63,7 @@ Some reasonable configurations are listed in the table below.
 
 To predict on an image (needs DISPLAY to show the outputs):
 ```
-./train.py --predict input.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
+./train.py --predict input1.jpg input2.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
 ```
 
 To evaluate the performance of a model on COCO:

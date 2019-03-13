@@ -9,6 +9,7 @@ from tensorpack.utils.palette import PALETTE_RGB
 
 from config import config as cfg
 from utils.np_box_ops import iou as np_iou
+from utils.np_box_ops import area as np_area
 
 
 def draw_annotation(img, boxes, klass, is_crowd=None):
@@ -70,14 +71,19 @@ def draw_final_outputs(img, results):
     if len(results) == 0:
         return img
 
+    # Display in largest to smallest order to reduce occlusion
+    boxes = np.asarray([r.box for r in results])
+    areas = np_area(boxes)
+    sorted_inds = np.argsort(-areas)
+
     tags = []
     for r in results:
         tags.append(
             "{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score))
-    boxes = np.asarray([r.box for r in results])
     ret = viz.draw_boxes(img, boxes, tags)
 
-    for r in results:
+    for result_id in sorted_inds:
+        r = results[result_id]
         if r.mask is not None:
             ret = draw_mask(ret, r.mask)
     return ret

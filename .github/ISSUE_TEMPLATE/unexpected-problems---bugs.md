@@ -18,14 +18,16 @@ feel free to delete everything in this template.
 
 (3) **If not using examples, tell us what you did:**
 
-Note that we may not be able to investigate it if there is no reproducible code.
-It's always better to paste what you did instead of describing them.
+  It's always better to copy-paste what you did than to describe them.
+
+  Please try to provide enough information to let other __reproduce__ your issues. 
+  Without reproducing the issue, we may not be able to investigate it.
 
 ### 2. What you observed:
 
 (1) **Include the ENTIRE logs here:**
 
-It's always better to paste what you observed instead of describing them.
+It's always better to copy-paste what you observed instead of describing them.
 
 It's always better to paste **as much as possible**, although sometimes a partial log is OK.
 
@@ -42,11 +44,11 @@ If you expect higher speed, please read
 http://tensorpack.readthedocs.io/tutorial/performance-tuning.html 
 before posting.
 
-If you expect higher accuracy, only in one of the two conditions can we help with it:
+If you expect certain accuracy, only in one of the two conditions can we help with it:
 (1) You're unable to match the accuracy documented in tensorpack examples.
 (2) It appears to be a tensorpack bug.
 
-Otherwise, how to get high accuracy is a machine learning question and is
+Otherwise, how to train a model to certain accuracy is a machine learning question and is
 not our responsibility to figure out.
 
 ### 4. Your environment:
