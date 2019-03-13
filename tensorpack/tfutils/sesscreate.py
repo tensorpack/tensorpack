@@ -3,6 +3,7 @@
 
 
 import tensorflow as tf
+from tensorflow.contrib.graph_editor import get_backward_walk_ops
 
 from ..tfutils.common import tfv1
 from ..utils import logger
@@ -42,9 +43,35 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
 
     def create_session(self):
         sess = tf.Session(target=self.target, config=self.config)
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
-        sess.run(tf.tables_initializer())
+
+        def blocking_op(op):
+            """
+            Whether an op is possibly blocking.
+            """
+            if not op.op_def.is_stateful:
+                return False
+            if "Dequeue" in op.type or "Enqueue" in op.type:
+                return True
+            if "Unstage" in op.type:
+                return True
+            if op.type in ["ZMQPull"]:
+                return True
+            return False
+
+        def run(op):
+            deps = get_backward_walk_ops(op, control_inputs=True)
+            for dep_op in deps:
+                if dep_op.op_def.is_stateful:
+                    print(dep_op.type)
+                if blocking_op(dep_op):
+                    logger.warn(
+                        "Initializer '{}' depends on a blocking op '{}'. This initializer is likely to hang!".format(
+                            op.name, dep_op.name))
+            sess.run(op)
+
+        run(tf.global_variables_initializer())
+        run(tf.local_variables_initializer())
+        run(tf.tables_initializer())
         return sess
 
 
