@@ -61,8 +61,6 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
         def run(op):
             deps = get_backward_walk_ops(op, control_inputs=True)
             for dep_op in deps:
-                if dep_op.op_def.is_stateful:
-                    print(dep_op.type)
                 if blocking_op(dep_op):
                     logger.warn(
                         "Initializer '{}' depends on a blocking op '{}'. This initializer is likely to hang!".format(
