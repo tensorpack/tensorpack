@@ -44,17 +44,17 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
     def create_session(self):
         sess = tf.Session(target=self.target, config=self.config)
 
-        def blocking_op(op):
+        def blocking_op(x):
             """
             Whether an op is possibly blocking.
             """
-            if not op.op_def.is_stateful:
+            if not x.op_def.is_stateful:
                 return False
-            if "Dequeue" in op.type or "Enqueue" in op.type:
+            if "Dequeue" in x.type or "Enqueue" in x.type:
                 return True
-            if "Unstage" in op.type:
+            if "Unstage" in x.type:
                 return True
-            if op.type in ["ZMQPull"]:
+            if x.type in ["ZMQPull"]:
                 return True
             return False
 
