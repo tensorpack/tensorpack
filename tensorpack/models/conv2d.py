@@ -218,7 +218,7 @@ def Conv2DTranspose(
                 [shape_dyn[0],
                  shape_dyn[1] * strides2d[0],
                  shape_dyn[2] * strides2d[1],
-                 channels_in])
+                 filters])
             out_shape3_sta = [None if inputs.shape[1] is None else inputs.shape[1] * strides2d[0],
                               None if inputs.shape[2] is None else inputs.shape[2] * strides2d[1],
                               filters]
