@@ -48,7 +48,7 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
             """
             Whether an op is possibly blocking.
             """
-            if not x.op_def.is_stateful:
+            if x.op_def is not None and not x.op_def.is_stateful:
                 return False
             if "Dequeue" in x.type or "Enqueue" in x.type:
                 return True
