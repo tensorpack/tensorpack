@@ -9,7 +9,6 @@ import sys
 from ..utils.develop import create_dummy_func  # noqa
 from .argtools import shape2d
 from .fs import mkdir_p
-from .palette import PALETTE_RGB
 
 try:
     import cv2
@@ -351,19 +350,46 @@ def intensity_to_rgb(intensity, cmap='cubehelix', normalize=False):
     return intensity.astype('float32') * 255.0
 
 
+def draw_text(img, pos, text, color, font_scale=0.4):
+    """
+    Draw text on an image.
+
+    Args:
+        pos (tuple): x, y; the position of the text
+        text (str):
+        font_scale (float):
+        color (tuple): a 3-tuple BGR color in [0, 255]
+    """
+    img = img.astype(np.uint8)
+    x0, y0 = int(pos[0]), int(pos[1])
+    # Compute text size.
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    ((text_w, text_h), _) = cv2.getTextSize(text, font, font_scale, 1)
+    # Place text background.
+    if x0 + text_w > img.shape[1]:
+        x0 = img.shape[1] - text_w
+    if y0 - int(1.15 * text_h) < 0:
+        y0 = int(1.15 * text_h)
+    back_topleft = x0, y0 - int(1.3 * text_h)
+    back_bottomright = x0 + text_w, y0
+    cv2.rectangle(img, back_topleft, back_bottomright, color, -1)
+    # Show text.
+    text_bottomleft = x0, y0 - int(0.25 * text_h)
+    cv2.putText(img, text, text_bottomleft, font, font_scale, (222, 222, 222), lineType=cv2.LINE_AA)
+    return img
+
+
 def draw_boxes(im, boxes, labels=None, color=None):
     """
     Args:
         im (np.ndarray): a BGR image in range [0,255]. It will not be modified.
         boxes (np.ndarray): a numpy array of shape Nx4 where each row is [x1, y1, x2, y2].
         labels: (list[str] or None)
-        color: a 3-tuple (in range [0, 255]). By default will choose automatically.
+        color: a 3-tuple BGR color (in range [0, 255])
 
     Returns:
         np.ndarray: a new image.
     """
-    FONT = cv2.FONT_HERSHEY_SIMPLEX
-    FONT_SCALE = 0.4
     boxes = np.asarray(boxes, dtype='int32')
     if labels is not None:
         assert len(labels) == len(boxes), "{} != {}".format(len(labels), len(boxes))
@@ -376,40 +402,16 @@ def draw_boxes(im, boxes, labels=None, color=None):
         "Image shape: {}\n Boxes:\n{}".format(str(im.shape), str(boxes))
 
     im = im.copy()
-    COLOR = (218, 218, 218) if color is None else color
-    COLOR_DIFF_WEIGHT = np.asarray((3, 4, 2), dtype='int32')    # https://www.wikiwand.com/en/Color_difference
-    COLOR_CANDIDATES = PALETTE_RGB[:, ::-1]
+    if color is None:
+        color = (15, 128, 15)
     if im.ndim == 2 or (im.ndim == 3 and im.shape[2] == 1):
         im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
     for i in sorted_inds:
         box = boxes[i, :]
-
-        best_color = COLOR
         if labels is not None:
-            label = labels[i]
-
-            # find the best placement for the text
-            ((linew, lineh), _) = cv2.getTextSize(label, FONT, FONT_SCALE, 1)
-            bottom_left = [box[0] + 1, box[1] - 0.3 * lineh]
-            top_left = [box[0] + 1, box[1] - 1.3 * lineh]
-            if top_left[1] < 0:     # out of image
-                top_left[1] = box[3] - 1.3 * lineh
-                bottom_left[1] = box[3] - 0.3 * lineh
-            x1, y1 = int(top_left[0]), int(top_left[1])
-            x2, y2 = int(top_left[0] + linew), int(top_left[1] + lineh)
-            x1, x2 = [np.clip(x, 0, im.shape[1] - 1) for x in [x1, x2]]
-            y1, y2 = [np.clip(y, 0, im.shape[0] - 1) for y in [y1, y2]]
-            if color is None:
-                # find the best color
-                mean_color = im[y1:y2 + 1, x1:x2 + 1].mean(axis=(0, 1))
-                best_color_ind = (np.square(COLOR_CANDIDATES - mean_color) *
-                                  COLOR_DIFF_WEIGHT).sum(axis=1).argmax()
-                best_color = COLOR_CANDIDATES[best_color_ind].tolist()
-
-            cv2.putText(im, label, (x1, y2),
-                        FONT, FONT_SCALE, color=best_color, lineType=cv2.LINE_AA)
+            im = draw_text(im, (box[0], box[1]), labels[i], color=color)
         cv2.rectangle(im, (box[0], box[1]), (box[2], box[3]),
-                      color=best_color, thickness=1)
+                      color=color, thickness=1)
     return im
 
 

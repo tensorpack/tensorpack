@@ -76,16 +76,18 @@ def draw_final_outputs(img, results):
     areas = np_area(boxes)
     sorted_inds = np.argsort(-areas)
 
+    ret = img
     tags = []
-    for r in results:
-        tags.append(
-            "{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score))
-    ret = viz.draw_boxes(img, boxes, tags)
 
     for result_id in sorted_inds:
         r = results[result_id]
         if r.mask is not None:
             ret = draw_mask(ret, r.mask)
+
+    for r in results:
+        tags.append(
+            "{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score))
+    ret = viz.draw_boxes(ret, boxes, tags)
     return ret
 
 
