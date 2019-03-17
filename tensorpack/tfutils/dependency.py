@@ -1,6 +1,5 @@
 
 import tensorflow as tf
-from tensorflow.contrib.graph_editor import get_backward_walk_ops
 
 from ..utils.argtools import graph_memoized
 
@@ -33,6 +32,7 @@ def dependency_of_targets(targets, op):
         op = op.op
     assert isinstance(op, tf.Operation), op
 
+    from tensorflow.contrib.graph_editor import get_backward_walk_ops
     # alternative implementation can use graph_util.extract_sub_graph
     dependent_ops = get_backward_walk_ops(targets, control_inputs=True)
     return op in dependent_ops

@@ -21,8 +21,8 @@ class Model(ModelDesc):
         """
         Define all the inputs (with type, shape, name) that the graph will need.
         """
-        return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, IMAGE_SIZE, IMAGE_SIZE), tf.float32, 'input'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, image, label):
         """This function should build the model which takes the input variables
@@ -51,7 +51,7 @@ class Model(ModelDesc):
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss
 
-        correct = tf.cast(tf.nn.in_top_k(logits, label, 1), tf.float32, name='correct')
+        correct = tf.cast(tf.nn.in_top_k(predictions=logits, targets=label, k=1), tf.float32, name='correct')
         accuracy = tf.reduce_mean(correct, name='accuracy')
 
         # This will monitor training error & accuracy (in a moving average fashion). The value will be automatically

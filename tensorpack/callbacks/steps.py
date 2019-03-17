@@ -3,10 +3,10 @@
 
 """ Some common step callbacks. """
 
-import tensorflow as tf
 import tqdm
 from six.moves import zip
 
+from ..compat import tfv1 as tf
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
 from ..utils import logger
 from ..utils.naming import GLOBAL_STEP_INCR_OP_NAME

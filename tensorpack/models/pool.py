@@ -2,7 +2,7 @@
 # File: pool.py
 
 import numpy as np
-import tensorflow as tf
+from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..utils.argtools import get_data_format, shape2d
 from ..utils.develop import log_deprecated

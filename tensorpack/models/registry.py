@@ -8,6 +8,7 @@ from functools import wraps
 import six
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..tfutils.argscope import get_arg_scope
 from ..tfutils.model_utils import get_shape_str
 from ..utils import logger
@@ -117,7 +118,7 @@ def layer_register(
             #             del actual_args[k]
 
             if name is not None:        # use scope
-                with tf.variable_scope(name) as scope:
+                with tfv1.variable_scope(name) as scope:
                     # this name is only used to surpress logging, doesn't hurt to do some heuristics
                     scope_name = re.sub('tower[0-9]+/', '', scope.name)
                     do_log_shape = log_shape and scope_name not in _LAYER_LOGGED

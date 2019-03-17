@@ -4,8 +4,8 @@
 
 import numpy as np
 from collections import deque
-import tensorflow as tf
 
+from ..compat import tfv1 as tf
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY

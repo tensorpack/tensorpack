@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..utils.develop import deprecated
 
 __all__ = ['print_stat', 'rms']
@@ -30,7 +31,7 @@ def rms(x, name=None):
     """
     if name is None:
         name = x.op.name + '/rms'
-        with tf.name_scope(None):   # name already contains the scope
+        with tfv1.name_scope(None):   # name already contains the scope
             return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
     return tf.sqrt(tf.reduce_mean(tf.square(x)), name=name)
 

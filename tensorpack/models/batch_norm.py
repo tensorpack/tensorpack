@@ -4,7 +4,7 @@
 
 import re
 import six
-import tensorflow as tf
+from ..compat import tfv1 as tf  # this should be avoided first in model code
 from tensorflow.python.training import moving_averages
 
 from ..tfutils.collection import backup_collection, restore_collection

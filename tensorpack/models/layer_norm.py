@@ -2,7 +2,7 @@
 # File: layer_norm.py
 
 
-import tensorflow as tf
+from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..utils.argtools import get_data_format
 from .common import VariableHolder, layer_register

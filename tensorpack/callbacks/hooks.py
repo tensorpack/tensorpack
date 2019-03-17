@@ -6,7 +6,7 @@
 
 import tensorflow as tf
 
-from ..tfutils.common import tfv1
+from ..compat import tfv1
 from ..utils.develop import HIDE_DOC
 
 from .base import Callback

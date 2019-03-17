@@ -2,7 +2,7 @@
 # File: model_utils.py
 # Author: tensorpack contributors
 
-import tensorflow as tf
+from ..compat import tfv1 as tf
 from tabulate import tabulate
 from termcolor import colored
 

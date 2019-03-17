@@ -5,6 +5,7 @@
 import re
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
@@ -60,13 +61,13 @@ def regularize_cost(regex, func, name='regularize_cost'):
     # If vars are shared, regularize all of them
     # If vars are replicated, only regularize those in the current tower
     if ctx.has_own_variables:
-        params = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+        params = ctx.get_collection_in_tower(tfv1.GraphKeys.TRAINABLE_VARIABLES)
     else:
-        params = tf.trainable_variables()
+        params = tfv1.trainable_variables()
 
     names = []
 
-    with tf.name_scope(name + '_internals'):
+    with tfv1.name_scope(name + '_internals'):
         costs = []
         for p in params:
             para_name = p.op.name
@@ -119,9 +120,9 @@ def regularize_cost_from_collection(name='regularize_cost'):
     # NOTE: this collection doesn't always grow with towers.
     # It only grows with actual variable creation, but not get_variable call.
     if ctx.has_own_variables:   # be careful of the first tower (name='')
-        losses = ctx.get_collection_in_tower(tf.GraphKeys.REGULARIZATION_LOSSES)
+        losses = ctx.get_collection_in_tower(tfv1.GraphKeys.REGULARIZATION_LOSSES)
     else:
-        losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+        losses = tfv1.get_collection(tfv1.GraphKeys.REGULARIZATION_LOSSES)
     if len(losses) > 0:
         logger.info("regularize_cost_from_collection() found {} regularizers "
                     "in REGULARIZATION_LOSSES collection.".format(len(losses)))

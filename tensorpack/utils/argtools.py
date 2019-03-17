@@ -52,7 +52,7 @@ def graph_memoized(func):
     """
 
     # TODO it keeps the graph alive
-    import tensorflow as tf
+    from ..compat import tfv1
     GRAPH_ARG_NAME = '__IMPOSSIBLE_NAME_FOR_YOU__'
 
     @memoized
@@ -63,7 +63,7 @@ def graph_memoized(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         assert GRAPH_ARG_NAME not in kwargs, "No Way!!"
-        graph = tf.get_default_graph()
+        graph = tfv1.get_default_graph()
         kwargs[GRAPH_ARG_NAME] = graph
         return func_with_graph_arg(*args, **kwargs)
     return wrapper

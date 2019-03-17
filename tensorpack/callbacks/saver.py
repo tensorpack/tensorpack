@@ -4,8 +4,8 @@
 
 import os
 from datetime import datetime
-import tensorflow as tf
 
+from ..compat import tfv1 as tf
 from ..utils import logger
 from .base import Callback
 
@@ -40,8 +40,8 @@ class ModelSaver(Callback):
         if checkpoint_dir is None:
             checkpoint_dir = logger.get_logger_dir()
         if checkpoint_dir is not None:
-            if not tf.gfile.IsDirectory(checkpoint_dir):
-                tf.gfile.MakeDirs(checkpoint_dir)
+            if not tf.gfile.IsDirectory(checkpoint_dir):  # v2: tf.io.gfile.isdir
+                tf.gfile.MakeDirs(checkpoint_dir)  # v2: tf.io.gfile.makedirs
         self.checkpoint_dir = checkpoint_dir
 
     def _setup_graph(self):

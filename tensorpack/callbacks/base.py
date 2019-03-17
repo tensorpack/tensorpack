@@ -4,7 +4,7 @@
 
 from abc import ABCMeta
 import six
-import tensorflow as tf
+from ..compat import tfv1 as tf
 
 from ..tfutils.common import get_op_or_tensor_by_name
 

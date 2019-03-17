@@ -7,13 +7,12 @@ import tensorflow as tf
 
 from ..models.regularize import regularize_cost_from_collection
 from ..tfutils.tower import get_current_tower_context
-from ..tfutils.common import get_tf_version_tuple
 from ..utils import logger
 from ..utils.argtools import memoized_method
 from ..utils.develop import log_deprecated
+from ..compat import backport_tensor_spec, tfv1
 
-if get_tf_version_tuple() >= (1, 7):
-    from tensorflow.python.framework.tensor_spec import TensorSpec
+TensorSpec = backport_tensor_spec()
 
 
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
@@ -49,8 +48,8 @@ class InputDesc(
         Returns:
             tf.Tensor:
         """
-        with tf.name_scope(None):   # clear any name scope it might get called in
-            ret = tf.placeholder(
+        with tfv1.name_scope(None):   # clear any name scope it might get called in
+            ret = tfv1.placeholder(
                 self.type, shape=self.shape, name=self.name)
         self._register_cached_placeholder(ret)
         return ret
@@ -63,7 +62,7 @@ class InputDesc(
         Returns:
             tf.Tensor:
         """
-        g = tf.get_default_graph()
+        g = tfv1.get_default_graph()
         if g in self._cached_placeholder:
             return self._cached_placeholder[g]
         else:

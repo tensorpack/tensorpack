@@ -6,7 +6,7 @@ import traceback
 from contextlib import contextmanager
 from time import time as timer
 import six
-import tensorflow as tf
+from ..compat import tfv1 as tf
 
 from ..utils import logger
 from ..utils.utils import humanize_time_delta

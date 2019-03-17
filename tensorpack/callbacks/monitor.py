@@ -12,8 +12,8 @@ import time
 from collections import defaultdict
 from datetime import datetime
 import six
-import tensorflow as tf
 
+from ..compat import tfv1 as tf
 from ..libinfo import __git_version__
 from ..tfutils.summary import create_image_summary, create_scalar_summary
 from ..utils import logger

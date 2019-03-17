@@ -5,10 +5,10 @@
 import re
 from contextlib import contextmanager
 import six
-import tensorflow as tf
 from six.moves import range
 from tensorflow.python.training import moving_averages
 
+from ..compat import tfv1 as tf
 from ..utils import logger
 from ..utils.argtools import graph_memoized
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY

@@ -5,7 +5,8 @@
 from contextlib import contextmanager
 import tensorflow as tf
 
-from ..tfutils.common import get_tf_version_tuple, tfv1
+from ..tfutils.common import get_tf_version_tuple
+from ..compat import tfv1
 from ..utils.develop import HIDE_DOC
 from .gradproc import FilterNoneGrad, GradientProcessor
 

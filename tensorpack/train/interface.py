@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # File: interface.py
 
-import tensorflow as tf
-
+from ..compat import tfv1
 from ..input_source import DummyConstantInput, FeedfreeInput, FeedInput, InputSource, QueueInput, StagingInput
 from ..utils import logger
+from ..compat import is_tfv2
 from .config import TrainConfig
 from .tower import SingleCostTrainer
 from .trainers import SimpleTrainer
@@ -71,6 +71,9 @@ def launch_train_with_config(config, trainer):
         launch_train_with_config(
             config, SyncMultiGPUTrainerParameterServer(8, ps_device='gpu'))
     """
+    if is_tfv2():
+        tfv1.disable_eager_execution()
+
     assert isinstance(trainer, SingleCostTrainer), trainer
     assert isinstance(config, TrainConfig), config
     assert config.model is not None
@@ -99,7 +102,7 @@ def launch_train_with_config(config, trainer):
 
 
 def _check_unused_regularization():
-    coll = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    coll = tfv1.get_collection(tfv1.GraphKeys.REGULARIZATION_LOSSES)
     unconsumed_reg = []
     for c in coll:
         if len(c.consumers()) == 0:

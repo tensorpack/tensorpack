@@ -8,6 +8,7 @@ import six
 import tensorflow as tf
 from six.moves import range
 
+from ..compat import tfv1
 from ..callbacks import Callback, Callbacks, Monitors, MonitorBase
 from ..callbacks.steps import MaintainStepCounter
 from ..tfutils import get_global_step_value
@@ -222,7 +223,7 @@ class Trainer(object):
             session_creator (tf.train.SessionCreator):
             session_init (sessinit.SessionInit):
         """
-        assert isinstance(session_creator, tf.train.SessionCreator), session_creator
+        assert isinstance(session_creator, tfv1.train.SessionCreator), session_creator
         assert isinstance(session_init, SessionInit), session_init
         session_init._setup_graph()
 
@@ -250,7 +251,7 @@ class Trainer(object):
         which can be useful when the training is not done by a single `train_op`.
         """
         hooks = self._callbacks.get_hooks()
-        self.hooked_sess = tf.train.MonitoredSession(
+        self.hooked_sess = tfv1.train.MonitoredSession(
             session_creator=ReuseSessionCreator(self.sess), hooks=hooks)
 
     @call_only_once

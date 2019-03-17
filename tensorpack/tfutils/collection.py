@@ -5,7 +5,8 @@
 from contextlib import contextmanager
 from copy import copy
 import six
-import tensorflow as tf
+
+from ..compat import tfv1 as tf
 
 from ..utils import logger
 from ..utils.argtools import memoized

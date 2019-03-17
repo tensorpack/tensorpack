@@ -3,7 +3,7 @@
 
 
 import numpy as np
-import tensorflow as tf
+from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..tfutils.common import get_tf_version_tuple
 from .common import VariableHolder, layer_register

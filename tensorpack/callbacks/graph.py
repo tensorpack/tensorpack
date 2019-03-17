@@ -6,9 +6,9 @@
 
 import numpy as np
 import os
-import tensorflow as tf
 from six.moves import zip
 
+from ..compat import tfv1 as tf
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 from .base import Callback

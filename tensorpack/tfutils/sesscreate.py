@@ -2,10 +2,7 @@
 # File: sesscreate.py
 
 
-import tensorflow as tf
-from tensorflow.contrib.graph_editor import get_backward_walk_ops
-
-from ..tfutils.common import tfv1
+from ..compat import tfv1 as tf, is_tfv2
 from ..utils import logger
 from .common import get_default_sess_config
 
@@ -20,7 +17,7 @@ A SessionCreator should:
 """
 
 
-class NewSessionCreator(tfv1.train.SessionCreator):
+class NewSessionCreator(tf.train.SessionCreator):
     def __init__(self, target='', config=None):
         """
         Args:
@@ -59,12 +56,16 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
             return False
 
         def run(op):
-            deps = get_backward_walk_ops(op, control_inputs=True)
-            for dep_op in deps:
-                if blocking_op(dep_op):
-                    logger.warn(
-                        "Initializer '{}' depends on a blocking op '{}'. This initializer is likely to hang!".format(
-                            op.name, dep_op.name))
+            if not is_tfv2():
+                from tensorflow.contrib.graph_editor import get_backward_walk_ops
+
+                deps = get_backward_walk_ops(op, control_inputs=True)
+                for dep_op in deps:
+                    if blocking_op(dep_op):
+                        logger.warn(
+                            "Initializer '{}' depends on a blocking op '{}'. "
+                            "This initializer is likely to hang!".format(
+                                op.name, dep_op.name))
             sess.run(op)
 
         run(tf.global_variables_initializer())
@@ -73,7 +74,7 @@ bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
         return sess
 
 
-class ReuseSessionCreator(tfv1.train.SessionCreator):
+class ReuseSessionCreator(tf.train.SessionCreator):
     """
     Returns an existing session.
     """
@@ -88,7 +89,7 @@ class ReuseSessionCreator(tfv1.train.SessionCreator):
         return self.sess
 
 
-class SessionCreatorAdapter(tfv1.train.SessionCreator):
+class SessionCreatorAdapter(tf.train.SessionCreator):
     """
     Apply a function on the output of a SessionCreator. Can be used to create a debug session.
     """

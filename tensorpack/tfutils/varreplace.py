@@ -3,8 +3,8 @@
 # Credit: Qinyao He
 
 from contextlib import contextmanager
-import tensorflow as tf
 
+from ..compat import tfv1 as tf
 from .common import get_tf_version_tuple
 
 __all__ = ['custom_getter_scope', 'freeze_variables', 'remap_variables']

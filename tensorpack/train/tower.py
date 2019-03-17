@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import six
 import tensorflow as tf
 
+from ..compat import tfv1, is_tfv2
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
 from ..tfutils.gradproc import FilterNoneGrad
@@ -126,7 +127,7 @@ class TowerTrainer(Trainer):
             input.setup(self.inputs_desc)
 
             vs_name = self._vs_name_for_predictor(device_id)
-            with tf.variable_scope(tf.get_variable_scope(), reuse=True), \
+            with tfv1.variable_scope(tfv1.get_variable_scope(), reuse=True), \
                     tf.device(device), PredictTowerContext(
                         tower_name, vs_name=vs_name):
                 logger.info("Building graph for predict tower '{}' on device {} {}...".format(
@@ -254,15 +255,19 @@ class SingleCostTrainer(TowerTrainer):
                     return None     # this is the tower function, could be called for inference
 
                 if ctx.has_own_variables:
-                    varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+                    varlist = ctx.get_collection_in_tower(tfv1.GraphKeys.TRAINABLE_VARIABLES)
                 else:
-                    varlist = tf.trainable_variables()
+                    varlist = tfv1.trainable_variables()
                 opt = get_opt_fn()
-                grads = opt.compute_gradients(
-                    cost, var_list=varlist,
-                    gate_gradients=self.GATE_GRADIENTS,
-                    colocate_gradients_with_ops=self.COLOCATE_GRADIENTS_WITH_OPS,
-                    aggregation_method=self.AGGREGATION_METHOD)
+                if is_tfv2() and isinstance(opt, tf.optimizers.Optimizer):
+                    grads = opt.get_gradients(cost, varlist)
+                    grads = list(zip(grads, varlist))
+                else:
+                    grads = opt.compute_gradients(
+                        cost, var_list=varlist,
+                        gate_gradients=self.GATE_GRADIENTS,
+                        colocate_gradients_with_ops=self.COLOCATE_GRADIENTS_WITH_OPS,
+                        aggregation_method=self.AGGREGATION_METHOD)
                 grads = FilterNoneGrad().process(grads)
                 return grads
 

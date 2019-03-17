@@ -8,6 +8,7 @@ from itertools import chain
 import tensorflow as tf
 from six.moves import range, zip
 
+from ..compat import tfv1
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
 from ..dataflow import DataFlow, MapData, RepeatedData
@@ -84,7 +85,7 @@ class FeedInput(InputSource):
             dp = next(self._itr)
             assert len(dp) == len(self._placeholders), "[FeedInput] datapoints and inputs are of different length!"
             feed = _make_feeds(self._placeholders, dp)
-            return tf.train.SessionRunArgs(fetches=[], feed_dict=feed)
+            return tfv1.train.SessionRunArgs(fetches=[], feed_dict=feed)
 
         def _reset(self):
             self._itr = self._ds.__iter__()
@@ -228,9 +229,9 @@ class QueueInput(FeedfreeInput):
         """
         self.thread.pause()     # pause enqueue
 
-        opt = tf.RunOptions()
+        opt = tfv1.RunOptions()
         opt.timeout_in_ms = 2000   # 2s
-        sess = tf.get_default_session()
+        sess = tfv1.get_default_session()
         # dequeue until empty
         try:
             while True:
@@ -304,7 +305,7 @@ class BatchQueueInput(QueueInput):
         # prepare placeholders without the first dimension
         placehdrs_nobatch = []
         for p in self.input_placehdrs:
-            placehdrs_nobatch.append(tf.placeholder(
+            placehdrs_nobatch.append(tfv1.placeholder(
                 dtype=p.dtype, shape=p.get_shape().as_list()[1:],
                 name=get_op_tensor_name(p.name)[0] + '-nobatch'))
 
@@ -546,7 +547,7 @@ class StagingInput(FeedfreeInput):
             unstage_ops = self._input._get_unstage_ops()
             unstage_op = tf.group(*unstage_ops, name='unstage_all')
             self._check_dependency_op = unstage_ops[0]
-            self.fetches = tf.train.SessionRunArgs(
+            self.fetches = tfv1.train.SessionRunArgs(
                 fetches=[self.stage_op, unstage_op])
 
         def _prefill(self, sess):

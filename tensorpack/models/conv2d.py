@@ -2,7 +2,7 @@
 # File: conv2d.py
 
 
-import tensorflow as tf
+from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..tfutils.common import get_tf_version_tuple
 from ..utils.argtools import get_data_format, shape2d, shape4d, log_once

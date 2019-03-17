@@ -4,9 +4,10 @@
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import six
-import tensorflow as tf
+
 from six.moves import zip
 
+from ..compat import tfv1 as tf
 from ..utils import logger
 from ..utils.argtools import call_only_once
 from ..utils.develop import HIDE_DOC

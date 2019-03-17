@@ -5,15 +5,14 @@
 import itertools
 import sys
 from contextlib import contextmanager
-import tensorflow as tf
 import tqdm
 from six.moves import range
 from tensorflow.python.training.monitored_session import _HookedSession as HookedSession
 
+from ..compat import tfv1 as tf
 from ..dataflow.base import DataFlow
 from ..input_source import FeedInput, InputSource, QueueInput, StagingInput
 from ..tfutils.tower import PredictTowerContext
-from ..tfutils.common import tfv1
 from ..utils import logger
 from ..utils.utils import get_tqdm_kwargs
 from .base import Callback
@@ -28,7 +27,7 @@ def _device_from_int(dev):
     return '/gpu:{}'.format(dev) if dev >= 0 else '/cpu:0'
 
 
-class InferencerToHook(tfv1.train.SessionRunHook):
+class InferencerToHook(tf.train.SessionRunHook):
     def __init__(self, inf, fetches):
         self._inf = inf
         self._fetches = fetches
