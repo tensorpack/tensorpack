@@ -10,7 +10,7 @@ Both are necessary.
 
 `tf.train.NewCheckpointReader` is the offical tool to parse TensorFlow checkpoint.
 Read [TF docs](https://www.tensorflow.org/api_docs/python/tf/train/NewCheckpointReader) for details.
-Tensorpack also provides a small tool to load checkpoints, see 
+Tensorpack also provides a small tool to load checkpoints, see
 [load_chkpt_vars](../modules/tfutils.html#tensorpack.tfutils.varmanip.load_chkpt_vars)
 for details.
 
@@ -51,3 +51,26 @@ Therefore, transfer learning is trivial.
 If you want to load a pre-trained model, just use the same variable names.
 If you want to re-train some layer, just rename either the variables in the
 graph or the variables in your loader.
+
+
+## Resume Training
+
+"resume training" means "loading the last known checkpoint".
+Therefore you should refer to the [previous section](#load-a-model-to-a-session)
+on how to load a model.
+
+```eval_rst
+.. note:: **A checkpoint does not resume everything!**
+
+    The TensorFlow checkpoint only saves TensorFlow variables,
+    which means other Python states that are not TensorFlow variables will not be saved
+    and resumed. This often include:
+
+    1. Training epoch number. You can set it by providing a `starting_epoch` to
+       your resume job.
+    2. State in your callbacks. Certain callbacks maintain a state
+       (e.g., current best accuracy) in Python, which cannot be saved automatically.
+
+The [AutoResumeTrainConfig](../modules/train.html#tensorpack.train.AutoResumeTrainConfig)
+is an alternative of `TrainConfig` which applies some heuristics to
+automatically resume both checkpoint and the epoch number from your log directory.

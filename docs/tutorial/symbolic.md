@@ -7,14 +7,14 @@ However, tensorpack is model-agnostic, which means
 **you can skip this tutorial and do not need to use tensorpack's symbolic layers.**
 
 These layers were written only because there were no alternatives when tensorpack was first developed.
-Nowadays, these implementation actually call `tf.layers` directly.
+Nowadays, many of these implementation actually call `tf.layers` directly.
 __Tensorpack will not add any more layers__ into its core library because this is
 not the focus of tensorpack, and there are many other alternative symbolic
 libraries today.
 
 Today, you can just use `tf.layers` or any other symbolic libraries inside tensorpack.
 If you use the tensorpack implementations, you can also benefit from `argscope` and `LinearWrap` to
-simplify the code.
+simplify the code, and also fewer bugs than `tf.layers`.
 
 Note that to keep backward compatibility of code and pre-trained models, tensorpack layers
 have some small differences with `tf.layers`, including variable names and default options.
@@ -111,13 +111,13 @@ always creates new variable scope. See the [Keras example](../examples/keras) fo
 
 ```eval_rst
 .. note:: **It's best to not trust others' layers!**
-    
+
     For non-standard layers that's not included in TensorFlow or Tensorpack, it's best to implement them yourself.
     Non-standard layers often do not have a mathematical definition that people
-    all agree on, and different people can implement it differently. 
+    all agree on, and different people can implement it differently.
     Also, deep learning models on github often have bugs, especially when there is
     no reproduced experiments with the code.
-    
+
     For your own good, it's best to implement the layers yourself.
     This is also why Tensorpack does not contain non-standard layers.
 ```

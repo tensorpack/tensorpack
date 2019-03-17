@@ -54,7 +54,10 @@ def Conv2D(
             kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)
         else:
             kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
-    if split == 1:
+    dilation_rate = shape2d(dilation_rate)
+
+    if split == 1 and dilation_rate == [1, 1]:
+        # tf.layers.Conv2D has bugs with dilations (https://github.com/tensorflow/tensorflow/issues/26797)
         with rename_get_variable({'kernel': 'W', 'bias': 'b'}):
             layer = tf.layers.Conv2D(
                 filters,
@@ -92,7 +95,7 @@ def Conv2D(
 
         out_channel = filters
         assert out_channel % split == 0
-        assert dilation_rate == (1, 1) or get_tf_version_tuple() >= (1, 5), 'TF>=1.5 required for group dilated conv'
+        assert dilation_rate == [1, 1] or get_tf_version_tuple() >= (1, 5), 'TF>=1.5 required for dilated conv.'
 
         kernel_shape = shape2d(kernel_size)
         filter_shape = kernel_shape + [in_channel / split, out_channel]
