@@ -157,11 +157,11 @@ with TowerContext('', is_training=False):
 You can just use `tf.train.Saver` for all the work.
 Alternatively, use tensorpack's `get_model_loader(path).init(tf.get_default_session())`
 
-Now, you've already built a graph for inference, and the checkpoint is loaded. 
+Now, you've already built a graph for inference, and the checkpoint is also loaded. 
 You may now:
 
 1. use `sess.run` to do inference
-2. save the grpah to some formats for further processing
+2. save the graph to some formats for further processing
 3. apply graph transformation for efficient inference
 
 These steps are unrelated to tensorpack, and you'll need to learn TensorFlow and

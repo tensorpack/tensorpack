@@ -40,14 +40,15 @@ for easier options.
 ### Noisy TensorFlow Summaries
 
 Since TF summaries are evaluated infrequently (every epoch) by default,
-if the content is data-dependent, the values could have high variance.
+if the content is data-dependent (e.g., training loss), 
+the infrequently-sampled values could have high variance.
 To address this issue, you can:
 1. Change "When to Log": log more frequently, but note that certain summaries can be expensive to
   log. You may want to use a separate collection for frequent logging.
 2. Change "What to Log": you can call
   [tfutils.summary.add_moving_summary](../modules/tfutils.html#tensorpack.tfutils.summary.add_moving_summary)
   on scalar tensors, which will summarize the moving average of those scalars, instead of their instant values.
-  The moving averages are maintained by the
+  The moving averages are updated every step by the
   [MovingAverageSummary](../modules/callbacks.html#tensorpack.callbacks.MovingAverageSummary)
   callback (enabled by default).
 
@@ -56,7 +57,7 @@ To address this issue, you can:
 Besides TensorFlow summaries,
 a callback can also write other data to the monitor backend anytime once the training has started,
 by `self.trainer.monitors.put_xxx`.
-As long as the type of data is supported, the data will be dispatched to and logged to the same place.
+As long as the type of data is supported, the data will be dispatched to and logged to the same places.
 
 As a result, tensorboard will show not only summaries in the graph, but also your custom data.
 For example, a precise validation error often needs to be computed manually, outside the TensorFlow graph.

@@ -49,6 +49,6 @@ Note that the above methods only prevent variables being updated by SGD.
 Some variables may be updated by other means,
 e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](../modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.
 
-## My training is slow!
+## My training seems slow. Why?
 
 Checkout the [Performance Tuning tutorial](performance-tuning.html)

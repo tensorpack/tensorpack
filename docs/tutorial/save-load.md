@@ -55,7 +55,7 @@ graph or the variables in your loader.
 
 ## Resume Training
 
-"resume training" means "loading the last known checkpoint".
+"resume training" is mostly just "loading the last known checkpoint".
 Therefore you should refer to the [previous section](#load-a-model-to-a-session)
 on how to load a model.
 
@@ -63,14 +63,15 @@ on how to load a model.
 .. note:: **A checkpoint does not resume everything!**
 
     The TensorFlow checkpoint only saves TensorFlow variables,
-    which means other Python states that are not TensorFlow variables will not be saved
-    and resumed. This often include:
+    which means other Python state that are not TensorFlow variables will not be saved
+    and resumed. This means:
 
-    1. Training epoch number. You can set it by providing a `starting_epoch` to
-       your resume job.
-    2. State in your callbacks. Certain callbacks maintain a state
+    1. Training epoch number will not be resumed.
+       You can set it by providing a ``starting_epoch`` to your resume job.
+    2. State in your callbacks will not be resumed. Certain callbacks maintain a state
        (e.g., current best accuracy) in Python, which cannot be saved automatically.
+```
+
 
 The [AutoResumeTrainConfig](../modules/train.html#tensorpack.train.AutoResumeTrainConfig)
 is an alternative of `TrainConfig` which applies some heuristics to
-automatically resume both checkpoint and the epoch number from your log directory.

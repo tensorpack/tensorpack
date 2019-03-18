@@ -17,7 +17,8 @@ The Tensorpack API brings speed and flexibility together.
 Is TensorFlow Slow?
 ~~~~~~~~~~~~~~~~~~~~~
 
-No it's not, but it's not easy to write it in an efficient way.
+There is a common misconception,
+but no, it's not slow. But it's not easy to write it in an efficient way.
 
 When **speed** is a concern, users will have to worry a lot about things unrelated to the model.
 Code written with low-level APIs or other existing high-level wrappers is often suboptimal in speed.
@@ -28,7 +29,7 @@ The `official TensorFlow benchmark <https://github.com/tensorflow/benchmarks/tre
 
   These models are designed for performance. For models that have clean and easy-to-read implementations, see the TensorFlow Official Models.
 
-which seems to suggest that you cannot have performance and ease-of-use together.
+which seems to suggest that you cannot have **performance and ease-of-use together**.
 However you can have them both in tensorpack.
 Tensorpack uses TensorFlow efficiently, and hides performance details under its APIs.
 You no longer need to write
