@@ -487,10 +487,12 @@ if __name__ == '__main__':
             PeakMemoryTracker(),
             EstimatedTimeLeft(median=True),
             SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
-        ] + [
-            EvalCallback(dataset, *MODEL.get_inference_tensor_names(), args.logdir)
-            for dataset in cfg.DATA.VAL
         ]
+        if cfg.TRAIN.EVAL_PERIOD > 0:
+            callbacks.extend([
+                EvalCallback(dataset, *MODEL.get_inference_tensor_names(), args.logdir)
+                for dataset in cfg.DATA.VAL
+            ])
         if not is_horovod:
             callbacks.append(GPUUtilizationTracker())
 
