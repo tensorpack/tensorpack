@@ -26,8 +26,8 @@ class Model(ModelDesc):
         """
         Define all the inputs (with type, shape, name) that the graph will need.
         """
-        return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, IMAGE_SIZE, IMAGE_SIZE), tf.float32, 'input'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, image, label):
         """This function should build the model which takes the input variables

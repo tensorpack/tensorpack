@@ -41,8 +41,8 @@ BITG = 4
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, [None, 40, 40, 3], 'input'),
-                tf.placeholder(tf.int32, [None], 'label')]
+        return [tf.TensorSpec([None, 40, 40, 3], tf.float32, 'input'),
+                tf.TensorSpec([None], tf.int32, 'label')]
 
     def build_graph(self, image, label):
         is_training = get_current_tower_context().is_training

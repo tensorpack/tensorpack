@@ -34,12 +34,10 @@ class Model(ModelDesc):
         # When we use h history frames, the current state and the next state will have (h-1) overlapping frames.
         # Therefore we use a combined state for efficiency:
         # The first h are the current state, and the last h are the next state.
-        return [tf.placeholder(self.state_dtype,
-                               (None,) + self.state_shape + (self.history + 1, ),
-                               'comb_state'),
-                tf.placeholder(tf.int64, (None,), 'action'),
-                tf.placeholder(tf.float32, (None,), 'reward'),
-                tf.placeholder(tf.bool, (None,), 'isOver')]
+        return [tf.TensorSpec((None,) + self.state_shape + (self.history + 1, ), self.state_dtype, 'comb_state'),
+                tf.TensorSpec((None,), tf.int64, 'action'),
+                tf.TensorSpec((None,), tf.float32, 'reward'),
+                tf.TensorSpec((None,), tf.bool, 'isOver')]
 
     @abc.abstractmethod
     def _get_DQN_prediction(self, state):

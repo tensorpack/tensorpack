@@ -145,9 +145,9 @@ class FlowNetBase(ModelDesc):
         self.width = width
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (1, 3, self.height, self.width), 'left'),
-                tf.placeholder(tf.float32, (1, 3, self.height, self.width), 'right'),
-                tf.placeholder(tf.float32, (1, 2, self.height, self.width), 'gt_flow')]
+        return [tf.TensorSpec((1, 3, self.height, self.width), tf.float32, 'left'),
+                tf.TensorSpec((1, 3, self.height, self.width), tf.float32, 'right'),
+                tf.TensorSpec((1, 2, self.height, self.width), tf.float32, 'gt_flow')]
 
     def graph_structure(self, inputs):
         """

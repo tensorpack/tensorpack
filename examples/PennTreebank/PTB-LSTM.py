@@ -46,8 +46,8 @@ def get_PennTreeBank(data_dir=None):
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.int32, (None, SEQ_LEN), 'input'),
-                tf.placeholder(tf.int32, (None, SEQ_LEN), 'nextinput')]
+        return [tf.TensorSpec((None, SEQ_LEN), tf.int32, 'input'),
+                tf.TensorSpec((None, SEQ_LEN), tf.int32, 'nextinput')]
 
     def build_graph(self, input, nextinput):
         is_training = get_current_tower_context().is_training

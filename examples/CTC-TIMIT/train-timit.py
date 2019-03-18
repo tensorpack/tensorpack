@@ -26,11 +26,11 @@ FEATUREDIM = 39     # MFCC feature dimension
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, [None, None, FEATUREDIM], 'feat'),   # bxmaxseqx39
-                tf.placeholder(tf.int64, [None, None], 'labelidx'),  # label is b x maxlen, sparse
-                tf.placeholder(tf.int32, [None], 'labelvalue'),
-                tf.placeholder(tf.int64, [None], 'labelshape'),
-                tf.placeholder(tf.int32, [None], 'seqlen'),   # b
+        return [tf.TensorSpec([None, None, FEATUREDIM], tf.float32, 'feat'),   # bxmaxseqx39
+                tf.TensorSpec([None, None], tf.int64, 'labelidx'),  # label is b x maxlen, sparse
+                tf.TensorSpec([None], tf.int32, 'labelvalue'),
+                tf.TensorSpec([None], tf.int64, 'labelshape'),
+                tf.TensorSpec([None], tf.int32, 'seqlen'),   # b
                 ]
 
     def build_graph(self, feat, labelidx, labelvalue, labelshape, seqlen):

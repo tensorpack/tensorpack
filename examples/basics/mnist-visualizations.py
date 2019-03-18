@@ -66,8 +66,8 @@ def visualize_conv_activations(activation, name):
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, IMAGE_SIZE, IMAGE_SIZE), 'input'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, IMAGE_SIZE, IMAGE_SIZE), tf.float32, 'input'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, image, label):
         image = tf.expand_dims(image * 2 - 1, 3)

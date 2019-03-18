@@ -54,7 +54,7 @@ def saliency_map(output, input, name="saliency_map"):
 
 class Model(tp.ModelDescBase):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (IMAGE_SIZE, IMAGE_SIZE, 3), 'image')]
+        return [tf.TensorSpec((IMAGE_SIZE, IMAGE_SIZE, 3), tf.float32, 'image')]
 
     def build_graph(self, orig_image):
         mean = tf.get_variable('resnet_v1_50/mean_rgb', shape=[3])

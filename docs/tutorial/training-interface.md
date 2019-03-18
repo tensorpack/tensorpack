@@ -17,7 +17,7 @@ expects 4 arguments to setup the graph: `InputDesc`, `InputSource`, get_cost fun
 ```python
 class MyModel(ModelDesc):
   def inputs(self):
-    return [tf.placeholder(dtype, shape, name), tf.placeholder(dtype, shape, name), ... ]
+    return [tf.TensorSpec(shape, dtype, name), tf.TensorSpec(shape, dtype, name), ... ]
 
   def build_graph(self, tensorA, tensorB, ...):  # inputs
     # build the graph

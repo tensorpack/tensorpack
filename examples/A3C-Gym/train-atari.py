@@ -69,10 +69,10 @@ class MySimulatorWorker(SimulatorProcess):
 class Model(ModelDesc):
     def inputs(self):
         assert NUM_ACTIONS is not None
-        return [tf.placeholder(tf.uint8, (None,) + STATE_SHAPE + (FRAME_HISTORY, ), 'state'),
-                tf.placeholder(tf.int64, (None,), 'action'),
-                tf.placeholder(tf.float32, (None,), 'futurereward'),
-                tf.placeholder(tf.float32, (None,), 'action_prob'),
+        return [tf.TensorSpec((None,) + STATE_SHAPE + (FRAME_HISTORY, ), tf.uint8, 'state'),
+                tf.TensorSpec((None,), tf.int64, 'action'),
+                tf.TensorSpec((None,), tf.float32, 'futurereward'),
+                tf.TensorSpec((None,), tf.float32, 'action_prob'),
                 ]
 
     def _get_NN_prediction(self, state):

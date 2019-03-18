@@ -70,8 +70,8 @@ class CharRNNData(RNGDataFlow):
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.int32, (None, param.seq_len), 'input'),
-                tf.placeholder(tf.int32, (None, param.seq_len), 'nextinput')]
+        return [tf.TensorSpec((None, param.seq_len), tf.int32, 'input'),
+                tf.TensorSpec((None, param.seq_len), tf.int32, 'nextinput')]
 
     def build_graph(self, input, nextinput):
         cell = rnn.MultiRNNCell([rnn.LSTMBlockCell(num_units=param.rnn_size)

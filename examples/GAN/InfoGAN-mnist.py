@@ -106,7 +106,7 @@ def sample_prior(batch_size):
 
 class Model(GANModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, 28, 28), 'input')]
+        return [tf.TensorSpec((None, 28, 28), tf.float32, 'input')]
 
     def generator(self, z):
         l = FullyConnected('fc0', z, 1024, activation=BNReLU)

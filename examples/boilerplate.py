@@ -19,8 +19,8 @@ CHANNELS = 3
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, CHANNELS), 'input1'),
-                tf.placeholder(tf.int32, (None,), 'input2')]
+        return [tf.TensorSpec((None, SHAPE, SHAPE, CHANNELS), tf.float32, 'input1'),
+                tf.TensorSpec((None,), tf.int32, 'input2')]
 
     def build_graph(self, input1, input2):
 

@@ -41,8 +41,8 @@ def batch_flatten(x):
 
 class Model(GANModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, 28, 28), tf.float32, 'input'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def generator(self, z, y):
         l = FullyConnected('fc0', tf.concat([z, y], 1), 1024, activation=BNReLU)

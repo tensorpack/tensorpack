@@ -28,7 +28,7 @@ GAMMA = 0.5
 
 class Model(GANModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, args.final_size, args.final_size, 3), 'input')]
+        return [tf.TensorSpec((None, args.final_size, args.final_size, 3), tf.float32, 'input')]
 
     @auto_reuse_variable_scope
     def decoder(self, z):

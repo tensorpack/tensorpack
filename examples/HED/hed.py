@@ -103,8 +103,8 @@ def CaffeBilinearUpSample(x, shape):
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, [None, None, None, 3], 'image'),
-                tf.placeholder(tf.int32, [None, None, None], 'edgemap')]
+        return [tf.TensorSpec([None, None, None, 3], tf.float32, 'image'),
+                tf.TensorSpec([None, None, None], tf.int32, 'edgemap')]
 
     def build_graph(self, image, edgemap):
         image = image - tf.constant([104, 116, 122], dtype='float32')

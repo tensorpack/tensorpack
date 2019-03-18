@@ -98,14 +98,14 @@ class DetectionModel(ModelDesc):
 class ResNetC4Model(DetectionModel):
     def inputs(self):
         ret = [
-            tf.placeholder(tf.float32, (None, None, 3), 'image'),
-            tf.placeholder(tf.int32, (None, None, cfg.RPN.NUM_ANCHOR), 'anchor_labels'),
-            tf.placeholder(tf.float32, (None, None, cfg.RPN.NUM_ANCHOR, 4), 'anchor_boxes'),
-            tf.placeholder(tf.float32, (None, 4), 'gt_boxes'),
-            tf.placeholder(tf.int64, (None,), 'gt_labels')]  # all > 0
+            tf.TensorSpec((None, None, 3), tf.float32, 'image'),
+            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR), tf.int32, 'anchor_labels'),
+            tf.TensorSpec((None, None, cfg.RPN.NUM_ANCHOR, 4), tf.float32, 'anchor_boxes'),
+            tf.TensorSpec((None, 4), tf.float32, 'gt_boxes'),
+            tf.TensorSpec((None,), tf.int64, 'gt_labels')]  # all > 0
         if cfg.MODE_MASK:
             ret.append(
-                tf.placeholder(tf.uint8, (None, None, None), 'gt_masks')
+                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks')
             )   # NR_GT x height x width
         return ret
 
@@ -199,20 +199,20 @@ class ResNetFPNModel(DetectionModel):
 
     def inputs(self):
         ret = [
-            tf.placeholder(tf.float32, (None, None, 3), 'image')]
+            tf.TensorSpec((None, None, 3), tf.float32, 'image')]
         num_anchors = len(cfg.RPN.ANCHOR_RATIOS)
         for k in range(len(cfg.FPN.ANCHOR_STRIDES)):
             ret.extend([
-                tf.placeholder(tf.int32, (None, None, num_anchors),
-                               'anchor_labels_lvl{}'.format(k + 2)),
-                tf.placeholder(tf.float32, (None, None, num_anchors, 4),
-                               'anchor_boxes_lvl{}'.format(k + 2))])
+                tf.TensorSpec((None, None, num_anchors), tf.int32,
+                              'anchor_labels_lvl{}'.format(k + 2)),
+                tf.TensorSpec((None, None, num_anchors, 4), tf.float32,
+                              'anchor_boxes_lvl{}'.format(k + 2))])
         ret.extend([
-            tf.placeholder(tf.float32, (None, 4), 'gt_boxes'),
-            tf.placeholder(tf.int64, (None,), 'gt_labels')])  # all > 0
+            tf.TensorSpec((None, 4), tf.float32, 'gt_boxes'),
+            tf.TensorSpec((None,), tf.int64, 'gt_labels')])  # all > 0
         if cfg.MODE_MASK:
             ret.append(
-                tf.placeholder(tf.uint8, (None, None, None), 'gt_masks')
+                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks')
             )   # NR_GT x height x width
         return ret
 

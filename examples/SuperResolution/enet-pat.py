@@ -50,8 +50,8 @@ class Model(GANModelDesc):
         self.width = width
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, self.height * 1, self.width * 1, CHANNELS), 'Ilr'),
-                tf.placeholder(tf.float32, (None, self.height * 4, self.width * 4, CHANNELS), 'Ihr')]
+        return [tf.TensorSpec((None, self.height * 1, self.width * 1, CHANNELS), tf.float32, 'Ilr'),
+                tf.TensorSpec((None, self.height * 4, self.width * 4, CHANNELS), tf.float32, 'Ihr')]
 
     def build_graph(self, Ilr, Ihr):
         Ilr, Ihr = Ilr / 255.0, Ihr / 255.0

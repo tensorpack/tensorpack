@@ -41,7 +41,7 @@ class Model(GANModelDesc):
         self.zdim = z_dim
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, self.shape, self.shape, 3), 'input')]
+        return [tf.TensorSpec((None, self.shape, self.shape, 3), tf.float32, 'input')]
 
     def generator(self, z):
         """ return an image generated from z"""

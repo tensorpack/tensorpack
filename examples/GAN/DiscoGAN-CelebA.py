@@ -35,8 +35,8 @@ def BNLReLU(x, name=None):
 
 class Model(GANModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
-                tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
+        return [tf.TensorSpec((None, SHAPE, SHAPE, 3), tf.float32, 'inputA'),
+                tf.TensorSpec((None, SHAPE, SHAPE, 3), tf.float32, 'inputB')]
 
     @auto_reuse_variable_scope
     def generator(self, img):

@@ -44,8 +44,8 @@ class Model(ModelDesc):
     """
 
     def inputs(self):
-        return [tf.placeholder(tf.uint8, (None, SHAPE, SHAPE, CHANNELS), 'input_img'),
-                tf.placeholder(tf.uint8, (None, SHAPE, SHAPE, CHANNELS), 'target_img')]
+        return [tf.TensorSpec((None, SHAPE, SHAPE, CHANNELS), tf.uint8, 'input_img'),
+                tf.TensorSpec((None, SHAPE, SHAPE, CHANNELS), tf.uint8, 'target_img')]
 
     def make_prediction(self, img):
 
@@ -86,7 +86,7 @@ class InferenceOnlyModel(Model):
 
     def inputs(self):
         # The inference graph only accepts a single image, which is different to the training model.
-        return [tf.placeholder(tf.string, (None,), 'input_img_bytes')]
+        return [tf.TensorSpec((None,), tf.string, 'input_img_bytes')]
 
     def build_graph(self, input_img_bytes):
         # prepare input (png encoded strings to images)

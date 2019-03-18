@@ -40,8 +40,8 @@ def preactivation_block(input, num_filters, stride=1):
 
 class ResNet_Cifar(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, [None, 32, 32, 3], 'input'),
-                tf.placeholder(tf.float32, [None, CLASS_NUM], 'label')]
+        return [tf.TensorSpec([None, 32, 32, 3], tf.float32, 'input'),
+                tf.TensorSpec([None, CLASS_NUM], tf.float32, 'label')]
 
     def build_graph(self, image, label):
         assert tf.test.is_gpu_available()

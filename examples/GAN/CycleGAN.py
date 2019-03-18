@@ -42,8 +42,8 @@ def INLReLU(x, name=None):
 
 class Model(GANModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputA'),
-                tf.placeholder(tf.float32, (None, SHAPE, SHAPE, 3), 'inputB')]
+        return [tf.TensorSpec((None, SHAPE, SHAPE, 3), tf.float32, 'inputA'),
+                tf.TensorSpec((None, SHAPE, SHAPE, 3), tf.float32, 'inputB')]
 
     @staticmethod
     def build_res_block(x, name, chan, first=False):

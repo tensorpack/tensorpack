@@ -236,9 +236,9 @@ class SiameseModel(EmbeddingModel):
         return ds
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
-                tf.placeholder(tf.float32, (None, 28, 28), 'input_y'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, 28, 28), tf.float32, 'input'),
+                tf.TensorSpec((None, 28, 28), tf.float32, 'input_y'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, x, y, label):
         # embed them
@@ -280,9 +280,9 @@ class TripletModel(EmbeddingModel):
         return ds
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
-                tf.placeholder(tf.float32, (None, 28, 28), 'input_p'),
-                tf.placeholder(tf.float32, (None, 28, 28), 'input_n')]
+        return [tf.TensorSpec((None, 28, 28), tf.float32, 'input'),
+                tf.TensorSpec((None, 28, 28), tf.float32, 'input_p'),
+                tf.TensorSpec((None, 28, 28), tf.float32, 'input_n')]
 
     def loss(self, a, p, n):
         return triplet_loss(a, p, n, 5., extra=True, scope="loss")
@@ -314,8 +314,8 @@ class CenterModel(EmbeddingModel):
         return ds
 
     def inputs(self):
-        return [tf.placeholder(tf.float32, (None, 28, 28), 'input'),
-                tf.placeholder(tf.int32, (None,), 'label')]
+        return [tf.TensorSpec((None, 28, 28), tf.float32, 'input'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, x, label):
         # embed them

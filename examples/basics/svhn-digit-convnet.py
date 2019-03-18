@@ -22,8 +22,8 @@ Each epoch iterates over the whole training set (4721 iterations), and takes abo
 
 class Model(ModelDesc):
     def inputs(self):
-        return [tf.placeholder(tf.float32, [None, 40, 40, 3], 'input'),
-                tf.placeholder(tf.int32, [None], 'label')]
+        return [tf.TensorSpec([None, 40, 40, 3], tf.float32, 'input'),
+                tf.TensorSpec([None], tf.int32, 'label')]
 
     def build_graph(self, image, label):
         image = image / 128.0 - 1

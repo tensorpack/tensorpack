@@ -324,8 +324,8 @@ class ImageNetModel(ModelDesc):
     label_smoothing = 0.
 
     def inputs(self):
-        return [tf.placeholder(self.image_dtype, [None, self.image_shape, self.image_shape, 3], 'input'),
-                tf.placeholder(tf.int32, [None], 'label')]
+        return [tf.TensorSpec([None, self.image_shape, self.image_shape, 3], self.image_dtype, 'input'),
+                tf.TensorSpec([None], tf.int32, 'label')]
 
     def build_graph(self, image, label):
         image = self.image_preprocess(image)
