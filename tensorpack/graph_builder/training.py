@@ -10,6 +10,7 @@ import six
 import tensorflow as tf
 from six.moves import range, zip
 
+from ..compat import tfv1
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.gradproc import ScaleGradient
 from ..tfutils.tower import TrainTowerContext
@@ -101,7 +102,7 @@ class DataParallelBuilder(GraphBuilder):
             device = devices[idx] if devices is not None else '/gpu:{}'.format(t)
             usevs = use_vs[idx] if use_vs is not None else False
             reuse = not usevs and idx > 0
-            with tf.device(device), _maybe_reuse_vs(reuse), TrainTowerContext(
+            with tfv1.device(device), _maybe_reuse_vs(reuse), TrainTowerContext(
                     tower_names[idx],
                     vs_name=tower_names[idx] if usevs else '',
                     index=idx, total=len(towers)):

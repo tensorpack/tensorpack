@@ -6,7 +6,9 @@ from collections import defaultdict
 from contextlib import contextmanager
 from functools import wraps
 from inspect import getmembers, isfunction
+import tensorflow as tf
 
+from ..compat import is_tfv2
 from ..utils import logger
 from .tower import get_current_tower_context
 
@@ -138,6 +140,8 @@ def enable_argscope_for_module(module, log_shape=True):
     Args:
         log_shape (bool): print input/output shapes of each function.
     """
+    if is_tfv2() and module == tf.layers:
+        module = tf.compat.v1.layers
     for name, obj in getmembers(module):
         if isfunction(obj):
             setattr(module, name, enable_argscope_for_function(obj,

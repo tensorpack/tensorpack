@@ -8,6 +8,7 @@ import six
 import tensorflow as tf
 from six.moves import queue, range
 
+from ..compat import tfv1
 from ..tfutils.model_utils import describe_trainable_vars
 from ..utils import logger
 from ..utils.concurrency import DIE, ShareSessionThread, StoppableThread
@@ -162,7 +163,7 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
 
     def start(self):
         if self._need_default_sess:
-            assert tf.get_default_session() is not None, \
+            assert tfv1.get_default_session() is not None, \
                 "Not session is bind to predictors, " \
                 "MultiThreadAsyncPredictor.start() has to be called under a default session!"
         for t in self.threads:

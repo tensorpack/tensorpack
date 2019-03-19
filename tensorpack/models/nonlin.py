@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 
+from ..compat import tfv1
 from .batch_norm import BatchNorm
 from .common import VariableHolder, layer_register
 
@@ -50,8 +51,8 @@ def PReLU(x, init=0.001, name='output'):
 
     * ``alpha``: learnable slope.
     """
-    init = tf.constant_initializer(init)
-    alpha = tf.get_variable('alpha', [], initializer=init)
+    init = tfv1.constant_initializer(init)
+    alpha = tfv1.get_variable('alpha', [], initializer=init)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
     ret = tf.multiply(x, 0.5, name=name)
 

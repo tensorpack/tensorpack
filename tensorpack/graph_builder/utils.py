@@ -6,6 +6,7 @@ import operator
 from contextlib import contextmanager
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.scope_utils import cached_name_scope, under_name_scope
 from ..tfutils.varreplace import custom_getter_scope
@@ -82,7 +83,7 @@ class LeastLoadedDeviceSetter(object):
         # from tensorflow.python.training.device_util import canonicalize
         # from tensorflow.python.distribute.device_util import canonicalize
         def canonicalize(name):    # tensorflow/tensorflow#11484
-            return tf.DeviceSpec.from_string(name).to_string()
+            return tfv1.DeviceSpec.from_string(name).to_string()
 
         if op.device:
             return op.device

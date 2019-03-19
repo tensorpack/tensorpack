@@ -25,7 +25,8 @@ if get_tf_version_tuple() <= (1, 12):
     l2_regularizer = tf.contrib.layers.l2_regularizer
     l1_regularizer = tf.contrib.layers.l1_regularizer
 else:
-    l2_regularizer = tf.keras.regularizers.l2
+    # oh these little dirty details
+    l2_regularizer = lambda x: tf.keras.regularizers.l2(x * 0.5)  # noqa
     l1_regularizer = tf.keras.regularizers.l1
 
 

@@ -13,7 +13,7 @@ import tqdm
 from tensorpack import ModelDesc
 from tensorpack.dataflow import AugmentImageComponent, BatchData, MultiThreadMapData, PrefetchDataZMQ, dataset, imgaug
 from tensorpack.input_source import QueueInput, StagingInput
-from tensorpack.models import regularize_cost
+from tensorpack.models import regularize_cost, l2_regularizer
 from tensorpack.predict import FeedfreePredictor, PredictConfig
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils import logger
@@ -339,7 +339,7 @@ class ImageNetModel(ModelDesc):
 
         if self.weight_decay > 0:
             wd_loss = regularize_cost(self.weight_decay_pattern,
-                                      tf.contrib.layers.l2_regularizer(self.weight_decay),
+                                      l2_regularizer(self.weight_decay),
                                       name='l2_regularize_loss')
             add_moving_summary(loss, wd_loss)
             total_cost = tf.add_n([loss, wd_loss], name='cost')

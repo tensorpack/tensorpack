@@ -7,6 +7,7 @@ import pprint
 import six
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..utils import logger
 from .common import get_op_tensor_name
 
@@ -84,7 +85,7 @@ class SessionUpdate(object):
             return None
 
         if hasattr(value, 'dtype'):
-            vartype = var.value().dtype
+            vartype = var.dtype
             if vartype != value.dtype:
                 msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, vartype, value.dtype)
                 newtype = upcast(var.dtype.base_dtype, value.dtype)
@@ -172,7 +173,7 @@ def get_checkpoint_path(model_path):
     if os.path.basename(model_path) == model_path:
         model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
     if os.path.basename(model_path) == 'checkpoint':
-        assert tf.gfile.Exists(model_path), model_path
+        assert tfv1.gfile.Exists(model_path), model_path
         model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
         # to be consistent with either v1 or v2
 
@@ -186,7 +187,7 @@ def get_checkpoint_path(model_path):
         logger.info(
             "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
         model_path = new_path
-    assert tf.gfile.Exists(model_path) or tf.gfile.Exists(model_path + '.index'), model_path
+    assert tfv1.gfile.Exists(model_path) or tfv1.gfile.Exists(model_path + '.index'), model_path
     return model_path
 
 
@@ -200,7 +201,7 @@ def load_chkpt_vars(model_path):
         dict: a name:value dict
     """
     model_path = get_checkpoint_path(model_path)
-    reader = tf.train.NewCheckpointReader(model_path)
+    reader = tfv1.train.NewCheckpointReader(model_path)
     var_names = reader.get_variable_to_shape_map().keys()
     result = {}
     for n in var_names:

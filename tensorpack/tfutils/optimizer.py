@@ -20,7 +20,7 @@ class ProxyOptimizer(tfv1.train.Optimizer):
     A transparent proxy which delegates all methods of :class:`tf.train.Optimizer`
     """
     def __init__(self, opt, name='ProxyOptimizer'):
-        assert isinstance(opt, tf.train.Optimizer), opt
+        assert isinstance(opt, tfv1.train.Optimizer), opt
         super(ProxyOptimizer, self).__init__(False, name)
         self._opt = opt
 

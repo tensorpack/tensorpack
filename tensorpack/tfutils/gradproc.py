@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import six
 import tensorflow as tf
 
+from ..compat import tfv1
 from ..utils import logger
 from .summary import add_moving_summary
 from .symbolic_functions import print_stat, rms
@@ -40,11 +41,11 @@ class GradientProcessor(object):
 
         # reuse the old name_scope, if process() is called multiple times
         if self._name_scope is None:
-            with tf.name_scope(type(self).__name__) as scope:
+            with tfv1.name_scope(type(self).__name__) as scope:
                 self._name_scope = scope
                 return self._process(grads)
         else:
-            with tf.name_scope(self._name_scope):
+            with tfv1.name_scope(self._name_scope):
                 return self._process(grads)
 
     @abstractmethod
@@ -175,7 +176,7 @@ class SummaryGradient(MapGradient):
             return grad
         if name not in SummaryGradient._summaried_gradient:
             SummaryGradient._summaried_gradient.add(name)
-            tf.summary.histogram(name + '-grad', grad, collections=self._coll)
+            tfv1.summary.histogram(name + '-grad', grad, collections=self._coll)
             add_moving_summary(rms(grad, name=name + '/rms'))
         return grad
 

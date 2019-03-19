@@ -3,7 +3,7 @@
 
 
 import six
-import tensorflow as tf
+from ..compat import tfv1 as tf
 
 from ..graph_builder import ModelDescBase
 from ..tfutils import get_default_sess_config

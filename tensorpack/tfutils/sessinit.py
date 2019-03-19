@@ -4,8 +4,8 @@
 import os
 import numpy as np
 import six
-import tensorflow as tf
 
+from ..compat import tfv1 as tf
 from ..utils import logger
 from .common import get_op_tensor_name
 from .varmanip import SessionUpdate, get_checkpoint_path, get_savename_from_varname, is_training_name
