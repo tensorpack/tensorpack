@@ -88,7 +88,7 @@ def launch_train_with_config(config, trainer):
     # TowerFuncWrapper is a better abstraction (similar to tf.defun in the future)
     trainer.setup_graph(
         model.get_input_signature(), input,
-        model._build_graph_get_cost, model.get_optimizer)
+        model.build_graph, model.get_optimizer)
     _check_unused_regularization()
     trainer.train_with_defaults(
         callbacks=config.callbacks,

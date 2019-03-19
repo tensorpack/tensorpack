@@ -5,11 +5,8 @@
 from collections import namedtuple
 import tensorflow as tf
 
-from ..models.regularize import regularize_cost_from_collection
-from ..tfutils.tower import get_current_tower_context
-from ..utils import logger
 from ..utils.argtools import memoized_method
-from ..utils.develop import log_deprecated
+from ..utils.develop import deprecated
 from ..compat import backport_tensor_spec, tfv1
 
 TensorSpec = backport_tensor_spec()
@@ -88,6 +85,8 @@ class ModelDescBase(object):
             inputs = self.inputs()
             if isinstance(inputs[0], tf.Tensor):
                 for p in inputs:
+                    assert "Placeholder" in p.op.type, \
+                        "inputs() have to return TensorSpec or placeholders! Found {} instead.".format(p)
                     assert p.graph == G, "Placeholders returned by inputs() should be created inside inputs()!"
             return [TensorSpec(shape=p.shape, dtype=p.dtype, name=p.name) for p in inputs]
 
@@ -98,9 +97,6 @@ class ModelDescBase(object):
             [str]: the names of all the inputs.
         """
         return [k.name for k in self.get_input_signature()]
-
-    def _get_inputs(self):
-        raise NotImplementedError()
 
     def inputs(self):
         """
@@ -133,21 +129,7 @@ class ModelDescBase(object):
             may require it to return necessary information to build the trainer.
             For example, `SingleCostTrainer` expect this method to return the cost tensor.
         """
-        assert len(args) == len(self.get_input_signature()), \
-            "Number of inputs passed to the graph != number of inputs defined " \
-            "in ModelDesc! ({} != {})".format(len(args), len(self.get_input_signature()))
-        log_deprecated(
-            "ModelDescBase._build_graph() interface",
-            "Use build_graph() instead!",
-            "2019-03-30")
-        return self._build_graph(args)
-
-    def _build_graph(self, inputs):
-        """
-        This is an alternative interface which takes a list of tensors, instead of positional arguments.
-        By default :meth:`build_graph` will call this method.
-        """
-        pass
+        raise NotImplementedError()
 
 
 class ModelDesc(ModelDescBase):
@@ -163,31 +145,6 @@ class ModelDesc(ModelDescBase):
 
     """
 
-    def get_cost(self):
-        """
-        Being deprecated.
-        You're recommended to return a cost tensor in :meth:`build_graph` method directly.
-
-        This function takes the `self.cost` tensor defined by :meth:`build_graph`,
-        and applies the collection
-        ``tf.GraphKeys.REGULARIZATION_LOSSES`` to the cost automatically.
-        """
-        log_deprecated(
-            "get_cost() and self.cost",
-            "Return the cost tensor directly in build_graph() instead!",
-            "2019-03-30")
-        cost = self._get_cost()
-        reg_cost = regularize_cost_from_collection()
-        if reg_cost.op.type != 'Const':
-            logger.warn("Regularization losses found in collection, and a 'cost' tensor was "
-                        "not returned by `build_graph`. Therefore applying regularization automatically!")
-            return tf.add(cost, reg_cost, name='cost_with_regularizer')
-        else:
-            return cost
-
-    def _get_cost(self, *args):
-        return self.cost
-
     @memoized_method
     def get_optimizer(self):
         """
@@ -199,19 +156,7 @@ class ModelDesc(ModelDescBase):
         Returns:
             a :class:`tf.train.Optimizer` instance.
         """
-        try:
-            ret = self._get_optimizer()
-            log_deprecated(
-                "ModelDescBase._get_optimizer() interface",
-                "Use optimizer() instead!",
-                "2019-03-30")
-            return ret
-        except NotImplementedError:
-            pass
         return self.optimizer()
-
-    def _get_optimizer(self):
-        raise NotImplementedError()
 
     def optimizer(self):
         """
@@ -220,15 +165,6 @@ class ModelDesc(ModelDescBase):
         """
         raise NotImplementedError()
 
+    @deprecated("Just use `build_graph` instead!")
     def _build_graph_get_cost(self, *inputs):
-        """
-        Equivalent to `build_graph`.
-        Used internally by trainers to get the final cost for optimization in a backward-compatible way.
-        """
-        ret = self.build_graph(*inputs)
-        if not get_current_tower_context().is_training:
-            return None     # this is the tower function, could be called for inference
-        if ret is not None:
-            return ret
-        else:   # the old way, for compatibility
-            return self.get_cost()
+        return self.build_graph(*inputs)

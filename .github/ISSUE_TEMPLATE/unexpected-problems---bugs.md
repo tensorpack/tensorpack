@@ -45,11 +45,12 @@ http://tensorpack.readthedocs.io/tutorial/performance-tuning.html
 before posting.
 
 If you expect certain accuracy, only in one of the two conditions can we help with it:
-(1) You're unable to match the accuracy documented in tensorpack examples.
+(1) You're unable to reproduce the accuracy documented in tensorpack examples.
 (2) It appears to be a tensorpack bug.
 
-Otherwise, how to train a model to certain accuracy is a machine learning question and is
-not our responsibility to figure out.
+Otherwise, how to train a model to certain accuracy is a machine learning question.
+We do not answer machine learning questions and it is your responsibility to 
+figure out how to make your models more accurate.
 
 ### 4. Your environment:
   + Python version:
