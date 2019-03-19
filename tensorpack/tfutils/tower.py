@@ -257,24 +257,27 @@ class TowerFuncWrapper(object):
     Conceptually, this class is roughly equivalent to `tf.function` with input signature, introduced in TF 2.0.
     """
 
-    def __init__(self, tower_fn, inputs_desc):
+    def __init__(self, tower_fn, input_signature):
         """
         Args:
             tower_func: a function which builds one tower in the graph.
                 It takes several input tensors and could return anything.
-            inputs_desc ([InputDesc]): list of :class:`InputDesc`.
+            input_signature ([TensorSpec]): list of :class:`tf.TensorSpec`.
                 They are used to figure out the names for the input tensors.
         """
         assert callable(tower_fn), tower_fn
-        self._inputs_desc_names = [k.name for k in inputs_desc]
-        assert len(set(self._inputs_desc_names)) == len(self._inputs_desc_names), \
-            "Duplicated names in inputs_desc! " + str(self._inputs_desc_names)
+        self._inputs_names = [k.name for k in input_signature]
+        assert len(set(self._inputs_names)) == len(self._inputs_names), \
+            "Duplicated names in input_signature! " + str(self._inputs_names)
+        for name in self._inputs_names:
+            if any(k in name for k in [':', '/', ' ']):
+                raise ValueError("Invalid input name: '{}'".format(name))
         self._tower_fn = tower_fn
-        self._inputs_desc = inputs_desc
+        self._input_signature = input_signature
 
         self._handles = []
 
-    def __new__(cls, tower_fn, inputs_desc):
+    def __new__(cls, tower_fn, _):
         # to avoid double-wrapping a function
         if isinstance(tower_fn, TowerFuncWrapper):
             return tower_fn
@@ -285,7 +288,7 @@ class TowerFuncWrapper(object):
         ctx = get_current_tower_context()
         assert ctx is not None, "Function must be called under TowerContext!"
         output = self._tower_fn(*args)
-        handle = TowerTensorHandle(ctx, args, output, self._inputs_desc)
+        handle = TowerTensorHandle(ctx, args, output, self._input_signature)
         self._handles.append(handle)
         return output
 
@@ -299,8 +302,13 @@ class TowerFuncWrapper(object):
         return TowerTensorHandles(self._handles)
 
     @property
+    def input_signature(self):
+        return self._input_signature
+
+    @property
     def inputs_desc(self):
-        return self._inputs_desc
+        # TODO mark deprecated
+        return self._input_signature
 
 
 class TowerTensorHandles(object):
@@ -354,14 +362,14 @@ class TowerTensorHandle(object):
     """
 
     @HIDE_DOC
-    def __init__(self, ctx, input, output, inputs_desc=None):
+    def __init__(self, ctx, input, output, input_signature=None):
         self._ctx = ctx
 
         self._extra_tensor_names = {}
-        if inputs_desc is not None:
-            assert len(inputs_desc) == len(input)
+        if input_signature is not None:
+            assert len(input_signature) == len(input)
             self._extra_tensor_names = {
-                get_op_tensor_name(x.name)[1]: y for x, y in zip(inputs_desc, input)}
+                get_op_tensor_name(x.name)[1]: y for x, y in zip(input_signature, input)}
         self._input = input
         self._output = output
 
@@ -379,7 +387,7 @@ class TowerTensorHandle(object):
 
         1. The name of the tensor without any tower prefix.
 
-        2. The name of an :class:`InputDesc`, if it is used when building the tower.
+        2. A name in the input signature, if it is used when building the tower.
 
         In the second case, this method will return the tensor that's used as the corresponding
         input to the tower. Note that this tensor may have a different name (e.g. may be an output of a queue).

@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from tensorpack import InputDesc, QueueInput
+from tensorpack import QueueInput
 from tensorpack.callbacks import ModelSaver
 from tensorpack.contrib.keras import KerasModel
 from tensorpack.dataflow import BatchData, MapData, dataset
@@ -57,8 +57,8 @@ if __name__ == '__main__':
 
     M = KerasModel(
         model_func,
-        inputs_desc=[InputDesc(tf.float32, [None, IMAGE_SIZE, IMAGE_SIZE, 1], 'images')],
-        targets_desc=[InputDesc(tf.float32, [None, 10], 'labels')],
+        input_signature=[tf.TensorSpec([None, IMAGE_SIZE, IMAGE_SIZE, 1], tf.float32, 'images')],
+        target_signature=[tf.TensorSpec([None, 10], tf.float32, 'labels')],
         input=QueueInput(dataset_train))
     M.compile(
         optimizer=tf.train.AdamOptimizer(1e-3),

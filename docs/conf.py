@@ -375,6 +375,8 @@ _DEPRECATED_NAMES = set([
     'PrefetchOnGPUs',
     'DistributedTrainerReplicated',
     'DistributedTrainerParameterServer',
+    'InputDesc',
+    'inputs_desc',
 
     # renamed items that should not appear in docs
     'DumpTensor',

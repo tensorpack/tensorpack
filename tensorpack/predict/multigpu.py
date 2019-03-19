@@ -4,7 +4,6 @@
 
 import tensorflow as tf
 
-from ..graph_builder.model_desc import InputDesc
 from ..input_source import PlaceholderInput
 from ..tfutils.tower import PredictTowerContext
 from ..utils import logger
@@ -33,7 +32,7 @@ class MultiTowerOfflinePredictor(OnlinePredictor):
             handles = []
 
             input = PlaceholderInput()
-            input.setup(config.inputs_desc)
+            input.setup(config.input_signature)
 
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
@@ -102,10 +101,10 @@ class DataParallelOfflinePredictor(OnlinePredictor):
             for idx, t in enumerate(towers):
                 tower_name = 'tower' + str(t)
 
-                inputs_desc = [InputDesc(desc.type, desc.shape, tower_name + '_' + desc.name)
-                               for desc in config.inputs_desc]
+                new_sig = [tf.TensorSpec(dtype=p.dtype, shape=p.shape, name=tower_name + '_' + p.name)
+                           for p in config.input_signature]
                 input = PlaceholderInput()
-                input.setup(inputs_desc)
+                input.setup(new_sig)
 
                 with tf.variable_scope(tf.get_variable_scope(), reuse=idx > 0), \
                         tf.device('/gpu:{}'.format(t)), \

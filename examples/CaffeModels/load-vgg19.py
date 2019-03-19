@@ -62,7 +62,7 @@ def run_test(path, input):
     param_dict = {k.replace('/W', '/kernel').replace('/b', '/bias'): v for k, v in six.iteritems(param_dict)}
 
     predict_func = OfflinePredictor(PredictConfig(
-        inputs_desc=[InputDesc(tf.float32, (None, 224, 224, 3), 'input')],
+        input_signature=[tf.TensorSpec((None, 224, 224, 3), tf.float32, 'input')],
         tower_func=tower_func,
         session_init=DictRestore(param_dict),
         input_names=['input'],

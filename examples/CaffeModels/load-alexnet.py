@@ -42,7 +42,7 @@ def tower_func(image):
 def run_test(path, input):
     param_dict = dict(np.load(path))
     predictor = OfflinePredictor(PredictConfig(
-        inputs_desc=[InputDesc(tf.float32, (None, 227, 227, 3), 'input')],
+        input_signature=[tf.TensorSpec((None, 227, 227, 3), tf.float32, 'input')],
         tower_func=tower_func,
         session_init=DictRestore(param_dict),
         input_names=['input'],

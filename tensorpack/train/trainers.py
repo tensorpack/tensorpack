@@ -272,7 +272,7 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
         self._builder = DistributedReplicatedBuilder(gpus, server)
         self.is_chief = self._builder.is_chief
 
-    def _setup_input(self, inputs_desc, input):
+    def _setup_input(self, input_signature, input):
         with override_to_local_variable():
             get_global_step_var()  # gs should be local
             # input source may create variable (queue size summary)
@@ -280,7 +280,7 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
             # whether something should be global or local. We now assume
             # they should be local.
             assert not input.setup_done()
-            return input.setup(inputs_desc)
+            return input.setup(input_signature)
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         assert isinstance(input, FeedfreeInput), input

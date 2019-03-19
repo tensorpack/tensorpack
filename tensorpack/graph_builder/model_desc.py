@@ -18,12 +18,41 @@ TensorSpec = backport_tensor_spec()
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
 
 
+def build_or_reuse_placeholder(tensor_spec):
+    """
+    Build a tf.placeholder from the metadata in the given tensor spec, or return an existing one.
+
+    Args:
+        tensor_spec (tf.TensorSpec):
+
+    Returns:
+        tf.Tensor:
+    """
+    g = tfv1.get_default_graph()
+    name = tensor_spec.name
+    try:
+        tensor = g.get_tensor_by_name(name + ':0')
+        assert "Placeholder" in tensor.op.type, "Tensor {} exists but is not a placeholder!".format(name)
+        assert tensor_spec.is_compatible_with(tensor), \
+            "Tensor {} exists but is not compatible with the signature!".format(tensor)
+        return tensor
+    except KeyError:
+        with tfv1.name_scope(None):   # clear any name scope it might get called in
+            ret = tfv1.placeholder(
+                tensor_spec.dtype, shape=tensor_spec.shape, name=tensor_spec.name)
+        return ret
+
+
 class InputDesc(
         namedtuple('InputDescTuple', ['type', 'shape', 'name'])):
     """
-    Metadata about an input entry point to the graph.
-    This metadata can be later used to build placeholders or other types of
-    input source.
+    An equivalent of `tf.TensorSpec`.
+
+    History: this concept is used to represent metadata about the inputs,
+    which can be later used to build placeholders or other types of input source.
+    It is introduced much much earlier than the equivalent concept `tf.TensorSpec`
+    was introduced in TensorFlow.
+    Therefore, we now switched to use `tf.TensorSpec`, but keep this here for compatibility reasons.
     """
 
     def __new__(cls, type, shape, name):
@@ -33,64 +62,9 @@ class InputDesc(
             shape (tuple):
             name (str):
         """
-        shape = tuple(shape)    # has to be tuple for "self" to be hashable
+        # TODO mark deprecated
         assert isinstance(type, tf.DType), type
-        if any(k in name for k in [':', '/', ' ']):
-            raise ValueError("Invalid InputDesc name: '{}'".format(name))
-        self = super(InputDesc, cls).__new__(cls, type, shape, name)
-        self._cached_placeholder = {}
-        return self
-
-    def _build_placeholder(self):
-        """
-        Build a tf.placeholder from the metadata.
-
-        Returns:
-            tf.Tensor:
-        """
-        with tfv1.name_scope(None):   # clear any name scope it might get called in
-            ret = tfv1.placeholder(
-                self.type, shape=self.shape, name=self.name)
-        self._register_cached_placeholder(ret)
-        return ret
-
-    # cannot memoize here, because InputDesc is hashed by its fields.
-    def build_placeholder_reuse(self):
-        """
-        Build a tf.placeholder from the metadata, or return an old one.
-
-        Returns:
-            tf.Tensor:
-        """
-        g = tfv1.get_default_graph()
-        if g in self._cached_placeholder:
-            return self._cached_placeholder[g]
-        else:
-            return self._build_placeholder()
-
-    def _register_cached_placeholder(self, placeholder):
-        graph = placeholder.graph
-        assert graph not in self._cached_placeholder, \
-            "Placeholder for this InputDesc had been created before! This is a bug."
-        self._cached_placeholder[graph] = placeholder
-
-    @staticmethod
-    def _from_placeholder(placeholder):
-        name = placeholder.op.name
-        if name.endswith('_1') or name.endswith('_2'):
-            logger.error("Creating InputDesc from a placeholder named {}.".format(name))
-            logger.error("You might have mistakenly created this placeholder multiple times!")
-        ret = InputDesc(
-            placeholder.dtype,
-            tuple(placeholder.shape.as_list()),
-            name)
-        ret._register_cached_placeholder(placeholder)
-        return ret
-
-    @staticmethod
-    def _from_tensor_spec(spec):
-        assert spec.name is not None, "TensorSpec should have a name!"
-        return InputDesc(spec.dtype, tuple(spec.shape.as_list()), spec.name)
+        return tf.TensorSpec(shape=shape, dtype=type, name=name)
 
 
 class ModelDescBase(object):
@@ -100,29 +74,22 @@ class ModelDescBase(object):
 
     @memoized_method
     def get_inputs_desc(self):
+        # TODO mark deprecated
+        return self.get_input_signature()
+
+    @memoized_method
+    def get_input_signature(self):
         """
         Returns:
-            A list of :class:`InputDesc`, which describes the inputs of this model.
+            A list of :class:`tf.TensorSpec`, which describes the inputs of this model.
             The result is cached for each instance of :class:`ModelDescBase`.
         """
-        try:
-            ret = self._get_inputs()
-            log_deprecated(
-                "ModelDescBase._get_inputs() interface",
-                "Use inputs() instead!",
-                "2019-03-30")
-            return ret
-        except NotImplementedError:
-            with tf.Graph().as_default() as G:   # create these placeholder in a temporary graph
-                inputs = self.inputs()
-                if isinstance(inputs[0], tf.Tensor):
-                    for p in inputs:
-                        assert p.graph == G, "Placeholders returned by inputs() should be created inside inputs()!"
-                    return [InputDesc._from_placeholder(p) for p in inputs]
-                else:
-                    for p in inputs:
-                        assert isinstance(p, TensorSpec), type(p)
-                    return [InputDesc._from_tensor_spec(p) for p in inputs]
+        with tf.Graph().as_default() as G:   # create these placeholder in a temporary graph
+            inputs = self.inputs()
+            if isinstance(inputs[0], tf.Tensor):
+                for p in inputs:
+                    assert p.graph == G, "Placeholders returned by inputs() should be created inside inputs()!"
+            return [TensorSpec(shape=p.shape, dtype=p.dtype, name=p.name) for p in inputs]
 
     @property
     def input_names(self):
@@ -130,7 +97,7 @@ class ModelDescBase(object):
         Returns:
             [str]: the names of all the inputs.
         """
-        return [k.name for k in self.get_inputs_desc()]
+        return [k.name for k in self.get_input_signature()]
 
     def _get_inputs(self):
         raise NotImplementedError()
@@ -147,7 +114,7 @@ class ModelDescBase(object):
         Also, you should never call this method by yourself.
 
         Returns:
-            list[tf.placeholder] or list[tf.TensorSpec], to be converted to :class:`InputDesc`.
+            list[tf.TensorSpec or tf.placeholder]. To be converted to :class:`tf.TensorSpec`.
         """
         raise NotImplementedError()
 
@@ -166,9 +133,9 @@ class ModelDescBase(object):
             may require it to return necessary information to build the trainer.
             For example, `SingleCostTrainer` expect this method to return the cost tensor.
         """
-        assert len(args) == len(self.get_inputs_desc()), \
+        assert len(args) == len(self.get_input_signature()), \
             "Number of inputs passed to the graph != number of inputs defined " \
-            "in ModelDesc! ({} != {})".format(len(args), len(self.get_inputs_desc()))
+            "in ModelDesc! ({} != {})".format(len(args), len(self.get_input_signature()))
         log_deprecated(
             "ModelDescBase._build_graph() interface",
             "Use build_graph() instead!",

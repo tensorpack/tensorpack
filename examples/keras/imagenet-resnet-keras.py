@@ -9,7 +9,7 @@ import os
 import tensorflow as tf
 from tensorflow.python.keras.layers import *
 
-from tensorpack import InputDesc, SyncMultiGPUTrainerReplicated
+from tensorpack import SyncMultiGPUTrainerReplicated
 from tensorpack.callbacks import *
 from tensorpack.contrib.keras import KerasModel
 from tensorpack.dataflow import FakeData, MapDataComponent
@@ -166,8 +166,8 @@ if __name__ == '__main__':
 
     M = KerasModel(
         resnet50,
-        inputs_desc=[InputDesc(tf.uint8, [None, 224, 224, 3], 'images')],
-        targets_desc=[InputDesc(tf.float32, [None, 1000], 'labels')],
+        input_signature=[tf.TensorSpec([None, 224, 224, 3], tf.uint8, 'images')],
+        target_signature=[tf.TensorSpec([None, 1000], tf.float32, 'labels')],
         input=df_train,
         trainer=SyncMultiGPUTrainerReplicated(num_gpu))
 

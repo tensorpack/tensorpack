@@ -8,8 +8,8 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from collections import deque
 import six
-import tensorflow as tf
 
+from ..compat import tfv1
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 from .base import Callback
@@ -67,7 +67,7 @@ class GraphVarParam(HyperParam):
 
     def setup_graph(self):
         """ Will setup the assign operator for that variable. """
-        all_vars = tf.global_variables() + tf.local_variables()
+        all_vars = tfv1.global_variables() + tfv1.local_variables()
         for v in all_vars:
             if v.name == self.var_name:
                 self.var = v

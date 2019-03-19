@@ -254,14 +254,11 @@ if __name__ == '__main__':
         eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
     elif args.flops:
         # manually build the graph with batch=1
-        input_desc = [
-            InputDesc(tf.float32, [1, 224, 224, 3], 'input'),
-            InputDesc(tf.int32, [1], 'label')
-        ]
-        input = PlaceholderInput()
-        input.setup(input_desc)
         with TowerContext('', is_training=False):
-            model.build_graph(*input.get_input_tensors())
+            model.build_graph(
+                tf.placeholder(tf.float32, [1, 224, 224, 3], 'input'),
+                tf.placeholder(tf.int32, [1], 'label')
+            )
         model_utils.describe_trainable_vars()
 
         tf.profiler.profile(

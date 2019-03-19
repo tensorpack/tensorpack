@@ -155,7 +155,7 @@ class OfflinePredictor(OnlinePredictor):
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
             input = PlaceholderInput()
-            input.setup(config.inputs_desc)
+            input.setup(config.input_signature)
             with PredictTowerContext(''):
                 config.tower_func(*input.get_input_tensors())
 

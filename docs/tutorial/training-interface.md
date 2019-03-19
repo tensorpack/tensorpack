@@ -11,7 +11,7 @@ This interface is enough for most types of single-cost tasks.
 A lot of examples are written in this interface.
 
 [SingleCost trainers](../modules/train.html#tensorpack.train.SingleCostTrainer)
-expects 4 arguments to setup the graph: `InputDesc`, `InputSource`, get_cost function, and an optimizer.
+expects 4 arguments to setup the graph: input signatures, `InputSource`, get_cost function, and an optimizer.
 `ModelDesc` describes a model by packing 3 of them together into one object:
 
 ```python
@@ -62,7 +62,7 @@ The function `launch_train_with_config(config, trainer)`
 uses the raw trainer interface under the hood, and is almost equivalent to the following two lines of code:
 ```python
 trainer.setup_graph(
-    my_model.get_inputs_desc(),
+    my_model.get_input_signature(),
     my_input_source,  # or QueueInput(my_dataflow)
     my_model.build_graph,
     my_model.get_optimizer)

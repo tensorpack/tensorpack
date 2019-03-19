@@ -12,6 +12,7 @@ from ..callbacks.base import CallbackFactory
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized_method
+from ..graph_builder.model_desc import build_or_reuse_placeholder
 
 __all__ = ['InputSource', 'remap_input_source']
 
@@ -86,20 +87,20 @@ class InputSource(object):
         pass
 
     @call_only_once
-    def setup(self, inputs_desc):
+    def setup(self, input_signature):
         """
         Args:
-            inputs_desc (list[InputDesc]): list of input desc
+            input_signature (list[tf.TensorSpec]): list of specs for each input tensor
 
         Returns:
             list[Callback]: extra callbacks needed by this InputSource.
             callbacks of InputSource cannot use any `trigger*()` method.
         """
-        self._setup(inputs_desc)
+        self._setup(input_signature)
         self._setup_done = True
         return self.get_callbacks()
 
-    def _setup(self, inputs_desc):
+    def _setup(self, input_signature):
         pass
 
     def setup_done(self):
@@ -190,8 +191,8 @@ class ProxyInputSource(InputSource):
     def _get_input_tensors(self):
         return self._input.get_input_tensors()
 
-    def _setup(self, inputs_desc):
-        self._input.setup(inputs_desc)
+    def _setup(self, input_signature):
+        self._input.setup(input_signature)
 
     def _get_callbacks(self):
         return self._input.get_callbacks()
@@ -226,11 +227,11 @@ def remap_input_source(input, names):
         input1 = QueueInput(ds)
         # assume ds produces 'image' and 'label', but the graph takes more
         # inputs for some reasons, or takes inputs of a different order:
-        inputs_desc = [InputDesc(tf.float32, (None,10), 'score'),
-                       InputDesc(tf.float32, (None,20,20,3), 'label'),
-                       InputDesc(tf.int32, (None,), 'image') ]
+        input_signature = [tf.TensorSpec((None,10), tf.float32, 'score'),
+                           tf.TensorSpec((None,20,20,3), tf.float32, 'label'),
+                           tf.TensorSpec((None,), tf.int32, 'image') ]
         input2 = remap_input_source(input1, ['image', 'label'])
-        input2.setup(inputs_desc)
+        input2.setup(input_signature)
         # now, input2.get_input_tensors() will return a placeholder for 'score',
         # plus the tensors returned by input1.get_input_tensors()
     """
@@ -240,7 +241,7 @@ def remap_input_source(input, names):
         self._names = tuple(names)
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._all_placehdrs = [build_or_reuse_placeholder(v) for v in inputs]
         inputs_subset = get_sublist_by_names(inputs, self._names)
         self._input.setup(inputs_subset)
 

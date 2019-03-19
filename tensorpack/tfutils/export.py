@@ -28,7 +28,7 @@ class ModelExporter(object):
 
         Args:
             config (PredictConfig): the config to use.
-                The graph will be built with `config.tower_func` and `config.inputs_desc`.
+                The graph will be built with the tower function defined by this `PredictConfig`.
                 Then the input / output names will be used to export models for inference.
         """
         super(ModelExporter, self).__init__()
@@ -51,7 +51,7 @@ class ModelExporter(object):
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
             input = PlaceholderInput()
-            input.setup(self.config.inputs_desc)
+            input.setup(self.config.input_signature)
             with PredictTowerContext(''):
                 self.config.tower_func(*input.get_input_tensors())
 
@@ -116,7 +116,7 @@ class ModelExporter(object):
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
             input = PlaceholderInput()
-            input.setup(self.config.inputs_desc)
+            input.setup(self.config.input_signature)
             with PredictTowerContext(''):
                 self.config.tower_func(*input.get_input_tensors())
 

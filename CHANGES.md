@@ -8,6 +8,9 @@ so you don't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
++ [2019/03/20] The concept of `InputDesc` was replaced by its equivalent in TF:
+  `tf.TensorSpec`. This may be a breaking change if you have customized
+  code that relies on internals of `InputDesc`.
 + [2018/08/27] msgpack is used again for "serialization to disk", because pyarrow
   has no compatibility between versions. To use pyarrow instead, `export TENSORPACK_COMPATIBLE_SERIALIZE=pyarrow`.
 + [2018/04/05] msgpack is replaced by pyarrow in favor of its speed. If you want old behavior,

@@ -141,7 +141,7 @@ class KerasPhaseCallback(Callback):
 
 def setup_keras_trainer(
         trainer, get_model,
-        inputs_desc, targets_desc,
+        input_signature, target_signature,
         input, optimizer, loss, metrics):
     """
     Args:
@@ -159,7 +159,7 @@ def setup_keras_trainer(
     assert isinstance(metrics, list), metrics
     model_caller = KerasModelCaller(get_model)
 
-    nr_inputs = len(inputs_desc)
+    nr_inputs = len(input_signature)
 
     def get_cost(*inputs):
         ctx = get_current_tower_context()
@@ -211,7 +211,7 @@ def setup_keras_trainer(
         return total_loss
 
     trainer.setup_graph(
-        inputs_desc + targets_desc,
+        input_signature + target_signature,
         input,
         get_cost,
         lambda: optimizer)
@@ -221,23 +221,27 @@ def setup_keras_trainer(
 
 
 class KerasModel(object):
-    def __init__(self, get_model, inputs_desc, targets_desc,
-                 input, trainer=None):
+    def __init__(self, get_model, input_signature=None, target_signature=None,
+                 input=None, trainer=None, inputs_desc=None, targets_desc=None):
         """
         Args:
             get_model (input1, input2, ... -> keras.Model):
                 A function which takes tensors, builds and returns a Keras model.
                 It will be part of the tower function.
-            inputs_desc ([InputDesc]):
-            targets_desc ([InputDesc]):
-            input (InputSource | DataFlow):
-            trainer (Trainer): the default will check the number of available
-                GPUs and use them all.
+            input_signature ([tf.TensorSpec]): required. The signature for inputs.
+            target_signature ([tf.TensorSpec]): required. The signature for the targets tensors.
+            input (InputSource | DataFlow): the InputSource or DataFlow where the input data comes from.
+            trainer (Trainer): the default will check the number of available GPUs and use them all.
+            inputs_desc, targets_desc: deprecated names for `input_signature` and `target_signature`
         """
+        if inputs_desc is not None:
+            input_signature = inputs_desc
+        if targets_desc is not None:
+            target_signature = targets_desc
         self.get_model = get_model
         assert callable(get_model), get_model
-        self.inputs_desc = inputs_desc
-        self.targets_desc = targets_desc
+        self.input_signature = input_signature
+        self.target_signature = target_signature
         if trainer is None:
             nr_gpu = get_nr_gpu()
             if nr_gpu <= 1:
@@ -248,6 +252,7 @@ class KerasModel(object):
         assert isinstance(trainer, Trainer), trainer
         assert not isinstance(trainer, DistributedTrainerBase)
 
+        assert input is not None, "Argument 'input' is required!"
         self.input = apply_default_prefetch(input, trainer)
         self.trainer = trainer
 
@@ -267,7 +272,8 @@ class KerasModel(object):
         self._stats_to_inference = loss + metrics + [TOTAL_LOSS_NAME]
         setup_keras_trainer(
             self.trainer, get_model=self.get_model,
-            inputs_desc=self.inputs_desc, targets_desc=self.targets_desc,
+            input_signature=self.input_signature,
+            target_signature=self.target_signature,
             input=self.input,
             optimizer=optimizer,
             loss=loss,

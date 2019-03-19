@@ -19,6 +19,7 @@ from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
 from .input_source_base import InputSource
+from ..graph_builder.model_desc import build_or_reuse_placeholder
 
 try:
     from tensorflow.python.ops.data_flow_ops import StagingArea
@@ -59,7 +60,7 @@ class PlaceholderInput(InputSource):
         pass
 
     def _setup(self, inputs):
-        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._all_placehdrs = [build_or_reuse_placeholder(v) for v in inputs]
 
     def _get_input_tensors(self):
         return self._all_placehdrs
@@ -110,7 +111,7 @@ class FeedInput(InputSource):
 
     def _setup(self, inputs):
         # placeholders as input are always safe to reuse.
-        self._all_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._all_placehdrs = [build_or_reuse_placeholder(v) for v in inputs]
         self._cb = self._FeedCallback(self._iter_ds, self._all_placehdrs)
 
     def _get_input_tensors(self):
@@ -196,7 +197,7 @@ class QueueInput(FeedfreeInput):
         Args:
             ds(DataFlow): the input DataFlow.
             queue (tf.QueueBase): A :class:`tf.QueueBase` whose type
-                should match the corresponding InputDesc of the model.
+                should match the corresponding input signature of the model.
                 Defaults to a FIFO queue of size 50.
         """
         if not isinstance(ds, DataFlow):
@@ -210,12 +211,12 @@ class QueueInput(FeedfreeInput):
         return len(self.ds)
 
     def _setup(self, inputs):
-        self._input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self._input_placehdrs = [build_or_reuse_placeholder(v) for v in inputs]
         assert len(self._input_placehdrs) > 0, \
             "QueueInput has to be used with some inputs!"
         with self.cached_name_scope():
             if self.queue is None:
-                self.queue = tf.FIFOQueue(
+                self.queue = tfv1.FIFOQueue(
                     50, [x.dtype for x in self._input_placehdrs],
                     name='input_queue')
             logger.info("Setting up the queue '{}' for CPU prefetching ...".format(self.queue.name))
@@ -287,7 +288,7 @@ class BatchQueueInput(QueueInput):
             ds(DataFlow): the input DataFlow.
             batch_size(int): the batch size.
             queue (tf.QueueBase): A :class:`tf.QueueBase` whose type
-                should match the corresponding InputDesc of the model.
+                should match the corresponding input signature of the model.
                 Defaults to a FIFO queue of size 3000.
         """
         super(BatchQueueInput, self).__init__(ds, queue)
@@ -298,9 +299,9 @@ class BatchQueueInput(QueueInput):
 
     def _setup(self, inputs):
         logger.info("Setting up the queue for CPU prefetching ...")
-        self.input_placehdrs = [v.build_placeholder_reuse() for v in inputs]
+        self.input_placehdrs = [build_or_reuse_placeholder(v) for v in inputs]
         assert len(self.input_placehdrs) > 0, \
-            "BatchQueueInput has to be used with some InputDesc!"
+            "BatchQueueInput has to be used with some input signature!"
 
         # prepare placeholders without the first dimension
         placehdrs_nobatch = []
@@ -364,8 +365,8 @@ class TensorInput(FeedfreeInput):
             assert size > 0
         self._fixed_size = size
 
-    def _setup(self, inputs_desc):
-        self._desc = inputs_desc
+    def _setup(self, input_signature):
+        self._spec = input_signature
 
     def _size(self):
         if self._fixed_size is None:
@@ -376,8 +377,8 @@ class TensorInput(FeedfreeInput):
         with self.cached_name_scope():
             ret = self.get_tensor_fn()
         assert isinstance(ret, (list, tuple)), "get_tensor_fn needs to return a list!"
-        assert len(ret) == len(self._desc), \
-            "get_tensor_fn returns {} tensors but there are {} inputs".format(len(ret), len(self._desc))
+        assert len(ret) == len(self._spec), \
+            "get_tensor_fn returns {} tensors but there are {} inputs".format(len(ret), len(self._spec))
         return ret
 
 
@@ -399,7 +400,7 @@ class DummyConstantInput(TensorInput):
             assert len(self.shapes) == len(self._desc)
             for idx, p in enumerate(self._desc):
                 tlist.append(tf.constant(
-                    0, dtype=p.type,
+                    0, dtype=p.dtype,
                     name='dummy-{}-{}'.format(p.name, ctx.index),
                     shape=self.shapes[idx]))
             return tlist
@@ -429,15 +430,14 @@ class ZMQInput(TensorInput):
             return ret
         super(ZMQInput, self).__init__(fn)
 
-    def _setup(self, inputs_desc):
-        assert len(inputs_desc) > 0, \
-            "ZMQInput has to be used with InputDesc!"
-        self._desc = inputs_desc
+    def _setup(self, input_signature):
+        assert len(input_signature) > 0, \
+            "ZMQInput has to be used with input signature!"
 
         import zmq_ops
         self._zmq_pull_socket = zmq_ops.ZMQPullSocket(
             self._end_point,
-            [x.type for x in inputs_desc],
+            [x.dtype for x in input_signature],
             hwm=self._hwm,
             bind=self._bind)
 
@@ -458,23 +458,23 @@ class TFDatasetInput(FeedfreeInput):
             raise ValueError("TFDatasetInput takes a tf.data.Dataset! Got {}".format(dataset))
         self._dataset = dataset
 
-    def _setup(self, inputs_desc):
-        self._desc = inputs_desc
+    def _setup(self, input_signature):
+        self._spec = input_signature
         types = self._dataset.output_types
-        desc_types = tuple([k.type for k in inputs_desc])
-        assert len(types) == len(desc_types), \
-            "Dataset and InputDesc has different length! {} != {}".format(
-                len(types), len(desc_types))
-        assert types == desc_types, \
-            "Types of dataset and InputDesc don't match! {} != {}".format(
-                str(types), str(desc_types))
+        spec_types = tuple([k.dtype for k in input_signature])
+        assert len(types) == len(spec_types), \
+            "Dataset and input signature have different length! {} != {}".format(
+                len(types), len(spec_types))
+        assert types == spec_types, \
+            "Data types of dataset and input signature don't match! {} != {}".format(
+                str(types), str(spec_types))
         shapes = self._dataset.output_shapes
-        desc_shapes = [k.shape for k in inputs_desc]
-        for idx, (s1, s2) in enumerate(zip(shapes, desc_shapes)):
+        spec_shapes = [k.shape for k in input_signature]
+        for idx, (s1, s2) in enumerate(zip(shapes, spec_shapes)):
             s2 = tf.TensorShape(s2)
             assert s2.is_compatible_with(s1), \
-                "InputDesc '{}' has incompatible shape with dataset! {} vs {}".format(
-                    inputs_desc[idx].name, s2, s1)
+                "Input signature '{}' has incompatible shape with dataset! {} vs {}".format(
+                    input_signature[idx].name, s2, s1)
         self._iterator = self._dataset.make_initializable_iterator()
         self._init_op = self._iterator.initializer
 
@@ -482,11 +482,11 @@ class TFDatasetInput(FeedfreeInput):
         self._init_op.run()
 
     def _get_input_tensors(self):
-        desc_shapes = [k.shape for k in self._desc]
+        spec_shapes = [k.shape for k in self._spec]
         ret = self._iterator.get_next()
-        assert len(ret) == len(desc_shapes), \
-            "Dataset returns {} tensors but there are {} inputs!".format(len(ret), len(desc_shapes))
-        for t, shp in zip(ret, desc_shapes):
+        assert len(ret) == len(spec_shapes), \
+            "Dataset returns {} tensors but there are {} inputs!".format(len(ret), len(spec_shapes))
+        for t, shp in zip(ret, spec_shapes):
             t.set_shape(shp)
         return ret
 

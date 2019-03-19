@@ -88,7 +88,7 @@ class GANTrainer(TowerTrainer):
             input = StagingInput(input)
 
         # Setup input
-        cbs = input.setup(model.get_inputs_desc())
+        cbs = input.setup(model.get_input_signature())
         self.register_callback(cbs)
 
         if num_gpu <= 1:
@@ -105,7 +105,7 @@ class GANTrainer(TowerTrainer):
         not needed. Just calling model.build_graph directly is OK.
         """
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_inputs_desc())
+        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_input_signature())
         with TowerContext('', is_training=True):
             self.tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
@@ -127,7 +127,7 @@ class GANTrainer(TowerTrainer):
             model.build_graph(*inputs)
             return [model.d_loss, model.g_loss]
 
-        self.tower_func = TowerFuncWrapper(get_cost, model.get_inputs_desc())
+        self.tower_func = TowerFuncWrapper(get_cost, model.get_input_signature())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         cost_list = DataParallelBuilder.build_on_towers(
             list(range(num_gpu)),
@@ -163,11 +163,11 @@ class SeparateGANTrainer(TowerTrainer):
         assert min(d_period, g_period) == 1
 
         # Setup input
-        cbs = input.setup(model.get_inputs_desc())
+        cbs = input.setup(model.get_input_signature())
         self.register_callback(cbs)
 
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_inputs_desc())
+        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_input_signature())
         with TowerContext('', is_training=True), \
                 argscope(BatchNorm, internal_update=True):
             # should not hook the updates to both train_op, it will hurt training speed.

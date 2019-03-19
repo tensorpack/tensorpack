@@ -18,7 +18,7 @@ class PredictConfig(object):
     def __init__(self,
                  model=None,
                  tower_func=None,
-                 inputs_desc=None,
+                 input_signature=None,
 
                  input_names=None,
                  output_names=None,
@@ -27,11 +27,18 @@ class PredictConfig(object):
                  session_init=None,
                  return_input=False,
                  create_graph=True,
+                 inputs_desc=None
                  ):
         """
-        You need to set either `model`, or `inputs_desc` plus `tower_func`.
-        They are needed to construct the graph.
-        You'll also have to set `output_names` as it does not have a default.
+        Users need to provide enough arguments to create a tower function,
+        which will be used to construct the graph.
+        This can be provided in the following ways:
+
+        1. `model`: a :class:`ModelDesc` instance. It will contain a tower function by itself.
+        2. `tower_func`: a :class:`tfutils.TowerFuncWrapper` instance.
+            Provide a tower function instance directly.
+        3. `tower_func`: a symbolic function and `input_signature`: the signature of the function.
+            Provide both a function and its signature.
 
         Example:
 
@@ -42,15 +49,14 @@ class PredictConfig(object):
                                    output_names=['linear/output', 'prediction'])
 
         Args:
-            model (ModelDescBase): to be used to obtain inputs_desc and tower_func.
+            model (ModelDescBase): to be used to construct a tower function.
             tower_func: a callable which takes input tensors (by positional args) and construct a tower.
-                or a :class:`tfutils.TowerFuncWrapper` instance, which packs both `inputs_desc` and function together.
-            inputs_desc ([InputDesc]): if tower_func is a plain function (instead of a TowerFuncWrapper), this describes
-                the list of inputs it takes.
+                or a :class:`tfutils.TowerFuncWrapper` instance.
+            input_signature ([tf.TensorSpec]): if tower_func is a plain function (instead of a TowerFuncWrapper),
+                this describes the list of inputs it takes.
 
-            input_names (list): a list of input tensor names. Defaults to match inputs_desc.
-                The name can be either the name of a tensor, or the name of one input defined
-                by `inputs_desc` or by `model`.
+            input_names (list): a list of input tensor names. Defaults to match input_signature.
+                The name can be either the name of a tensor, or the name of one input of the tower.
             output_names (list): a list of names of the output tensors to predict, the
                 tensors can be any tensor in the graph that's computable from the tensors correponding to `input_names`.
 
@@ -62,23 +68,29 @@ class PredictConfig(object):
             return_input (bool): same as in :attr:`PredictorBase.return_input`.
             create_graph (bool): create a new graph, or use the default graph
                 when predictor is first initialized.
+            inputs_desc (list[tf.TensorSpec]): old (deprecated) name for `input_signature`.
         """
         def assert_type(v, tp, name):
             assert isinstance(v, tp), \
-                "{} has to be type '{}', but an object of type '{}' found.".format(
+                "Argument '{}' has to be type '{}', but an object of type '{}' found.".format(
                     name, tp.__name__, v.__class__.__name__)
+
+        if inputs_desc is not None:
+            # TODO warn deprecated or not?
+            assert input_signature is None, "Cannot set both inputs_desc and input_signature!"
+            input_signature = inputs_desc
 
         if model is not None:
             assert_type(model, ModelDescBase, 'model')
-            assert inputs_desc is None and tower_func is None
-            self.inputs_desc = model.get_inputs_desc()
-            self.tower_func = TowerFuncWrapper(model.build_graph, self.inputs_desc)
+            assert input_signature is None and tower_func is None
+            self.input_signature = model.get_input_signature()
+            self.tower_func = TowerFuncWrapper(model.build_graph, self.input_signature)
         else:
             if isinstance(tower_func, TowerFuncWrapper):
-                inputs_desc = tower_func.inputs_desc
-            assert inputs_desc is not None and tower_func is not None
-            self.inputs_desc = inputs_desc
-            self.tower_func = TowerFuncWrapper(tower_func, inputs_desc)
+                input_signature = tower_func.input_signature
+            assert input_signature is not None and tower_func is not None
+            self.input_signature = input_signature
+            self.tower_func = TowerFuncWrapper(tower_func, input_signature)
 
         if session_init is None:
             session_init = JustCurrentSession()
@@ -93,19 +105,21 @@ class PredictConfig(object):
         # inputs & outputs
         self.input_names = input_names
         if self.input_names is None:
-            self.input_names = [k.name for k in self.inputs_desc]
+            self.input_names = [k.name for k in self.input_signature]
+        assert output_names is not None, "Argument 'output_names' is not provided!"
         self.output_names = output_names
         assert_type(self.output_names, list, 'output_names')
         assert_type(self.input_names, list, 'input_names')
         if len(self.input_names) == 0:
             logger.warn('PredictConfig receives empty "input_names".')
-        # assert len(self.input_names), self.input_names
         for v in self.input_names:
             assert_type(v, six.string_types, 'Each item in input_names')
-        assert len(self.output_names), self.output_names
+        assert len(self.output_names), "Argument 'output_names' cannot be empty!"
 
         self.return_input = bool(return_input)
         self.create_graph = bool(create_graph)
+
+        self.inputs_desc = input_signature  # TODO a little bit of compatibility
 
     def _maybe_create_graph(self):
         if self.create_graph:

@@ -21,7 +21,7 @@ class FeedfreePredictor(PredictorBase):
         Args:
             config (PredictConfig): the config to use.
             input_source (InputSource): the feedfree InputSource to use.
-                Must match the inputs_desc in config.
+                Must match the signature of the tower function in config.
         """
         self._config = config
         self._input_source = input_source
@@ -33,7 +33,7 @@ class FeedfreePredictor(PredictorBase):
         self.graph = config._maybe_create_graph()
         with self.graph.as_default():
             self._input_callbacks = Callbacks(
-                self._input_source.setup(config.inputs_desc))
+                self._input_source.setup(config.input_signature))
             with PredictTowerContext(''):
                 self._input_tensors = self._input_source.get_input_tensors()
                 config.tower_func(*self._input_tensors)

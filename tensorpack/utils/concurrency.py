@@ -132,8 +132,8 @@ class ShareSessionThread(threading.Thread):
             yield None
 
     def start(self):
-        import tensorflow as tf
-        self._sess = tf.get_default_session()
+        from ..compat import tfv1
+        self._sess = tfv1.get_default_session()
         super(ShareSessionThread, self).start()
 
     def run(self):

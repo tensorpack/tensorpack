@@ -56,11 +56,16 @@ class TowerTrainer(Trainer):
 
     @property
     def inputs_desc(self):
+        # TODO mark deprecated
+        return self.input_signature
+
+    @property
+    def input_signature(self):
         """
         Returns:
-            list[InputDesc]: metainfo about the inputs to the tower.
+            list[tf.TensorSpec]: metainfo about the inputs to the tower.
         """
-        return self.tower_func.inputs_desc
+        return self.tower_func.input_signature
 
     @property
     def towers(self):
@@ -124,7 +129,7 @@ class TowerTrainer(Trainer):
 
         if tower is None:
             input = PlaceholderInput()
-            input.setup(self.inputs_desc)
+            input.setup(self.input_signature)
 
             vs_name = self._vs_name_for_predictor(device_id)
             with tfv1.variable_scope(tfv1.get_variable_scope(), reuse=True), \
@@ -164,7 +169,7 @@ class SingleCostTrainer(TowerTrainer):
     Base class for single-cost trainer.
 
     Single-cost trainer has a :meth:`setup_graph` method which takes
-    (inputs_desc, input, get_cost_fn, get_opt_fn), and build the training graph from them.
+    (input_signature, input, get_cost_fn, get_opt_fn), and build the training graph from them.
 
     To use a :class:`SingleCostTrainer` object, call `trainer.setup_graph(...); trainer.train(...)`.
     """
@@ -194,12 +199,12 @@ class SingleCostTrainer(TowerTrainer):
     """
 
     @call_only_once
-    def setup_graph(self, inputs_desc, input, get_cost_fn, get_opt_fn):
+    def setup_graph(self, input_signature, input, get_cost_fn, get_opt_fn):
         """
         Responsible for building the main training graph for single-cost training.
 
         Args:
-            inputs_desc ([InputDesc]):
+            input_signature ([TensorSpec]): list of TensorSpec that describe the inputs
             input (InputSource):
             get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tensors and return a cost tensor.
             get_opt_fn (-> tf.train.Optimizer): callable which returns an
@@ -210,12 +215,12 @@ class SingleCostTrainer(TowerTrainer):
             It must follows the `rules of tower function.
             <http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer>`_.
         """
-        get_cost_fn = TowerFuncWrapper(get_cost_fn, inputs_desc)
+        get_cost_fn = TowerFuncWrapper(get_cost_fn, input_signature)
         get_opt_fn = memoized(get_opt_fn)
         self.tower_func = get_cost_fn
 
         # TODO setup may want to register monitor as well??
-        input_callbacks = self._setup_input(inputs_desc, input)
+        input_callbacks = self._setup_input(input_signature, input)
         train_callbacks = self._setup_graph(input, get_cost_fn, get_opt_fn)
         self.register_callback(input_callbacks + train_callbacks)
 
@@ -229,9 +234,9 @@ class SingleCostTrainer(TowerTrainer):
             [Callback]: list of callbacks needed
         """
 
-    def _setup_input(self, inputs_desc, input):
+    def _setup_input(self, input_signature, input):
         assert not input.setup_done()
-        return input.setup(inputs_desc)
+        return input.setup(input_signature)
 
     def _make_get_grad_fn(self, input, get_cost_fn, get_opt_fn):
         """

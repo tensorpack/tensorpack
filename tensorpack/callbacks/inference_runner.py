@@ -141,7 +141,7 @@ class InferenceRunner(InferenceRunnerBase):
         if self._tower_func is None:
             assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
             self._tower_func = self.trainer.tower_func
-        input_callbacks = self._input_source.setup(self._tower_func.inputs_desc)
+        input_callbacks = self._input_source.setup(self._tower_func.input_signature)
 
         vs_name = self.trainer._vs_name_for_predictor(self._device_id)
         logger.info("[InferenceRunner] Building tower '{}' on device {} {}...".format(
@@ -223,7 +223,7 @@ class DataParallelInferenceRunner(InferenceRunnerBase):
             assert self.trainer.tower_func is not None, "You must set tower_func of the trainer to use InferenceRunner!"
             self._tower_func = self.trainer.tower_func
 
-        input_callbacks = self._input_source.setup(self._tower_func.inputs_desc)
+        input_callbacks = self._input_source.setup(self._tower_func.input_signature)
         with tf.variable_scope(tf.get_variable_scope(), reuse=True):
             for idx, dev in enumerate(self._devices):
                 vs_name = self.trainer._vs_name_for_predictor(idx)
