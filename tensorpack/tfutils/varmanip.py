@@ -77,6 +77,8 @@ class SessionUpdate(object):
 
         # fix some common type incompatibility problems, but not all
         def upcast(vartype, valtype):
+            # vartype: a tf dtype
+            # valtype: a numpy dtype
             # allow up-casting
             if vartype == tf.float64 and valtype == np.float32:
                 return np.float64
@@ -85,7 +87,7 @@ class SessionUpdate(object):
             return None
 
         if hasattr(value, 'dtype'):
-            vartype = var.dtype
+            vartype = var.dtype.as_numpy_dtype
             if vartype != value.dtype:
                 msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, vartype, value.dtype)
                 newtype = upcast(var.dtype.base_dtype, value.dtype)
