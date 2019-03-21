@@ -91,7 +91,7 @@ def Conv2D(
         assert in_channel % split == 0
 
         assert kernel_regularizer is None and bias_regularizer is None and activity_regularizer is None, \
-            "Not supported by group conv now!"
+            "Not supported by group conv or dilated conv!"
 
         out_channel = filters
         assert out_channel % split == 0
@@ -111,25 +111,28 @@ def Conv2D(
         if use_bias:
             b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
 
-        conv = None
-        if get_tf_version_tuple() >= (1, 13):
-            try:
-                conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
-            except ValueError:
-                conv = None
-                log_once("CUDNN group convolution support is only available with "
-                         "https://github.com/tensorflow/tensorflow/pull/25818 . "
-                         "Will fall back to a loop-based slow implementation instead!", 'warn')
-        if conv is None:
-            inputs = tf.split(inputs, split, channel_axis)
-            kernels = tf.split(W, split, 3)
-            outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
-                       for i, k in zip(inputs, kernels)]
-            conv = tf.concat(outputs, channel_axis)
+        if split == 1:
+            conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
+        else:
+            conv = None
+            if get_tf_version_tuple() >= (1, 13):
+                try:
+                    conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
+                except ValueError:
+                    log_once("CUDNN group convolution support is only available with "
+                             "https://github.com/tensorflow/tensorflow/pull/25818 . "
+                             "Will fall back to a loop-based slow implementation instead!", 'warn')
+            if conv is None:
+                inputs = tf.split(inputs, split, channel_axis)
+                kernels = tf.split(W, split, 3)
+                outputs = [tf.nn.conv2d(i, k, stride, padding.upper(), **kwargs)
+                           for i, k in zip(inputs, kernels)]
+                conv = tf.concat(outputs, channel_axis)
 
-        if activation is None:
-            activation = tf.identity
-        ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+        ret = tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv
+        if activation is not None:
+            ret = activation(ret)
+        ret = tf.identity(ret, name='output')
 
         ret.variables = VariableHolder(W=W)
         if use_bias:
@@ -236,7 +239,11 @@ def Conv2DTranspose(
             padding=padding.upper(),
             data_format=data_format)
         conv.set_shape(tf.TensorShape([None] + out_shape3_sta))
-        ret = activation(tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv, name='output')
+
+        ret = tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv
+        if activation is not None:
+            ret = activation(ret)
+        ret = tf.identity(ret, name='output')
 
         ret.variables = VariableHolder(W=W)
         if use_bias:

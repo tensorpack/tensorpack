@@ -47,10 +47,12 @@ variables in the current graph and variables in the `session_init` initializer.
 Variables that appear in only one side will be printed as warning.
 
 ## Transfer Learning
+
 Therefore, transfer learning is trivial.
+
 If you want to load a pre-trained model, just use the same variable names.
-If you want to re-train some layer, just rename either the variables in the
-graph or the variables in your loader.
+If you want to re-train some layer, either rename the variables in the
+graph or rename/remove the variables in your loader.
 
 
 ## Resume Training
