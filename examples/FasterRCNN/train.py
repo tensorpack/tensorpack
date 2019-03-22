@@ -15,7 +15,7 @@ import tqdm
 
 import tensorpack.utils.viz as tpviz
 from tensorpack import *
-from tensorpack.tfutils import optimizer
+from tensorpack.tfutils import optimizer, collect_env_info
 from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.tfutils.summary import add_moving_summary
 
@@ -454,6 +454,7 @@ if __name__ == '__main__':
 
         if not is_horovod or hvd.rank() == 0:
             logger.set_logger_dir(args.logdir, 'd')
+        logger.info("Environment Information:\n" + collect_env_info())
 
         finalize_configs(is_training=True)
         stepnum = cfg.TRAIN.STEPS_PER_EPOCH

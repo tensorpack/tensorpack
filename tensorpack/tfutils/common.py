@@ -1,17 +1,26 @@
 # -*- coding: utf-8 -*-
 # File: common.py
 
-
-import tensorflow as tf
+from collections import defaultdict
 from six.moves import map
+from tabulate import tabulate
+import os
+import re
+import sys
+import tensorflow as tf
 
 from ..compat import tfv1
 from ..utils.argtools import graph_memoized
+from ..utils.concurrency import subproc_call
+from ..utils import change_env
+from ..utils.nvml import NVMLContext
+from ..libinfo import __git_version__
 
 __all__ = ['get_default_sess_config',
            'get_global_step_value',
            'get_global_step_var',
            'get_tf_version_tuple',
+           'collect_env_info'
            # 'get_op_tensor_name',
            # 'get_tensors_by_names',
            # 'get_op_or_tensor_by_name',
@@ -153,3 +162,102 @@ def get_tf_version_tuple():
     Return TensorFlow version as a 2-element tuple (for comparison).
     """
     return tuple(map(int, tf.__version__.split('.')[:2]))
+
+
+def collect_env_info():
+    """
+    Returns:
+        str - a table contains important information about the environment
+    """
+    data = []
+    data.append(("Python", sys.version.replace("\n", "")))
+    data.append(("Tensorpack", __git_version__))
+    data.append(("TensorFlow", tfv1.VERSION + "/" + tfv1.GIT_VERSION))
+    data.append(("TF Compiler Version", tfv1.COMPILER_VERSION))
+    data.append(("TF CUDA support", tf.test.is_built_with_cuda()))
+
+    try:
+        from tensorflow.python.framework import test_util
+        data.append(("TF MKL support", test_util.IsMklEnabled()))
+    except Exception:
+        pass
+
+    try:
+        from tensorflow.python.framework import test_util
+        data.append(("TF XLA support", test_util.is_xla_enabled()))
+    except Exception:
+        pass
+
+    def find_library_with_ldconfig(ldconfig, lib):
+        # Read sonames from ldconfig: may not be accurate
+        # similar to from ctypes.util import find_library, but with full path
+        expr = r'\s+(lib%s\.[^\s]+)\s+\(.*=>\s+(.*)' % (re.escape(lib))
+        res = re.search(expr, ldconfig)
+        if not res:
+            return None
+        else:
+            ret = res.group(2)
+            return os.path.realpath(ret)
+
+    try:
+        with change_env('LC_ALL', 'C'), change_env('LANG', 'C'):
+            ldconfig, ret = subproc_call("ldconfig -p")
+        assert ret == 0
+        ldconfig = ldconfig.decode('utf-8')
+
+        def find_library(x):
+            return find_library_with_ldconfig(ldconfig, x)
+
+    except Exception:
+        from ctypes.util import find_library
+
+    data.append(("CUDA", find_library("cudart")))
+    data.append(("CUDNN", find_library("cudnn")))
+    data.append(("NCCL", find_library("nccl")))
+
+    # List devices with NVML
+    data.append(
+        ("CUDA_VISIBLE_DEVICES",
+         os.environ.get("CUDA_VISIBLE_DEVICES", str(None))))
+    try:
+        devs = defaultdict(list)
+        with NVMLContext() as ctx:
+            for idx, dev in enumerate(ctx.devices()):
+                devs[dev.name()].append(str(idx))
+
+        for devname, devids in devs.items():
+            data.append(
+                ("GPU " + ",".join(devids) + " Model",
+                 devname))
+    except Exception:
+        pass
+
+    # Other important dependencies
+    try:
+        import horovod
+        data.append(("horovod", horovod.__version__))
+    except ImportError:
+        pass
+
+    try:
+        import cv2
+        data.append(("cv2", cv2.__version__))
+    except ImportError:
+        pass
+
+    import msgpack
+    data.append(("msgpack", ".".join([str(x) for x in msgpack.version])))
+
+    has_prctl = True
+    try:
+        import prctl
+        _ = prctl.set_pdeathsig
+    except Exception:
+        has_prctl = False
+    data.append(("python-prctl", has_prctl))
+
+    return tabulate(data)
+
+
+if __name__ == '__main__':
+    print(collect_env_info())

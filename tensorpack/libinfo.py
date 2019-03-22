@@ -54,6 +54,11 @@ try:
     _version = tf.__version__.split('.')
     assert (int(_version[0]), int(_version[1])) >= (1, 3), "TF>=1.3 is required!"
     _HAS_TF = True
+    try:
+        from tensorflow.python.framework import test_util
+        test_util.InstallStackTraceHandler()
+    except Exception:
+        pass
 except ImportError:
     print("Failed to import tensorflow.")
     _HAS_TF = False

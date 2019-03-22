@@ -2,7 +2,9 @@
 # File: nvml.py
 
 import threading
-from ctypes import CDLL, POINTER, Structure, byref, c_uint, c_ulonglong
+from ctypes import (
+    CDLL, POINTER, Structure, byref, c_uint,
+    c_ulonglong, create_string_buffer)
 
 __all__ = ['NVMLContext']
 
@@ -134,6 +136,14 @@ class NvidiaDevice(object):
         _check_return(_NVML.get_function(
             "nvmlDeviceGetUtilizationRates")(self.hnd, byref(c_util)))
         return {'gpu': c_util.gpu, 'memory': c_util.memory}
+
+    def name(self):
+        buflen = 1024
+        buf = create_string_buffer(buflen)
+        fn = _NVML.get_function("nvmlDeviceGetName")
+        ret = fn(self.hnd, buf, c_uint(1024))
+        _check_return(ret)
+        return buf.value.decode('utf-8')
 
 
 class NVMLContext(object):
