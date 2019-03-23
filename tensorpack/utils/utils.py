@@ -4,6 +4,7 @@
 
 import inspect
 import numpy as np
+import re
 import os
 import sys
 from contextlib import contextmanager
@@ -11,6 +12,7 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 
 from . import logger
+from .concurrency import subproc_call
 
 __all__ = ['change_env',
            'get_rng',
@@ -216,3 +218,76 @@ def get_tqdm(*args, **kwargs):
     """ Similar to :func:`tqdm.tqdm()`,
     but use tensorpack's default options to have consistent style. """
     return tqdm(*args, **get_tqdm_kwargs(**kwargs))
+
+
+def find_library_full_path(name):
+    """
+    Similar to `from ctypes.util import find_library`, but try
+    to return full path if possible.
+    """
+    from ctypes.util import find_library
+
+    if os.name == "posix" and sys.platform == "darwin":
+        # on Mac, ctypes already returns full path
+        return find_library(name)
+
+    def _use_proc_maps(name):
+        """
+        Find so from /proc/pid/maps
+        Only works with libraries that has already been loaded.
+        But this is the most accurate method -- it finds the exact library that's being used.
+        """
+        procmap = os.path.join('/proc', str(os.getpid()), 'maps')
+        if not os.path.isfile(procmap):
+            return None
+        with open(procmap, 'r') as f:
+            for line in f:
+                line = line.strip().split(' ')
+                sofile = line[-1]
+
+                basename = os.path.basename(sofile)
+                if 'lib' + name + '.so' in basename:
+                    if os.path.isfile(sofile):
+                        return os.path.realpath(sofile)
+
+    # The following two methods come from https://github.com/python/cpython/blob/master/Lib/ctypes/util.py
+    def _use_ld(name):
+        """
+        Find so with `ld -lname -Lpath`.
+        It will search for files in LD_LIBRARY_PATH, but not in ldconfig.
+        """
+        cmd = "ld -t -l{} -o {}".format(name, os.devnull)
+        ld_lib_path = os.environ.get('LD_LIBRARY_PATH', '')
+        for d in ld_lib_path.split(':'):
+            cmd = cmd + " -L " + d
+        result, ret = subproc_call(cmd + '|| true')
+        expr = r'[^\(\)\s]*lib%s\.[^\(\)\s]*' % re.escape(name)
+        res = re.search(expr, result.decode('utf-8'))
+        if res:
+            res = res.group(0)
+            if not os.path.isfile(res):
+                return None
+            return os.path.realpath(res)
+
+    def _use_ldconfig(name):
+        """
+        Find so in `ldconfig -p`.
+        It does not handle LD_LIBRARY_PATH.
+        """
+        with change_env('LC_ALL', 'C'), change_env('LANG', 'C'):
+            ldconfig, ret = subproc_call("ldconfig -p")
+            ldconfig = ldconfig.decode('utf-8')
+            if ret != 0:
+                return None
+        expr = r'\s+(lib%s\.[^\s]+)\s+\(.*=>\s+(.*)' % (re.escape(name))
+        res = re.search(expr, ldconfig)
+        if not res:
+            return None
+        else:
+            ret = res.group(2)
+            return os.path.realpath(ret)
+
+    if sys.platform.startswith('linux'):
+        return _use_proc_maps(name) or _use_ld(name) or _use_ldconfig(name) or find_library(name)
+
+    return find_library(name)  # don't know what to do

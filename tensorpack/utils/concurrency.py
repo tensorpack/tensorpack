@@ -238,7 +238,7 @@ def start_proc_mask_signal(proc):
 
 def subproc_call(cmd, timeout=None):
     """
-    Execute a command with timeout, and return both STDOUT/STDERR.
+    Execute a command with timeout, and return STDOUT and STDERR
 
     Args:
         cmd(str): the command to execute.

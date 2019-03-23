@@ -5,14 +5,12 @@ from collections import defaultdict
 from six.moves import map
 from tabulate import tabulate
 import os
-import re
 import sys
 import tensorflow as tf
 
 from ..compat import tfv1
 from ..utils.argtools import graph_memoized
-from ..utils.concurrency import subproc_call
-from ..utils import change_env
+from ..utils.utils import find_library_full_path as find_library
 from ..utils.nvml import NVMLContext
 from ..libinfo import __git_version__
 
@@ -174,7 +172,8 @@ def collect_env_info():
     data.append(("Tensorpack", __git_version__))
     data.append(("TensorFlow", tfv1.VERSION + "/" + tfv1.GIT_VERSION))
     data.append(("TF Compiler Version", tfv1.COMPILER_VERSION))
-    data.append(("TF CUDA support", tf.test.is_built_with_cuda()))
+    has_cuda = tf.test.is_built_with_cuda()
+    data.append(("TF CUDA support", has_cuda))
 
     try:
         from tensorflow.python.framework import test_util
@@ -188,49 +187,27 @@ def collect_env_info():
     except Exception:
         pass
 
-    def find_library_with_ldconfig(ldconfig, lib):
-        # Read sonames from ldconfig: may not be accurate
-        # similar to from ctypes.util import find_library, but with full path
-        expr = r'\s+(lib%s\.[^\s]+)\s+\(.*=>\s+(.*)' % (re.escape(lib))
-        res = re.search(expr, ldconfig)
-        if not res:
-            return None
-        else:
-            ret = res.group(2)
-            return os.path.realpath(ret)
+    if has_cuda:
+        data.append(("Nvidia Driver", find_library("nvidia-ml")))
+        data.append(("CUDA", find_library("cudart")))
+        data.append(("CUDNN", find_library("cudnn")))
+        data.append(("NCCL", find_library("nccl")))
 
-    try:
-        with change_env('LC_ALL', 'C'), change_env('LANG', 'C'):
-            ldconfig, ret = subproc_call("ldconfig -p")
-        assert ret == 0
-        ldconfig = ldconfig.decode('utf-8')
+        # List devices with NVML
+        data.append(
+            ("CUDA_VISIBLE_DEVICES",
+             os.environ.get("CUDA_VISIBLE_DEVICES", str(None))))
+        try:
+            devs = defaultdict(list)
+            with NVMLContext() as ctx:
+                for idx, dev in enumerate(ctx.devices()):
+                    devs[dev.name()].append(str(idx))
 
-        def find_library(x):
-            return find_library_with_ldconfig(ldconfig, x)
-
-    except Exception:
-        from ctypes.util import find_library
-
-    data.append(("CUDA", find_library("cudart")))
-    data.append(("CUDNN", find_library("cudnn")))
-    data.append(("NCCL", find_library("nccl")))
-
-    # List devices with NVML
-    data.append(
-        ("CUDA_VISIBLE_DEVICES",
-         os.environ.get("CUDA_VISIBLE_DEVICES", str(None))))
-    try:
-        devs = defaultdict(list)
-        with NVMLContext() as ctx:
-            for idx, dev in enumerate(ctx.devices()):
-                devs[dev.name()].append(str(idx))
-
-        for devname, devids in devs.items():
-            data.append(
-                ("GPU " + ",".join(devids) + " Model",
-                 devname))
-    except Exception:
-        pass
+            for devname, devids in devs.items():
+                data.append(
+                    ("GPU " + ",".join(devids), devname))
+        except Exception:
+            data.append(("GPU", "Not found with NVML"))
 
     # Other important dependencies
     try:
