@@ -259,13 +259,13 @@ def finalize_configs(is_training):
         else:
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()
+        assert ngpu > 0, "Has to train with GPU!"
         assert ngpu % 8 == 0 or 8 % ngpu == 0, "Can only train with 1,2,4 or >=8 GPUs, but found {} GPUs".format(ngpu)
     else:
         # autotune is too slow for inference
         os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         ngpu = get_num_gpu()
 
-    assert ngpu > 0, "Has to run with GPU!"
     if _C.TRAIN.NUM_GPUS is None:
         _C.TRAIN.NUM_GPUS = ngpu
     else:

@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from ..utils.argtools import memoized_method
 from ..utils.develop import deprecated
+from ..tfutils.common import get_op_tensor_name
 from ..compat import backport_tensor_spec, tfv1
 
 TensorSpec = backport_tensor_spec()
@@ -88,7 +89,7 @@ class ModelDescBase(object):
                     assert "Placeholder" in p.op.type, \
                         "inputs() have to return TensorSpec or placeholders! Found {} instead.".format(p)
                     assert p.graph == G, "Placeholders returned by inputs() should be created inside inputs()!"
-            return [TensorSpec(shape=p.shape, dtype=p.dtype, name=p.name) for p in inputs]
+            return [TensorSpec(shape=p.shape, dtype=p.dtype, name=get_op_tensor_name(p.name)[0]) for p in inputs]
 
     @property
     def input_names(self):
