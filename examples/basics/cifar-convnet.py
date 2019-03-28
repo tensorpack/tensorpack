@@ -76,7 +76,7 @@ class Model(ModelDesc):
         return tf.add_n([cost, wd_cost], name='cost')
 
     def optimizer(self):
-        lr = tf.Variable(1e-2, name='learning_rate', trainable=False)
+        lr = tf.get_variable('learning_rate', initializer=1e-2, trainable=False)
         tf.summary.scalar('lr', lr)
         return tf.train.AdamOptimizer(lr, epsilon=1e-3)
 
