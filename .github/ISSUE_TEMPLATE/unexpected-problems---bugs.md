@@ -14,7 +14,7 @@ feel free to delete everything in this template.
 
 (1) **If you're using examples, what's the command you run:**
 
-(2) **If you're using examples, have you made any changes to the examples? Paste `git diff` here:**
+(2) **If you're using examples, have you made any changes to the examples? Paste `git status; git diff` here:**
 
 (3) **If not using examples, tell us what you did:**
 

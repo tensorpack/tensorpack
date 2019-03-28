@@ -70,6 +70,9 @@ pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories
 ```
 
+Please note that tensorpack is not yet stable.
+If you use tensorpack in your code, remember to mark the exact version of tensorpack you use as your dependencies.
+
 ## Citing Tensorpack:
 
 If you use Tensorpack in your research or wish to refer to the examples, please cite with:
