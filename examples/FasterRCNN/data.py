@@ -44,8 +44,9 @@ def print_class_histogram(roidbs):
         gt_classes = entry['class'][gt_inds]
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
     data = [[dataset.class_names[i], v] for i, v in enumerate(gt_hist)]
-    data.append(['total', sum([x[1] for x in data])])
-    table = tabulate(data, headers=['class', '#box'], tablefmt='pipe')
+    data.append(['total', sum(x[1] for x in data)])
+    # the first line is BG
+    table = tabulate(data[1:], headers=['class', '#box'], tablefmt='pipe')
     logger.info("Ground-Truth Boxes:\n" + colored(table, 'cyan'))
 
 

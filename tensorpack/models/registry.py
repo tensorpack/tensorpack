@@ -20,9 +20,13 @@ _LAYER_REGISTRY = {}
 __all__ = ['layer_register']
 
 
+_NameConflict = "LAYER_NAME_CONFLICT!!"
+
+
 def _register(name, func):
     if name in _LAYER_REGISTRY:
-        raise ValueError("Layer named {} is already registered!".format(name))
+        _LAYER_REGISTRY[name] = _NameConflict
+        return
     if name in ['tf']:
         raise ValueError(logger.error("A layer cannot be named {}".format(name)))
     _LAYER_REGISTRY[name] = func
@@ -39,7 +43,10 @@ def get_registered_layer(name):
     Returns:
         the wrapped layer function, or None if not registered.
     """
-    return _LAYER_REGISTRY.get(name, None)
+    ret = _LAYER_REGISTRY.get(name, None)
+    if ret == _NameConflict:
+        raise KeyError("Layer named '{}' is registered with `@layer_register` more than once!".format(name))
+    return ret
 
 
 def disable_layer_logging():
