@@ -146,7 +146,19 @@ class AccumGradOptimizer(ProxyOptimizer):
     :math:`k` times larger learning rate, but uses much less memory.
 
     Note that this implementation may not support all models.
-    E.g., it doesn't support sparse gradient update.
+    E.g., it currently doesn't support sparse gradient update.
+
+    This optimizer can be used in any TensorFlow code (with or without tensorpack).
+
+    Example:
+
+    .. code-block:: python
+
+        from tensorpack.tfutils.optimizer import AccumGradOptimizer
+        myopt = tf.train.GradientDescentOptimizer(0.01)
+        myopt = AccumGradOptimizer(myopt, niter=5)
+        train_op = myopt.minimize(loss)
+
     """
 
     def __init__(self, opt, niter):

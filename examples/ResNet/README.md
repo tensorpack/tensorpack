@@ -1,13 +1,14 @@
 
 ## [imagenet-resnet.py](imagenet-resnet.py)
 
-__Training__ code of three variants of ResNet on ImageNet:
+__Training__ code of 4 variants of ResNet on ImageNet:
 
 * [Original ResNet](https://arxiv.org/abs/1512.03385)
 * [Pre-activation ResNet](https://arxiv.org/abs/1603.05027)
 * [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
+* [ResNeXt](https://arxiv.org/abs/1611.05431)
 
-The training follows the __exact__ recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
+The training follows the exact recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
 __Distributed training__ code & results can be found at [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod).
 
@@ -15,25 +16,25 @@ This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet by .5% only compete with a lower
 baseline and they actually cannot beat this ResNet recipe.
 
-| Model       | Top 5 Error | Top 1 Error | Download                                                                     |
-|:------------|:------------|:-----------:|:----------------------------------------------------------------------------:|
-| ResNet18    | 10.50%      | 29.66%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet18.npz)    |
-| ResNet34    | 8.56%       | 26.17%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet34.npz)    |
-| ResNet50    | 6.85%       | 23.61%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50.npz)    |
-| ResNet50-SE | 6.24%       | 22.64%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50-SE.npz) |
-| ResNet101   | 6.04%       | 21.95%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet101.npz)   |
-| ResNeXt101-32x4d   | 5.73%       | 21.05%      |   [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNeXt101-32x4d.npz) |
-| ResNet152   | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)   |
+| Model            | Top 5 Error | Top 1 Error | Download                                                                          |
+|:-----------------|:------------|:-----------:|:---------------------------------------------------------------------------------:|
+| ResNet18         | 10.50%      | 29.66%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet18.npz)         |
+| ResNet34         | 8.56%       | 26.17%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet34.npz)         |
+| ResNet50         | 6.85%       | 23.61%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50.npz)         |
+| ResNet50-SE      | 6.24%       | 22.64%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet50-SE.npz)      |
+| ResNet101        | 6.04%       | 21.95%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet101.npz)        |
+| ResNeXt101-32x4d | 5.73%       | 21.05%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNeXt101-32x4d.npz) |
+| ResNet152        | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)        |
 
-To reproduce the above results,
+To reproduce,
 first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 [--mode resnet/preact/se] --batch 256
+./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 --mode resnet --batch 512
 # See ./imagenet-resnet.py -h for other options.
 ```
 
 You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
-With batch=64x8, it can finish 100 epochs in 16 hours on AWS p3.16xlarge (8 V100s).
+With batch=64x8, ResNet50 training can finish 100 epochs in 16 hours on AWS p3.16xlarge (8 V100s).
 
 The default data pipeline is probably OK for machines with SSD & 20 CPU cores.
 See the [tutorial](http://tensorpack.readthedocs.io/tutorial/efficient-dataflow.html) on other options to speed up your data.

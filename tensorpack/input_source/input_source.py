@@ -11,7 +11,7 @@ from six.moves import range, zip
 from ..compat import tfv1
 from ..callbacks.base import Callback, CallbackFactory
 from ..callbacks.graph import RunOp
-from ..dataflow import DataFlow, MapData, RepeatedData
+from ..dataflow import DataFlow, MapData, RepeatedData, DataFlowTerminated
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.dependency import dependency_of_fetches
 from ..tfutils.summary import add_moving_summary
@@ -164,18 +164,19 @@ class EnqueueThread(ShareSessionThread):
                     self.op.run(feed_dict=feed)
             except (tf.errors.CancelledError, tf.errors.OutOfRangeError):
                 pass
-                # logger.exception("Exception in {}:".format(self.name))
+            except DataFlowTerminated:
+                logger.info("[EnqueueThread] DataFlow has terminated.")
             except Exception as e:
                 if isinstance(e, RuntimeError) and 'closed Session' in str(e):
                     pass
                 else:
-                    logger.exception("Exception in {}:".format(self.name))
+                    logger.exception("[EnqueueThread] Exception in thread {}:".format(self.name))
             finally:
                 try:
                     self.close_op.run()
                 except Exception:
                     pass
-                logger.info("{} Exited.".format(self.name))
+                logger.info("[EnqueueThread] Thread {} Exited.".format(self.name))
 
     def reinitialize_dataflow(self):
         self._itr = self.dataflow.__iter__()
