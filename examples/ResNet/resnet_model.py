@@ -102,6 +102,15 @@ def se_resnet_bottleneck(l, ch_out, stride):
     return tf.nn.relu(out)
 
 
+def resnext_32x4d_bottleneck(l, ch_out, stride):
+    shortcut = l
+    l = Conv2D('conv1', l, ch_out * 2, 1, strides=1, activation=BNReLU)
+    l = Conv2D('conv2', l, ch_out * 2, 3, strides=stride, activation=BNReLU, split=32)
+    l = Conv2D('conv3', l, ch_out * 4, 1, activation=get_bn(zero_init=True))
+    out = l + resnet_shortcut(shortcut, ch_out * 4, stride, activation=get_bn(zero_init=False))
+    return tf.nn.relu(out)
+
+
 def resnet_group(name, l, block_func, features, count, stride):
     with tf.variable_scope(name):
         for i in range(0, count):
