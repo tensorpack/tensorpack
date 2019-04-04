@@ -425,13 +425,14 @@ class ZMQInput(TensorInput):
 
         def fn():
             ret = self._zmq_pull_socket.pull()
-            assert len(ret) == len(self._desc)
-            for qv, v in zip(ret, self._desc):
+            assert len(ret) == len(self._spec)
+            for qv, v in zip(ret, self._spec):
                 qv.set_shape(v.shape)
             return ret
         super(ZMQInput, self).__init__(fn)
 
     def _setup(self, input_signature):
+        super(ZMQInput, self)._setup(input_signature)
         assert len(input_signature) > 0, \
             "ZMQInput has to be used with input signature!"
 

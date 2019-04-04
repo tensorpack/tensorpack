@@ -228,7 +228,7 @@ def collect_env_info():
     has_prctl = True
     try:
         import prctl
-        _ = prctl.set_pdeathsig
+        _ = prctl.set_pdeathsig  # noqa
     except Exception:
         has_prctl = False
     data.append(("python-prctl", has_prctl))
