@@ -84,7 +84,7 @@ class GPUUtilizationTracker(Callback):
     def _after_train(self):
         self._stop_evt.set()
         self._evt.set()
-        self._proc.join()
+        self._proc.terminate()
 
     def worker(self, evt, rst_queue, stop_evt):
         while True:
