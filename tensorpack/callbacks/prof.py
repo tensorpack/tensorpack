@@ -67,7 +67,7 @@ class GPUUtilizationTracker(Callback):
         self._evt.set()
 
     def _after_epoch(self):
-        while self._evt.is_set():   # unlikely
+        while self._evt.is_set():   # unlikely, unless the epoch is extremely fast
             pass
         self._evt.set()
 
@@ -87,20 +87,21 @@ class GPUUtilizationTracker(Callback):
         self._proc.terminate()
 
     def worker(self, evt, rst_queue, stop_evt):
-        while True:
-            try:
-                evt.wait()  # start epoch
-                evt.clear()
-                if stop_evt.is_set():   # or on exit
-                    return
+        with NVMLContext() as ctx:
+            devices = [ctx.device(i) for i in self._devices]
+            while True:
+                try:
+                    evt.wait()  # start epoch
+                    evt.clear()
+                    if stop_evt.is_set():   # or on exit
+                        return
 
-                stats = np.zeros((len(self._devices),), dtype='f4')
-                cnt = 0
-                with NVMLContext() as ctx:
+                    stats = np.zeros((len(self._devices),), dtype='f4')
+                    cnt = 0
                     while True:
                         time.sleep(1)
 
-                        data = [ctx.device(i).utilization()['gpu'] for i in self._devices]
+                        data = [d.utilization()['gpu'] for d in devices]
                         data = list(map(float, data))
                         stats += data
                         cnt += 1
@@ -115,10 +116,10 @@ class GPUUtilizationTracker(Callback):
                                 cnt -= 1
                             rst_queue.put(stats / cnt)
                             break
-            except Exception:
-                logger.exception("Exception in GPUUtilizationTracker.worker")
-                rst_queue.put(-1)
-                return
+                except Exception:
+                    logger.exception("Exception in GPUUtilizationTracker.worker")
+                    rst_queue.put(-1)
+                    return
 
 
 # Can add more features from tfprof
