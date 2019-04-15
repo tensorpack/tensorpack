@@ -7,7 +7,7 @@ import numpy as np
 import os
 import time
 import tensorflow as tf
-from six.moves import map
+from six.moves import map, queue
 from tensorflow.python.client import timeline
 
 from ..tfutils.common import gpu_available_in_session
@@ -23,7 +23,7 @@ __all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
 class GPUUtilizationTracker(Callback):
     """ Summarize the average GPU utilization within an epoch.
 
-    It will start a process to run ``nvidia-smi`` every second
+    It will start a process to obtain GPU utilization through NVML every second
     within the epoch (the trigger_epoch time was not included),
     and write average utilization to monitors.
 
@@ -74,7 +74,14 @@ class GPUUtilizationTracker(Callback):
     def _trigger_epoch(self):
         # Don't do this in after_epoch because
         # before,after_epoch are supposed to be extremely fast by design.
-        stats = self._queue.get()
+        try:
+            stats = self._queue.get(timeout=60)
+        except queue.Empty:
+            if self._proc.is_alive():
+                raise RuntimeError("GPUUtilization.worker() is stuck. This is a bug.")
+            else:
+                raise RuntimeError("GPUUtilization.worker() process is killed unexpectedly.")
+
         if stats == -1:
             from ..train.base import StopTraining
             raise StopTraining("GPUUtilizationTracker.worker has failed.")

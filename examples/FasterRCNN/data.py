@@ -369,10 +369,10 @@ def get_train_dataflow():
         return ret
 
     if cfg.TRAINER == 'horovod':
-        ds = MultiThreadMapData(ds, 5, preprocess)
+        ds = MultiThreadMapData(ds, cfg.DATA.NUM_WORKERS, preprocess)
         # MPI does not like fork()
     else:
-        ds = MultiProcessMapDataZMQ(ds, 10, preprocess)
+        ds = MultiProcessMapDataZMQ(ds, cfg.DATA.NUM_WORKERS, preprocess)
     return ds
 
 

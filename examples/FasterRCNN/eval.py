@@ -251,7 +251,7 @@ class EvalCallback(Callback):
         scores = DetectionDataset().eval_or_save_inference_results(
             all_results, self._eval_dataset, output_file)
         for k, v in scores.items():
-            self.trainer.monitors.put_scalar(k, v)
+            self.trainer.monitors.put_scalar(self._eval_dataset + '-' + k, v)
 
     def _trigger_epoch(self):
         if self.epoch_num in self.epochs_to_eval:

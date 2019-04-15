@@ -89,7 +89,7 @@ Therefore, not every version of TF ≥ 1.6 supports every feature in this implem
 1. TF < 1.10: `SyncBN` with NCCL will fail ([PR](https://github.com/tensorflow/tensorflow/pull/20360)).
 1. TF 1.11 & 1.12: multithread inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/22750)).
    Latest tensorpack will apply a workaround.
-1. TF > 1.12: MKL inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/24650)).
+1. TF 1.13: MKL inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/24650)).
 1. TF > 1.12: Horovod training will fail ([issue](https://github.com/tensorflow/tensorflow/issues/25946)).
    Latest tensorpack will apply a workaround.
 

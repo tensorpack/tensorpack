@@ -7,7 +7,7 @@ try:
     # issue#1924 may happen on old systems
     import cv2  # noqa
     # cv2.setNumThreads(0)
-    if int(cv2.__version__.split('.')[0]) == 3:
+    if int(cv2.__version__.split('.')[0]) >= 3:
         cv2.ocl.setUseOpenCL(False)
     # check if cv is built with cuda or openmp
     info = cv2.getBuildInformation().split('\n')
