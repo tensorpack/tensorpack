@@ -11,7 +11,7 @@ from ..utils.develop import HIDE_DOC
 
 from .base import Callback
 
-__all__ = ['CallbackToHook', 'HookToCallback']
+__all__ = ['CallbackToHook', 'HookToCallback', 'TFLocalCLIDebugHook']
 
 
 class CallbackToHook(tfv1.train.SessionRunHook):
@@ -68,3 +68,27 @@ class HookToCallback(Callback):
 
     def _after_train(self):
         self._hook.end(self.trainer.sess)
+
+
+class TFLocalCLIDebugHook(HookToCallback):
+    """
+    Use the hook `tfdbg.LocalCLIDebugHook` in tensorpack.
+    """
+
+    _chief_only = True
+
+    def __init__(self, *args, **kwargs):
+        """
+        Args:
+            args, kwargs: arguments to create `tfdbg.LocalCLIDebugHook`.
+                Refer to tensorflow documentation for details.
+        """
+        from tensorflow.python import debug as tfdbg
+        super(TFLocalCLIDebugHook, self).__init__(tfdbg.LocalCLIDebugHook())
+
+    def add_tensor_filter(self, *args, **kwargs):
+        """
+        Wrapper of `tfdbg.LocalCLIDebugHook.add_tensor_filter`.
+        Refer to tensorflow documentation for details.
+        """
+        self._hook.add_tensor_filter(*args, **kwargs)
