@@ -37,6 +37,9 @@ with argscope(Conv2D, filters=32, kernel_size=3, activation=tf.nn.relu):
        .tf.multiply(0.5)
        .apply(func, *args, **kwargs)
        .FullyConnected('fc1', units=10, activation=tf.identity)())
+
+  with argscope([Conv2D, MaxPooling], data_format='NCHW'), argscope(Conv2D, kernel_size=1):
+    l2 = LinearWrap(image).Conv2D('conv3', strides=2).MaxPooling('pool3', 2)
 ```
 is equivalent to:
 ```
@@ -49,6 +52,9 @@ l = Dropout('dropout', l, rate=0.5)
 l = tf.multiply(l, 0.5)
 l = func(l, *args, **kwargs)
 l = FullyConnected('fc1', l, 10, activation=tf.identity)
+
+l2 = Conv2D('conv3', image, 32, 1, strides=2, data_format='NCHW', activation=tf.nn.relu)
+l2 = MaxPooling('pool3', l2, 2, data_format='NCHW')
 ```
 
 If you need to access the output of some layer and use it with some other

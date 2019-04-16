@@ -92,6 +92,10 @@ class ReuseSessionCreator(tf.train.SessionCreator):
 class SessionCreatorAdapter(tf.train.SessionCreator):
     """
     Apply a function on the output of a SessionCreator. Can be used to create a debug session.
+
+    Note:
+    Since TF 1.6, debug session may not work properly with Monitored session.
+    This is a tensorflow bug. To use tfdbg, use the :class:`TFLocalCLIDebugHook` callback instead.
     """
     def __init__(self, session_creator, func):
         """
