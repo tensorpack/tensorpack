@@ -56,8 +56,8 @@ setup(
     ],
     tests_require=['flake8', 'scikit-image'],
     extras_require={
-        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'] +
-               ['python-prctl'] if platform.system() == 'Linux' else [],
+        'all': ['pillow', 'scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'],
+        'all: "Linux" in sys_platform': ['python-prctl'],
         'all: python_version < "3.0"': ['tornado'],
     },
 )
