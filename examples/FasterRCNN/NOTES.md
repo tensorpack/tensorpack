@@ -24,14 +24,15 @@ Data:
      rewrite all the methods of
      `DetectionDataset` following its documents.
      You'll implement the logic to load your dataset and evaluate predictions.
-	 + If you want to load a model trained on COCO, you'll see error messages
-		 complaining about unmatched number of categories for certain weights in the checkpoint.
-		 Remove those weights in checkpoint, or rename them in the model.
+   + If you load a COCO-trained model on a different dataset, you'll see error messages
+     complaining about unmatched number of categories for certain weights in the checkpoint.
+     You can either remove those weights in checkpoint, or rename them in the model.
+     See [tensorpack tutorial](https://tensorpack.readthedocs.io/tutorial/save-load.html) for more details.
 
 2. You can easily add more augmentations such as rotation, but be careful how a box should be
-	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
-	 which is probably not the optimal way.
-	 A TODO is to generate bounding box from segmentation, so more augmentations can be naturally supported.
+   augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
+   which is probably not the optimal way.
+   A TODO is to generate bounding box from segmentation, so more augmentations can be naturally supported.
 
 Model:
 
