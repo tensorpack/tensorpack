@@ -82,7 +82,7 @@ class GPUUtilizationTracker(Callback):
             else:
                 raise RuntimeError("GPUUtilization.worker() process is killed unexpectedly.")
 
-        if stats == -1:
+        if isinstance(stats, int) and stats == -1:
             from ..train.base import StopTraining
             raise StopTraining("GPUUtilizationTracker.worker has failed.")
         for idx, dev in enumerate(self._devices):
