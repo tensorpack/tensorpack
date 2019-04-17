@@ -24,6 +24,9 @@ Data:
      rewrite all the methods of
      `DetectionDataset` following its documents.
      You'll implement the logic to load your dataset and evaluate predictions.
+	 + If you want to load a model trained on COCO, you'll see error messages
+		 complaining about unmatched number of categories for certain weights in the checkpoint.
+		 Remove those weights in checkpoint, or rename them in the model.
 
 2. You can easily add more augmentations such as rotation, but be careful how a box should be
 	 augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
