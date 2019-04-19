@@ -695,14 +695,15 @@ class PrintData(ProxyDataFlow):
 
         .. code-block:: python
 
-            def __iter__():
+            def create_my_dataflow():
                 ds = SomeDataSource('path/to/lmdb')
                 ds = SomeInscrutableMappings(ds)
                 ds = PrintData(ds, num=2, max_list=2)
                 return ds
-            ds = __iter__()
+            ds = create_my_dataflow()
+            # other code that uses ds
 
-        The output looks like:
+        When datapoints are taken from the dataflow, it will print outputs like:
 
         .. code-block:: none
 
