@@ -43,9 +43,18 @@ The tower function needs to follow some rules:
 2. It must __respect variable collections__:
    * (Required) Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
    * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
-3. It must __respect variable scopes__:
-   * The name of any trainable variables created in the function must be like "variable_scope_name/custom/scopes/name".
-     Don't depend on name_scope's name. Don't depend on some tensor's name. Don't use variable_scope's name twice.
+3. It must __respect variable scope names__:
+
+   The name of any trainable variables created in the function must be like "variable_scope_name/custom/scopes/name".
+	 Therefore, the name of any trainable variables must:
+
+	 * Not depend on name_scope's name.
+	 * Not depend on some tensor's name.
+	 * Not use the same variable_scope's name twice.
+
+	 Tensorpack layers create variables based on the name given to the layer  (i.e., `Conv2D('name', x)`).
+	 So the name of the layer needs to follow the above rules as well.
+4. It must __respect variable scope reuse__:
    * The creation of any trainable variables must __respect reuse__ variable scope.
      To respect variable reuse (i.e. sharing), use `tf.get_variable` instead of `tf.Variable` in the function.
 
@@ -54,9 +63,9 @@ The tower function needs to follow some rules:
    * Do not modify the reuse option (e.g., by `scope.reuse_variables()`) of a variable
      scope that is not created by you. This affects other's code. You can always
      open new scopes if you need the reuse option.
-4. It cannot create scopes or variables containing the name 'tower', as it is
+5. It must not create scopes or variables containing the name 'tower', as it is
    reserved for special use.
-     
+
 These conventions are easy to follow, and most layer wrappers (e.g.,
 tf.layers/slim/tensorlayer) do follow them. Note that certain Keras layers do not
 follow these conventions and will need some workarounds if used within tensorpack.
@@ -88,10 +97,10 @@ Note some __common problems__ when using these trainers:
     to the total batch size.
 
     ```eval_rst
-    .. note:: 
+    .. note::
 
-        Splitting a tensor for data-parallel training (as done by frameworks like Keras) 
-        makes no sense at all. 
+        Splitting a tensor for data-parallel training (as done by frameworks like Keras)
+        makes no sense at all.
         First, it wastes time doing the split because typically data is first concatenated by the user.
         Second, this puts unnecessary shape constraints on the data, that the
         inputs on each GPU needs to have compatible shapes.
