@@ -87,19 +87,19 @@ You just need the right interface to connect Python to the graph directly, effic
 `InputSource` is an abstract interface used by tensorpack trainers, to describe where the inputs come from and how they enter the graph.
 Some choices are:
 
-1. [FeedInput](../modules/input_source.html#tensorpack.input_source.FeedInput):
+1. [FeedInput](../../modules/input_source.html#tensorpack.input_source.FeedInput):
 	Data come from a DataFlow and get fed to the graph (slow).
-2. [QueueInput](../modules/input_source.html#tensorpack.input_source.QueueInput):
+2. [QueueInput](../../modules/input_source.html#tensorpack.input_source.QueueInput):
     Data come from a DataFlow and get buffered on CPU by a TF queue.
-3. [StagingInput](../modules/input_source.html#tensorpack.input_source.StagingInput):
+3. [StagingInput](../../modules/input_source.html#tensorpack.input_source.StagingInput):
 	Come from some other `InputSource`, then prefetched on GPU by a TF StagingArea.
-4. [TFDatasetInput](../modules/input_source.html#tensorpack.input_source.TFDatasetInput)
+4. [TFDatasetInput](../../modules/input_source.html#tensorpack.input_source.TFDatasetInput)
 	Come from a `tf.data.Dataset`.
-5. [dataflow_to_dataset](../modules/input_source.html#tensorpack.input_source.TFDatasetInput.dataflow_to_dataset)
-	Come from a DataFlow, and then lfurther processed by utilities in `tf.data.Dataset`.
-6. [TensorInput](../modules/input_source.html#tensorpack.input_source.TensorInput):
+5. [dataflow_to_dataset](../../modules/input_source.html#tensorpack.input_source.TFDatasetInput.dataflow_to_dataset)
+	Come from a DataFlow, and then further processed by utilities in `tf.data.Dataset`.
+6. [TensorInput](../../modules/input_source.html#tensorpack.input_source.TensorInput):
 	Come from some tensors you define (can be reading ops, for example).
-7. [ZMQInput](../modules/input_source.html#tensorpack.input_source.ZMQInput)
+7. [ZMQInput](../../modules/input_source.html#tensorpack.input_source.ZMQInput)
 	Come from some ZeroMQ pipe, where the reading/preprocessing may happen in a different process or even a different machine.
 
 Typically, we recommend using `DataFlow + QueueInput` as it's good for most use cases.
