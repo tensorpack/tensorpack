@@ -19,12 +19,13 @@ Then it is a good time to open an issue.
 ## How to print/dump intermediate results during training
 
 1. Learn `tf.Print`. Most of the times, adding one line in between:
-```python
-tensor = obtain_a_tensor()
-tensor = tf.Print(tensor, [tf.shape(tensor), tensor], tensor.name, summarize=100)
-use_the_tensor(tensor)
-```
-is sufficient.
+
+   ```python
+   tensor = obtain_a_tensor()
+   tensor = tf.Print(tensor, [tf.shape(tensor), tensor], tensor.name, summarize=100)
+   use_the_tensor(tensor)
+   ```
+   is sufficient.
 
 2. Know [DumpTensors](../modules/callbacks.html#tensorpack.callbacks.DumpTensors),
 	[ProcessTensors](../modules/callbacks.html#tensorpack.callbacks.ProcessTensors) callbacks.

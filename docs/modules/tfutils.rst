@@ -103,6 +103,14 @@ tensorpack.tfutils.export module
     :undoc-members:
     :show-inheritance:
 
+tensorpack.tfutils.dependency module
+------------------------------------
+
+.. automodule:: tensorpack.tfutils.dependency
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Other functions in tensorpack.tfutils module
 ---------------------------------------------
 

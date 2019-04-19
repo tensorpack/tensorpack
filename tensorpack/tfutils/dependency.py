@@ -25,7 +25,7 @@ def dependency_of_targets(targets, op):
         op (tf.Operation or tf.Tensor):
 
     Returns:
-        bool
+        bool: True if any one of `targets` depend on `op`.
     """
     # TODO tensorarray? sparsetensor?
     if isinstance(op, tf.Tensor):
@@ -48,7 +48,7 @@ def dependency_of_fetches(fetches, op):
         op (tf.Operation or tf.Tensor):
 
     Returns:
-        bool
+        bool: True if any of `fetches` depend on `op`.
     """
     try:
         from tensorflow.python.client.session import _FetchHandler as FetchHandler
