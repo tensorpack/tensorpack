@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-# File: mnist.py
+# File: caltech101.py
 
 
-import numpy
 import os
-import scipy.io
 from six.moves import range
 
 from ...utils import logger
 from ...utils.fs import download, get_dataset_path
 from ..base import RNGDataFlow
 
-__all__ = ["Caltech101"]
+__all__ = ["Caltech101Silhouettes"]
 
 
 def maybe_download(url, work_directory):
@@ -24,25 +22,25 @@ def maybe_download(url, work_directory):
     return filepath
 
 
-class Caltech101(RNGDataFlow):
+class Caltech101Silhouettes(RNGDataFlow):
     """
-    Produces [image, label] in Caltech101 dataset,
-    image is 28x28 in the range [0,1], label is an int.
+    Produces [image, label] in Caltech101 Silhouettes dataset,
+    image is 28x28 in the range [0,1], label is an int in the range [0,100].
     """
 
     _DIR_NAME = "caltech101_data"
     _SOURCE_URL = "https://people.cs.umass.edu/~marlin/data/"
 
-    def __init__(self, train_or_test, shuffle=True, dir=None):
+    def __init__(self, name, shuffle=True, dir=None):
         """
         Args:
-            train_or_test (str): either 'train' or 'test'
+            name (str): 'train', 'test', 'val'
             shuffle (bool): shuffle the dataset
         """
         if dir is None:
             dir = get_dataset_path(self._DIR_NAME)
-        assert train_or_test in ["train", "test"]
-        self.train_or_test = train_or_test
+        assert name in ['train', 'test', 'val']
+        self.name = name
         self.shuffle = shuffle
 
         def get_images_and_labels(data_file):
@@ -53,14 +51,14 @@ class Caltech101(RNGDataFlow):
         self.data = get_images_and_labels("caltech101_silhouettes_28_split1.mat")
 
         if self.train_or_test == "train":
-            train_with_val_images = (self.data["train_data"], self.data["val_data"])
-            self.images = numpy.concatenate(train_with_val_images, axis=0)
-            self.images = self.images.reshape((6364, 28, 28))
-            train_with_val_labels = (self.data["train_labels"], self.data["val_labels"])
-            self.labels = numpy.concatenate(train_with_val_labels, axis=0).ravel() - 1
-        else:
+            self.images = self.data["train_data"].reshape((4100, 28, 28))
+            self.labels = self.data["train_labels"].ravel() - 1
+        elif self.name == "test":
             self.images = self.data["test_data"].reshape((2307, 28, 28))
             self.labels = self.data["test_labels"].ravel() - 1
+        else:
+            self.images = self.data["val_data"].reshape((2264, 28, 28))
+            self.labels = self.data["val_labels"].ravel() - 1
 
     def __len__(self):
         return self.images.shape[0]
@@ -75,8 +73,15 @@ class Caltech101(RNGDataFlow):
             yield [img, label]
 
 
+try:
+    import scipy.io
+except ImportError:
+    from ...utils.develop import create_dummy_class
+    Caltech101Silhouettes = create_dummy_class('Caltech101Silhouettes', 'scipy.io') # noqa
+
+
 if __name__ == "__main__":
-    ds = Caltech101("train")
+    ds = Caltech101Silhouettes("train")
     ds.reset_state()
     for (img, label) in ds:
         from IPython import embed
