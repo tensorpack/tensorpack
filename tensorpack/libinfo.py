@@ -67,4 +67,4 @@ except ImportError:
 # These lines will be programatically read/write by setup.py
 # Don't touch them.
 __version__ = '0.9.4'
-__git_version__ = __version__
+__git_version__ = "v0.9.4-22-g8d888d30-dirty"
