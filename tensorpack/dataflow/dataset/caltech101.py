@@ -50,7 +50,7 @@ class Caltech101Silhouettes(RNGDataFlow):
 
         self.data = get_images_and_labels("caltech101_silhouettes_28_split1.mat")
 
-        if self.train_or_test == "train":
+        if self.name == "train":
             self.images = self.data["train_data"].reshape((4100, 28, 28))
             self.labels = self.data["train_labels"].ravel() - 1
         elif self.name == "test":
