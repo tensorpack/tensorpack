@@ -10,6 +10,7 @@ if STATICA_HACK:
     from .ilsvrc import *
     from .mnist import *
     from .svhn import *
+    from .caltech101 import *
 
 from pkgutil import iter_modules
 import os
