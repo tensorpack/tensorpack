@@ -13,7 +13,7 @@ from .develop import create_dummy_func
 msgpack_numpy.patch()
 assert msgpack.version >= (0, 5, 2)
 
-__all__ = ['loads', 'dumps']
+__all__ = ['loads', 'dumps', 'NonPicklableWrapper']
 
 
 MAX_MSGPACK_LEN = 1000000000
@@ -81,3 +81,21 @@ if os.environ.get('TENSORPACK_SERIALIZE', 'msgpack') == 'pyarrow':
 else:
     loads = loads_msgpack
     dumps = dumps_msgpack
+
+
+class NonPicklableWrapper(object):
+    """
+    TODO
+
+    https://github.com/joblib/joblib/blob/master/joblib/externals/loky/cloudpickle_wrapper.py
+    """
+    def __init__(self, obj):
+        self._obj = obj
+
+    def __reduce__(self):
+        import dill
+        s = dill.dumps(self._obj)
+        return dill.loads, (s, )
+
+    def __call__(self, *args, **kwargs):
+        return self._obj(*args, **kwargs)

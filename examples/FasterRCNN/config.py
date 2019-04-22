@@ -20,6 +20,9 @@ class AttrDict():
     def __getattr__(self, name):
         if self._freezed:
             raise AttributeError(name)
+        if name.startswith('_'):
+            # Do not mess with internals. Otherwise copy/pickle will fail
+            raise AttributeError(name)
         ret = AttrDict()
         setattr(self, name, ret)
         return ret
