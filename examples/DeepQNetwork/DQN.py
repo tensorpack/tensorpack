@@ -108,11 +108,14 @@ def get_config(model):
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
         init_memory_size=INIT_MEMORY_SIZE,
-        init_exploration=1.0,
         update_frequency=UPDATE_FREQ,
         history_len=FRAME_HISTORY,
         state_dtype=model.state_dtype.as_numpy_dtype
     )
+
+    # Set to other values if you need a different initial exploration
+    # (e.g., # if you're resuming a training half-way)
+    # expreplay.exploration = 1.0
 
     return TrainConfig(
         data=QueueInput(expreplay),
