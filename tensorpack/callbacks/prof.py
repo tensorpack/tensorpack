@@ -53,8 +53,7 @@ class GPUUtilizationTracker(Callback):
             self._devices = devices
         assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
 
-    def _before_train(self):
-        assert gpu_available_in_session(), "[GPUUtilizationTracker] needs GPU!"
+    def _setup_graph(self):
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()
@@ -62,6 +61,9 @@ class GPUUtilizationTracker(Callback):
             self._evt, self._queue, self._stop_evt))
         ensure_proc_terminate(self._proc)
         start_proc_mask_signal(self._proc)
+
+    def _before_train(self):
+        assert gpu_available_in_session(), "[GPUUtilizationTracker] needs GPU!"
 
     def _before_epoch(self):
         self._evt.set()

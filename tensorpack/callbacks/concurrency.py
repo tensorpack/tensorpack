@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # File: concurrency.py
 
-
 import multiprocessing as mp
 
 from ..utils import logger
