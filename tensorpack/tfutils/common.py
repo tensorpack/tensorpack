@@ -6,7 +6,9 @@ from six.moves import map
 from tabulate import tabulate
 import os
 import sys
+import psutil
 import tensorflow as tf
+import numpy as np
 
 from ..compat import tfv1
 from ..utils.argtools import graph_memoized
@@ -168,8 +170,11 @@ def collect_env_info():
         str - a table contains important information about the environment
     """
     data = []
+    data.append(("sys.platform", sys.platform))
     data.append(("Python", sys.version.replace("\n", "")))
     data.append(("Tensorpack", __git_version__))
+    data.append(("Numpy", np.__version__))
+
     data.append(("TensorFlow", tfv1.VERSION + "/" + tfv1.GIT_VERSION))
     data.append(("TF Compiler Version", tfv1.COMPILER_VERSION))
     has_cuda = tf.test.is_built_with_cuda()
@@ -209,7 +214,11 @@ def collect_env_info():
         except Exception:
             data.append(("GPU", "Not found with NVML"))
 
-    # Other important dependencies
+    vram = psutil.virtual_memory()
+    data.append(("Free RAM", "{:.2f}/{:.2f} GB".format(vram.available / 1024**3, vram.total / 1024**3)))
+    data.append(("CPU Count", psutil.cpu_count()))
+
+    # Other important dependencies:
     try:
         import horovod
         data.append(("horovod", horovod.__version__))

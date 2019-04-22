@@ -51,6 +51,7 @@ setup(
         "msgpack>=0.5.2",
         "msgpack-numpy>=0.4.4.2",
         "pyzmq>=16",
+        "psutil>=5",
         "subprocess32; python_version < '3.0'",
         "functools32; python_version < '3.0'",
     ],
