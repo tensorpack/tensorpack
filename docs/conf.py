@@ -361,9 +361,9 @@ def process_signature(app, what, name, obj, options, signature,
         # add scope name to layer signatures:
         if hasattr(obj, 'use_scope') and hasattr(obj, 'symbolic_function'):
             if obj.use_scope:
-                signature = signature[0] + 'scope_name, ' + signature[1:]
+                signature = signature[0] + 'variable_scope_name, ' + signature[1:]
             elif obj.use_scope is None:
-                signature = signature[0] + '[scope_name,] ' + signature[1:]
+                signature = signature[0] + '[variable_scope_name,] ' + signature[1:]
     # signature: arg list
     return signature, return_annotation
 

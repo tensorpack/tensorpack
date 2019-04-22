@@ -14,9 +14,9 @@ TensorFlow itself also changes API and those are not listed here.
   code that relies on internals of `InputDesc`.
 	To use `tf.TensorSpec` in your `ModelDesc`:
 ```python
-	def inputs(self):
-			return [tf.TensorSpec((None, 28, 28, 1), tf.float32, 'image'),
-							tf.TensorSpec((None,), tf.int32, 'label')]
+    def inputs(self):
+        return [tf.TensorSpec((None, 28, 28, 1), tf.float32, 'image'),
+                tf.TensorSpec((None,), tf.int32, 'label')]
 ```
 + [2018/08/27] msgpack is used for "serialization to disk", because pyarrow
   has no compatibility between versions. To use pyarrow instead, `export TENSORPACK_COMPATIBLE_SERIALIZE=pyarrow`.
@@ -25,7 +25,7 @@ TensorFlow itself also changes API and those are not listed here.
 	It's later found that pyarrow is unstable and may lead to crash.
 	So the default serialization is changed back to msgpack.
 + [2018/03/20] `ModelDesc` starts to use simplified interfaces:
-	+ `_get_inputs()` renamed to `inputs()` and returns `tf.placeholder`s.
+	+ `_get_inputs()` renamed to `inputs()` and returns `tf.TensorSpec`.
 	+ `build_graph(self, tensor1, tensor2)` returns the cost tensor directly.
 	+ `_get_optimizer()` renamed to `optimizer()`.
 	Old interface will still be available for a while, but new ones are recommended.
@@ -38,7 +38,7 @@ TensorFlow itself also changes API and those are not listed here.
 + [2017/10/18]
 	`TrainConfig(predict_tower)` was deprecated. You can set the inference device directly when creating the `InferenceRunner` callback.
 + [2017/10/12](https://github.com/tensorpack/tensorpack/commit/7e963996f615b85f7459455596b4ee9bbd0bce8e).
-	`tensorpack.RL` was deprecated. The RL examples are written with OpenAI gym interface instead.
+	`tensorpack.RL` was deprecated. The RL examples are rewritten with OpenAI gym interface instead.
 + [2017/10/10](https://github.com/tensorpack/tensorpack/commit/7d40e049691d92018f50dc7d45bba5e8b140becc).
 	`tfutils.distributions` was deprecated in favor of `tf.distributions` introduced in TF 1.3.
 + [2017/08/02](https://github.com/tensorpack/tensorpack/commit/875f4d7dbb5675f54eae5675fa3a0948309a8465).

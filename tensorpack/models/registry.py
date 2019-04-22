@@ -68,10 +68,9 @@ def layer_register(
     Args:
         log_shape (bool): log input/output shape of this layer
         use_scope (bool or None):
-            Whether to call this layer with an extra first argument as scope.
+            Whether to call this layer with an extra first argument as variable scope.
             When set to None, it can be called either with or without
-            the scope name argument.
-            It will try to figure out by checking if the first argument
+            the scope name argument, depend on whether the first argument
             is string or not.
 
     Returns:
@@ -84,6 +83,9 @@ def layer_register(
         @layer_register(use_scope=True)
         def add10(x):
             return x + tf.get_variable('W', shape=[10])
+
+        # use it:
+        output = add10('layer_name', input)  # the function will be called under variable scope "layer_name".
     """
 
     def wrapper(func):
