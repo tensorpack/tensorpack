@@ -108,7 +108,9 @@ class NumpySerializer():
 
     @staticmethod
     def load(path, shuffle=True):
-        buffer = np.load(path)['buffer']
+        # allow_pickle defaults to False since numpy 1.16.3
+        # (https://www.numpy.org/devdocs/release.html#unpickling-while-loading-requires-explicit-opt-in)
+        buffer = np.load(path, allow_pickle=True)['buffer']
         return DataFromList(buffer, shuffle=shuffle)
 
 

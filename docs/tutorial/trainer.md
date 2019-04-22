@@ -45,15 +45,18 @@ The tower function needs to follow some rules:
    * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
 3. It must __respect variable scope names__:
 
-   The name of any trainable variables created in the function must be like "variable_scope_name/custom/scopes/name".
-	 Therefore, the name of any trainable variables must:
+   The name of any trainable variables created in the function must be like "variable_scope_name/other/scopes/and/name".
+	 Strictly speaking, the name of any trainable variables must:
 
+     * Start with the name of the enclosing variable_scope when the tower function is called.
+	 * Not use the same variable_scope's name twice in its name.
 	 * Not depend on name_scope's name.
-	 * Not depend on some tensor's name.
-	 * Not use the same variable_scope's name twice.
+	 * Not depend on any tensor's name (because the tensor's name may depend on name_scope's name).
 
-	 Tensorpack layers create variables based on the name given to the layer  (i.e., `Conv2D('name', x)`).
-	 So the name of the layer needs to follow the above rules as well.
+	 Tensorpack layers create variables based on the name given to the layer:
+	 e.g., `Conv2D('test', x)` will open a variable scope named "test".
+     In order to respect the above rules, 
+	 the name of the layer must not depend on name_scope's name or any tensor's name.
 4. It must __respect variable scope reuse__:
    * The creation of any trainable variables must __respect reuse__ variable scope.
      To respect variable reuse (i.e. sharing), use `tf.get_variable` instead of `tf.Variable` in the function.
