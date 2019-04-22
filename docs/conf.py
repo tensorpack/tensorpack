@@ -31,7 +31,7 @@ MOCK_MODULES = ['tabulate', 'h5py',
                 'scipy', 'scipy.misc', 'scipy.io',
                 'tornado', 'tornado.concurrent',
                 'horovod', 'horovod.tensorflow',
-                'subprocess32', 'functools32']
+                'subprocess32', 'functools32', 'psutil']
 
 # it's better to have tensorflow installed (for some docs to show)
 # but it's OK to mock it as well
@@ -385,6 +385,7 @@ _DEPRECATED_NAMES = set([
     'start_test',  # TestDataSpeed
     'ThreadedMapData',
     'TrainingMonitor',
+    'PeakMemoryTracker',
 
     # deprecated or renamed symbolic code
     'Deconv2D', 'psnr',

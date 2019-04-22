@@ -9,6 +9,7 @@ import time
 import tensorflow as tf
 from six.moves import map, queue
 from tensorflow.python.client import timeline
+import psutil
 
 from ..tfutils.common import gpu_available_in_session
 from ..utils import logger
@@ -17,7 +18,7 @@ from ..utils.gpu import get_num_gpu
 from ..utils.nvml import NVMLContext
 from .base import Callback
 
-__all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker']
+__all__ = ['GPUUtilizationTracker', 'GraphProfiler', 'PeakMemoryTracker', 'GPUMemoryTracker', 'HostMemoryTracker']
 
 
 class GPUUtilizationTracker(Callback):
@@ -205,11 +206,11 @@ class GraphProfiler(Callback):
         self.trainer.monitors.put_event(evt)
 
 
-class PeakMemoryTracker(Callback):
+class GPUMemoryTracker(Callback):
     """
     Track peak memory used on each GPU device every epoch, by :mod:`tf.contrib.memory_stats`.
-    The peak memory comes from the `MaxBytesInUse` op, which might span
-    multiple session.run.
+    The peak memory comes from the ``MaxBytesInUse`` op, which is the peak memory used
+    in recent ``session.run`` calls.
     See https://github.com/tensorflow/tensorflow/pull/13107.
     """
 
@@ -245,3 +246,28 @@ class PeakMemoryTracker(Callback):
         if results is not None:
             for mem, dev in zip(results, self._devices):
                 self.trainer.monitors.put_scalar('PeakMemory(MB)' + dev, mem / 1e6)
+
+
+PeakMemoryTracker = GPUMemoryTracker
+
+
+class HostMemoryTracker(Callback):
+    """
+    Track free RAM on the host.
+
+    When triggered, it writes the size of free RAM into monitors.
+    """
+    _chief_only = False
+
+    def _setup_graph(self):
+        logger.info("[HostMemoryTracker] Free RAM in setup_graph() is {:.2f} GB.".format(self._free_ram_gb()))
+
+    def _before_train(self):
+        logger.info("[HostMemoryTracker] Free RAM in before_train() is {:.2f} GB.".format(self._free_ram_gb()))
+
+    def _trigger(self):
+        ram_gb = self._free_ram_gb()
+        self.trainer.monitors.put_scalar('HostFreeMemory (GB)', ram_gb)
+
+    def _free_ram_gb(self):
+        return psutil.virtual_memory().available / 1024**3

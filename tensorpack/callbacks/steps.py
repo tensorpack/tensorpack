@@ -140,7 +140,7 @@ class SessionRunTimeout(Callback):
         """
         Args:
             timeout_in_ms (int):
-"""
+        """
         self._timeout = int(timeout_in_ms)
 
         opt = tf.RunOptions(timeout_in_ms=timeout_in_ms)

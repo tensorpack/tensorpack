@@ -46,7 +46,7 @@ class InjectShell(Callback):
 
         callbacks=[InjectShell('/path/to/pause-training.tmp'), ...]
 
-        # the following command will pause the training when the epoch finishes:
+        # the following command will pause the training and start a shell when the epoch finishes:
         $ touch /path/to/pause-training.tmp
 
     """
@@ -85,11 +85,11 @@ class EstimatedTimeLeft(Callback):
     """
     Estimate the time left until completion of training.
     """
-    def __init__(self, last_k_epochs=5, median=False):
+    def __init__(self, last_k_epochs=5, median=True):
         """
         Args:
             last_k_epochs (int): Use the time spent on last k epochs to estimate total time left.
-            median (bool): Use mean by default. If True, use the median time spent on last k epochs.
+            median (bool): Use the mean or median time spent on last k epochs.
         """
         self._times = deque(maxlen=last_k_epochs)
         self._median = median

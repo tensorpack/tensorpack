@@ -485,9 +485,10 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter(
                 'learning_rate', warmup_schedule, interp='linear', step_based=True),
             ScheduledHyperParamSetter('learning_rate', lr_schedule),
-            PeakMemoryTracker(),
+            GPUMemoryTracker(),
+            HostMemoryTracker(),
             EstimatedTimeLeft(median=True),
-            SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
+            SessionRunTimeout(60000),   # 1 minute timeout
         ]
         if cfg.TRAIN.EVAL_PERIOD > 0:
             callbacks.extend([

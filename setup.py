@@ -47,7 +47,7 @@ setup(
         "six",
         "termcolor>=1.1",
         "tabulate>=0.7.7",
-        "tqdm>4.11.1",
+        "tqdm>4.29.0",
         "msgpack>=0.5.2",
         "msgpack-numpy>=0.4.4.2",
         "pyzmq>=16",
