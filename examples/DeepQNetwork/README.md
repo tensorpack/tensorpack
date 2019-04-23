@@ -20,9 +20,10 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-On one GTX 1080Ti, the ALE version took ~3 hours of training to reach 21 (maximum) score on
-Pong, ~15 hours of training to reach 400 score on Breakout.
-It runs at 50 batches (~3.2k trained frames, 200 seen frames, 800 game frames) per second on GTX 1080Ti.
+On one GTX 1080Ti, the ALE version took __~2 hours__ of training to reach 21 (maximum) score on
+Pong, __~10 hours__ of training to reach 400 score on Breakout.
+It runs at 80 batches (~5.1k trained frames, 320 seen frames, 1.3k game frames) per second on GTX 1080Ti.
+This is likely the fastest open source TF implementation of DQN.
 
 ## How to use
 

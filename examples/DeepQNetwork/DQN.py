@@ -27,6 +27,7 @@ MEMORY_SIZE = 1e6
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20
 STEPS_PER_EPOCH = 100000 // UPDATE_FREQ  # each epoch is 100k played frames
 EVAL_EPISODE = 50
+NUM_PARALLEL_PLAYERS = 3
 
 USE_GYM = False
 ENV_NAME = None
@@ -101,9 +102,11 @@ class Model(DQNModel):
 
 
 def get_config(model):
+    global args
     expreplay = ExpReplay(
         predictor_io_names=(['state'], ['Qvalue']),
-        player=get_player(train=True),
+        get_player=lambda: get_player(train=True),
+        num_parallel_players=NUM_PARALLEL_PLAYERS,
         state_shape=model.state_shape,
         batch_size=BATCH_SIZE,
         memory_size=MEMORY_SIZE,
@@ -134,7 +137,7 @@ def get_config(model):
                 interp='linear'),
             PeriodicTrigger(Evaluator(
                 EVAL_EPISODE, ['state'], ['Qvalue'], get_player),
-                every_k_epochs=10),
+                every_k_epochs=5 if 'pong' in args.env.lower() else 10),  # eval more frequently for easy games
             HumanHyperParamSetter('learning_rate'),
         ],
         steps_per_epoch=STEPS_PER_EPOCH,

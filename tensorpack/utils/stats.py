@@ -47,6 +47,12 @@ class StatCounter(object):
         assert len(self._values)
         return min(self._values)
 
+    def samples(self):
+        """
+        Returns all samples.
+        """
+        return self._values
+
 
 class RatioCounter(object):
     """ A counter to count ratio of something. """
