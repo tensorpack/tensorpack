@@ -1,56 +1,37 @@
 # -*- coding: utf-8 -*-
 # File: data.py
 
-import copy
-import numpy as np
 import cv2
-from tabulate import tabulate
-from termcolor import colored
+import numpy as np
+import copy
+import itertools
 
+from tensorpack.utils.argtools import memoized, log_once
 from tensorpack.dataflow import (
-    DataFromList, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
+    imgaug, TestDataSpeed,
+    PrefetchDataZMQ, MultiProcessMapDataZMQ, MultiThreadMapData,
+    MapDataComponent, DataFromList)
 from tensorpack.utils import logger
-from tensorpack.utils.argtools import log_once, memoized
-
-from common import (
-    CustomResize, DataFromListOfDict, box_to_point8,
-    filter_boxes_inside_shape, point8_to_box, segmentation_to_mask, np_iou)
-from config import config as cfg
-from dataset import DetectionDataset
-from utils.generate_anchors import generate_anchors
-from utils.np_box_ops import area as np_area, ioa as np_ioa
-
 # import tensorpack.utils.viz as tpviz
+
+from coco import COCODetection
+from utils.generate_anchors import generate_anchors
+from utils.np_box_ops import iou as np_iou
+from utils.np_box_ops import area as np_area
+from common import (
+    DataFromListOfDict, CustomResize, filter_boxes_inside_shape,
+    box_to_point8, point8_to_box, segmentation_to_mask)
+from config import config as cfg
 
 
 class MalformedData(BaseException):
     pass
 
 
-def print_class_histogram(roidbs):
-    """
-    Args:
-        roidbs (list[dict]): the same format as the output of `load_training_roidbs`.
-    """
-    dataset = DetectionDataset()
-    hist_bins = np.arange(dataset.num_classes + 1)
-
-    # Histogram of ground-truth objects
-    gt_hist = np.zeros((dataset.num_classes,), dtype=np.int)
-    for entry in roidbs:
-        # filter crowd?
-        gt_inds = np.where(
-            (entry['class'] > 0) & (entry['is_crowd'] == 0))[0]
-        gt_classes = entry['class'][gt_inds]
-        gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
-    data = [[dataset.class_names[i], v] for i, v in enumerate(gt_hist)]
-    data.append(['total', sum([x[1] for x in data])])
-    table = tabulate(data, headers=['class', '#box'], tablefmt='pipe')
-    logger.info("Ground-Truth Boxes:\n" + colored(table, 'cyan'))
-
-
 @memoized
-def get_all_anchors(stride=None, sizes=None):
+def get_all_anchors(
+        stride=cfg.RPN.ANCHOR_STRIDE,
+        sizes=cfg.RPN.ANCHOR_SIZES):
     """
     Get all anchors in the largest possible image, shifted, floatbox
     Args:
@@ -62,10 +43,6 @@ def get_all_anchors(stride=None, sizes=None):
         The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SIZE.
 
     """
-    if stride is None:
-        stride = cfg.RPN.ANCHOR_STRIDE
-    if sizes is None:
-        sizes = cfg.RPN.ANCHOR_SIZES
     # Generates a NAx4 matrix of anchor boxes in (x1, y1, x2, y2) format. Anchors
     # are centered on stride / 2, have (approximate) sqrt areas of the specified
     # sizes, and aspect ratios as given.
@@ -92,23 +69,20 @@ def get_all_anchors(stride=None, sizes=None):
         shifts.reshape((1, K, 4)).transpose((1, 0, 2)))
     field_of_anchors = field_of_anchors.reshape((field_size, field_size, A, 4))
     # FSxFSxAx4
-    # Many rounding happens inside the anchor code anyway
-    # assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
+    assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
     field_of_anchors = field_of_anchors.astype('float32')
     field_of_anchors[:, :, :, [2, 3]] += 1
     return field_of_anchors
 
 
 @memoized
-def get_all_anchors_fpn(strides=None, sizes=None):
+def get_all_anchors_fpn(
+        strides=cfg.FPN.ANCHOR_STRIDES,
+        sizes=cfg.RPN.ANCHOR_SIZES):
     """
     Returns:
         [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
     """
-    if strides is None:
-        strides = cfg.FPN.ANCHOR_STRIDES
-    if sizes is None:
-        sizes = cfg.RPN.ANCHOR_SIZES
     assert len(strides) == len(sizes)
     foas = []
     for stride, size in zip(strides, sizes):
@@ -122,7 +96,7 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     Label each anchor as fg/bg/ignore.
     Args:
         anchors: Ax4 float
-        gt_boxes: Bx4 float, non-crowd
+        gt_boxes: Bx4 float
         crowd_boxes: Cx4 float
 
     Returns:
@@ -157,13 +131,14 @@ def get_anchor_labels(anchors, gt_boxes, crowd_boxes):
     anchor_labels[ious_max_per_anchor >= cfg.RPN.POSITIVE_ANCHOR_THRESH] = 1
     anchor_labels[ious_max_per_anchor < cfg.RPN.NEGATIVE_ANCHOR_THRESH] = 0
 
-    # label all non-ignore candidate boxes which overlap crowd as ignore
-    if crowd_boxes.size > 0:
-        cand_inds = np.where(anchor_labels >= 0)[0]
-        cand_anchors = anchors[cand_inds]
-        ioas = np_ioa(crowd_boxes, cand_anchors)
-        overlap_with_crowd = cand_inds[ioas.max(axis=0) > cfg.RPN.CROWD_OVERLAP_THRESH]
-        anchor_labels[overlap_with_crowd] = -1
+    # We can label all non-ignore candidate boxes which overlap crowd as ignore
+    # But detectron did not do this.
+    # if crowd_boxes.size > 0:
+    #     cand_inds = np.where(anchor_labels >= 0)[0]
+    #     cand_anchors = anchors[cand_inds]
+    #     ious = np_iou(cand_anchors, crowd_boxes)
+    #     overlap_with_crowd = cand_inds[ious.max(axis=1) > cfg.RPN.CROWD_OVERLAP_THRES]
+    #     anchor_labels[overlap_with_crowd] = -1
 
     # Subsample fg labels: ignore some fg if fg is too many
     target_num_fg = int(cfg.RPN.BATCH_PER_IM * cfg.RPN.FG_RATIO)
@@ -283,35 +258,47 @@ def get_train_dataflow():
     If MODE_MASK, gt_masks: (N, h, w)
     """
 
-    roidbs = DetectionDataset().load_training_roidbs(cfg.DATA.TRAIN)
-    print_class_histogram(roidbs)
+    imgs = COCODetection.load_many(
+        cfg.DATA.BASEDIR, cfg.DATA.TRAIN, add_gt=True, add_mask=cfg.MODE_MASK)
+    """
+    To train on your own data, change this to your loader.
+    Produce "imgs" as a list of dict, in the dict the following keys are needed for training:
+    height, width: integer
+    file_name: str, full path to the image
+    boxes: numpy array of kx4 floats
+    class: numpy array of k integers
+    is_crowd: k booleans. Use k False if you don't know what it means.
+    segmentation: k lists of numpy arrays (one for each box).
+        Each list of numpy array corresponds to the mask for one instance.
+        Each numpy array in the list is a polygon of shape Nx2,
+        because one mask can be represented by N polygons.
+
+        If your segmentation annotations are originally masks rather than polygons,
+        either convert it, or the augmentation code below will need to be
+        changed or skipped accordingly.
+    """
 
     # Valid training images should have at least one fg box.
     # But this filter shall not be applied for testing.
-    num = len(roidbs)
-    roidbs = list(filter(lambda img: len(img['boxes'][img['is_crowd'] == 0]) > 0, roidbs))
+    num = len(imgs)
+    imgs = list(filter(lambda img: len(img['boxes'][img['is_crowd'] == 0]) > 0, imgs))
     logger.info("Filtered {} images which contain no non-crowd groudtruth boxes. Total #images for training: {}".format(
-        num - len(roidbs), len(roidbs)))
+        num - len(imgs), len(imgs)))
 
-    ds = DataFromList(roidbs, shuffle=True)
+    ds = DataFromList(imgs, shuffle=True)
 
     aug = imgaug.AugmentorList(
-        [CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
+        [CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
          imgaug.Flip(horiz=True)])
 
-    def preprocess(roidb):
-        fname, boxes, klass, is_crowd = roidb['file_name'], roidb['boxes'], roidb['class'], roidb['is_crowd']
+    def preprocess(img):
+        fname, boxes, klass, is_crowd = img['file_name'], img['boxes'], img['class'], img['is_crowd']
         boxes = np.copy(boxes)
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         im = im.astype('float32')
-        height, width = im.shape[:2]
         # assume floatbox as input
         assert boxes.dtype == np.float32, "Loader has to return floating point boxes!"
-
-        if not cfg.DATA.ABSOLUTE_COORD:
-            boxes[:, 0::2] *= width
-            boxes[:, 1::2] *= height
 
         # augmentation:
         im, params = aug.augment_return_params(im)
@@ -320,45 +307,40 @@ def get_train_dataflow():
         boxes = point8_to_box(points)
         assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
-        ret = {'image': im}
         # rpn anchor:
         try:
             if cfg.MODE_FPN:
                 multilevel_anchor_inputs = get_multilevel_rpn_anchor_input(im, boxes, is_crowd)
-                for i, (anchor_labels, anchor_boxes) in enumerate(multilevel_anchor_inputs):
-                    ret['anchor_labels_lvl{}'.format(i + 2)] = anchor_labels
-                    ret['anchor_boxes_lvl{}'.format(i + 2)] = anchor_boxes
+                anchor_inputs = itertools.chain.from_iterable(multilevel_anchor_inputs)
             else:
                 # anchor_labels, anchor_boxes
-                ret['anchor_labels'], ret['anchor_boxes'] = get_rpn_anchor_input(im, boxes, is_crowd)
+                anchor_inputs = get_rpn_anchor_input(im, boxes, is_crowd)
+                assert len(anchor_inputs) == 2
 
             boxes = boxes[is_crowd == 0]    # skip crowd boxes in training target
             klass = klass[is_crowd == 0]
-            ret['gt_boxes'] = boxes
-            ret['gt_labels'] = klass
             if not len(boxes):
                 raise MalformedData("No valid gt_boxes!")
         except MalformedData as e:
             log_once("Input {} is filtered for training: {}".format(fname, str(e)), 'warn')
             return None
 
+        ret = [im] + list(anchor_inputs) + [boxes, klass]
+
         if cfg.MODE_MASK:
             # augmentation will modify the polys in-place
-            segmentation = copy.deepcopy(roidb['segmentation'])
+            segmentation = copy.deepcopy(img['segmentation'])
             segmentation = [segmentation[k] for k in range(len(segmentation)) if not is_crowd[k]]
             assert len(segmentation) == len(boxes)
 
             # Apply augmentation on polygon coordinates.
             # And produce one image-sized binary mask per box.
             masks = []
-            width_height = np.asarray([width, height], dtype=np.float32)
             for polys in segmentation:
-                if not cfg.DATA.ABSOLUTE_COORD:
-                    polys = [p * width_height for p in polys]
                 polys = [aug.augment_coords(p, params) for p in polys]
                 masks.append(segmentation_to_mask(polys, im.shape[0], im.shape[1]))
             masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
-            ret['gt_masks'] = masks
+            ret.append(masks)
 
             # from viz import draw_annotation, draw_mask
             # viz = draw_annotation(im, boxes, klass)
@@ -375,27 +357,18 @@ def get_train_dataflow():
     return ds
 
 
-def get_eval_dataflow(name, shard=0, num_shards=1):
-    """
-    Args:
-        name (str): name of the dataset to evaluate
-        shard, num_shards: to get subset of evaluation data
-    """
-    roidbs = DetectionDataset().load_inference_roidbs(name)
-
-    num_imgs = len(roidbs)
-    img_per_shard = num_imgs // num_shards
-    img_range = (shard * img_per_shard, (shard + 1) * img_per_shard if shard + 1 < num_shards else num_imgs)
-
+def get_eval_dataflow():
+    imgs = COCODetection.load_many(cfg.DATA.BASEDIR, cfg.DATA.VAL, add_gt=False)
     # no filter for training
-    ds = DataFromListOfDict(roidbs[img_range[0]: img_range[1]], ['file_name', 'image_id'])
+    ds = DataFromListOfDict(imgs, ['file_name', 'id'])
 
     def f(fname):
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
         return im
     ds = MapDataComponent(ds, f, 0)
-    # Evaluation itself may be multi-threaded, therefore don't add prefetch here.
+    if cfg.TRAINER != 'horovod':
+        ds = PrefetchDataZMQ(ds, 1)
     return ds
 
 
@@ -407,5 +380,5 @@ if __name__ == '__main__':
     ds = PrintData(ds, 100)
     TestDataSpeed(ds, 50000).start()
     ds.reset_state()
-    for k in ds:
+    for k in ds.get_data():
         pass

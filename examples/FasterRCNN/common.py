@@ -15,10 +15,10 @@ class DataFromListOfDict(RNGDataFlow):
         self._shuffle = shuffle
         self._size = len(lst)
 
-    def __len__(self):
+    def size(self):
         return self._size
 
-    def __iter__(self):
+    def get_data(self):
         if self._shuffle:
             self.rng.shuffle(self._lst)
         for dic in self._lst:
@@ -32,27 +32,21 @@ class CustomResize(transform.TransformAugmentorBase):
     while avoiding the longest edge to exceed max_size.
     """
 
-    def __init__(self, short_edge_length, max_size, interp=cv2.INTER_LINEAR):
+    def __init__(self, size, max_size, interp=cv2.INTER_LINEAR):
         """
         Args:
-            short_edge_length ([int, int]): a [min, max] interval from which to sample the
-                shortest edge length.
-            max_size (int): maximum allowed longest edge length.
+            size (int): the size to resize the shortest edge to.
+            max_size (int): maximum allowed longest edge.
         """
-        super(CustomResize, self).__init__()
-        if isinstance(short_edge_length, int):
-            short_edge_length = (short_edge_length, short_edge_length)
         self._init(locals())
 
     def _get_augment_params(self, img):
         h, w = img.shape[:2]
-        size = self.rng.randint(
-            self.short_edge_length[0], self.short_edge_length[1] + 1)
-        scale = size * 1.0 / min(h, w)
+        scale = self.size * 1.0 / min(h, w)
         if h < w:
-            newh, neww = size, scale * w
+            newh, neww = self.size, scale * w
         else:
-            newh, neww = scale * h, size
+            newh, neww = scale * h, self.size
         if max(newh, neww) > self.max_size:
             scale = self.max_size * 1.0 / max(newh, neww)
             newh = newh * scale
@@ -93,13 +87,12 @@ def segmentation_to_mask(polys, height, width):
     Convert polygons to binary masks.
 
     Args:
-        polys: a list of nx2 float array. Each array contains many (x, y) coordinates.
+        polys: a list of nx2 float array
 
     Returns:
         a binary matrix of (height, width)
     """
     polys = [p.flatten().tolist() for p in polys]
-    assert len(polys) > 0, "Polygons are empty!"
 
     import pycocotools.mask as cocomask
     rles = cocomask.frPyObjects(polys, height, width)
@@ -141,24 +134,3 @@ def filter_boxes_inside_shape(boxes, shape):
         (boxes[:, 2] <= w) &
         (boxes[:, 3] <= h))[0]
     return indices, boxes[indices, :]
-
-
-try:
-    import pycocotools.mask as cocomask
-
-    # Much faster than utils/np_box_ops
-    def np_iou(A, B):
-        def to_xywh(box):
-            box = box.copy()
-            box[:, 2] -= box[:, 0]
-            box[:, 3] -= box[:, 1]
-            return box
-
-        ret = cocomask.iou(
-            to_xywh(A), to_xywh(B),
-            np.zeros((len(B),), dtype=np.bool))
-        # can accelerate even more, if using float32
-        return ret.astype('float32')
-
-except ImportError:
-    from utils.np_box_ops import iou as np_iou  # noqa

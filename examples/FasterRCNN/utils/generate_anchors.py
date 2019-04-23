@@ -7,8 +7,8 @@
 # Written by Ross Girshick and Sean Bell
 # --------------------------------------------------------
 
-import numpy as np
 from six.moves import range
+import numpy as np
 
 # Verify that we compute the same anchors as Shaoqing's matlab implementation:
 #
@@ -27,7 +27,7 @@ from six.moves import range
 #       -79  -167    96   184
 #      -167  -343   184   360
 
-# array([[ -83.,  -39.,  100.,   56.],
+#array([[ -83.,  -39.,  100.,   56.],
 #       [-175.,  -87.,  192.,  104.],
 #       [-359., -183.,  376.,  200.],
 #       [ -55.,  -55.,   72.,   72.],
@@ -36,7 +36,6 @@ from six.moves import range
 #       [ -35.,  -79.,   52.,   96.],
 #       [ -79., -167.,   96.,  184.],
 #       [-167., -343.,  184.,  360.]])
-
 
 def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                      scales=2**np.arange(3, 6)):
@@ -51,7 +50,6 @@ def generate_anchors(base_size=16, ratios=[0.5, 1, 2],
                          for i in range(ratio_anchors.shape[0])])
     return anchors
 
-
 def _whctrs(anchor):
     """
     Return width, height, x center, and y center for an anchor (window).
@@ -62,7 +60,6 @@ def _whctrs(anchor):
     x_ctr = anchor[0] + 0.5 * (w - 1)
     y_ctr = anchor[1] + 0.5 * (h - 1)
     return w, h, x_ctr, y_ctr
-
 
 def _mkanchors(ws, hs, x_ctr, y_ctr):
     """
@@ -78,7 +75,6 @@ def _mkanchors(ws, hs, x_ctr, y_ctr):
                          y_ctr + 0.5 * (hs - 1)))
     return anchors
 
-
 def _ratio_enum(anchor, ratios):
     """
     Enumerate a set of anchors for each aspect ratio wrt an anchor.
@@ -92,7 +88,6 @@ def _ratio_enum(anchor, ratios):
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
 
-
 def _scale_enum(anchor, scales):
     """
     Enumerate a set of anchors for each scale wrt an anchor.
@@ -103,3 +98,17 @@ def _scale_enum(anchor, scales):
     hs = h * scales
     anchors = _mkanchors(ws, hs, x_ctr, y_ctr)
     return anchors
+
+if __name__ == '__main__':
+    #import time
+    #t = time.time()
+    #a = generate_anchors()
+    #print(time.time() - t)
+    #print(a)
+    #from IPython import embed; embed()
+
+    anchors = generate_anchors(
+                16, scales=np.asarray((2, 4, 8, 16, 32), 'float32'),
+                ratios=[0.5,1,2])
+    print(anchors)
+    import IPython as IP; IP.embed()

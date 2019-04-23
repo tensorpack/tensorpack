@@ -1,34 +1,22 @@
 # -*- coding: utf-8 -*-
 # File: eval.py
 
-import itertools
-import sys
-import os
-import json
-import numpy as np
-from collections import namedtuple
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import ExitStack
-import cv2
-import pycocotools.mask as cocomask
 import tqdm
+import os
+from collections import namedtuple
+import numpy as np
+import cv2
 import tensorflow as tf
 
-from tensorpack.callbacks import Callback
-from tensorpack.tfutils.common import get_tf_version_tuple
-from tensorpack.utils import logger
-from tensorpack.utils.utils import get_tqdm
+from tensorpack.utils.utils import get_tqdm_kwargs
 
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
+import pycocotools.mask as cocomask
+
+from coco import COCOMeta
 from common import CustomResize, clip_boxes
-from data import get_eval_dataflow
-from dataset import DetectionDataset
 from config import config as cfg
-
-try:
-    import horovod.tensorflow as hvd
-except ImportError:
-    pass
-
 
 DetectionResult = namedtuple(
     'DetectionResult',
@@ -41,14 +29,12 @@ mask: None, or a binary image of the original image shape
 """
 
 
-def _paste_mask(box, mask, shape):
+def fill_full_mask(box, mask, shape):
     """
     Args:
         box: 4 float
         mask: MxM floats
         shape: h,w
-    Returns:
-        A uint8 binary image of hxw.
     """
     # int() is floor
     # box fpcoor=0.0 -> intcoor=0.0
@@ -68,71 +54,147 @@ def _paste_mask(box, mask, shape):
     ret[y0:y1 + 1, x0:x1 + 1] = mask
     return ret
 
+def DetectOneImageFromFrozenGraph(input_image_np):
 
-def predict_image(img, model_func):
+    # Each box represents a part of the image where a particular object was detected.
+    graph = DetectFromFrozenGraph.sessionvalues[0]
+    #config = DetectFromFrozenGraph.sessionvalues[1]
+    pbsession = DetectFromFrozenGraph.sessionvalues[1]    
+    image_tensor = DetectFromFrozenGraph.sessionvalues[2]
+    detection_boxes = DetectFromFrozenGraph.sessionvalues[3]
+    detection_scores = DetectFromFrozenGraph.sessionvalues[4]
+    detection_labels = DetectFromFrozenGraph.sessionvalues[5]
+
+    # Run real inference from the frozen graph.
+    (boxes, scores, labels) = pbsession.run([detection_boxes, detection_scores, detection_labels],feed_dict = {image_tensor : input_image_np})#,options=options, run_metadata=run_metadata )
+    return (boxes, scores, labels)
+class DetectFromFrozenGraph:
+    sessionvalues = []
+
+    def SetupDetectFromFrozenGraph(self, args):
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = dir_path + "/temp/built_graph"
+        frozen_model_path = dir_path + "/" + args.model_name
+
+        print("***********************************************************") 
+        print("Loading and inferencing model: {}".format(frozen_model_path))
+        print("***********************************************************")
+
+        config = tf.ConfigProto()
+        config.allow_soft_placement = True
+        config.intra_op_parallelism_threads = 28
+        config.inter_op_parallelism_threads = 1
+        #with tf.Session(config=config) as pbsession:
+        with tf.Graph().as_default() as tfgraph:
+            with tf.gfile.FastGFile(frozen_model_path,'rb') as f:  # Load pb as graphdef
+                #graph = tf.Graph()
+                graphdef = tf.GraphDef() 
+                graphdef.ParseFromString(f.read()) 
+                #text_format.Merge(f.read(),graphdef) 
+                #pbsession.graph.as_default()
+                with tfgraph.as_default() :
+                    tf.import_graph_def(graphdef, name='')
+                # Definite input and output Tensors for detection_graph
+                image_tensor = tfgraph.get_tensor_by_name('image:0')
+                detection_boxes = tfgraph.get_tensor_by_name('final_boxes:0')
+                detection_scores = tfgraph.get_tensor_by_name('final_probs:0')
+                detection_labels = tfgraph.get_tensor_by_name('final_labels:0')
+                
+                # Get a permanent session object
+                pbsession = tf.Session(graph=tfgraph, config=config)
+                # initialize the session
+                tf.global_variables_initializer()
+
+                # Store all the global variables in the class list.
+                self.sessionvalues.append(tfgraph)
+                #self.sessionvalues.append(config)
+                self.sessionvalues.append(pbsession)                                
+                self.sessionvalues.append(image_tensor)
+                self.sessionvalues.append(detection_boxes)
+                self.sessionvalues.append(detection_scores)
+                self.sessionvalues.append(detection_labels)
+
+def detect_one_image(img, model_func, tfargs=False, setup=False):
     """
     Run detection on one image, using the TF callable.
     This function should handle the preprocessing internally.
 
     Args:
         img: an image
-        model_func: a callable from the TF model.
-            It takes image and returns (boxes, probs, labels, [masks])
+        model_func: a callable from TF model,
+            takes image and returns (boxes, probs, labels, [masks])
 
     Returns:
         [DetectionResult]
     """
+    if setup:
+        print("Loading and inferecing from frozen graph and not checkpoint.")
+        print("-----------------------------------------------------------.")
+        detectfrozen = DetectFromFrozenGraph()
+        detectfrozen.SetupDetectFromFrozenGraph(tfargs)
 
     orig_shape = img.shape[:2]
-    resizer = CustomResize(cfg.PREPROC.TEST_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
+    resizer = CustomResize(cfg.PREPROC.SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)
-    scale = np.sqrt(resized_img.shape[0] * 1.0 / img.shape[0] * resized_img.shape[1] / img.shape[1])
-    boxes, probs, labels, *masks = model_func(resized_img)
+    scale = (resized_img.shape[0] * 1.0 / img.shape[0] + resized_img.shape[1] * 1.0 / img.shape[1]) / 2
+    #print(resized_img.shape)
+    if not tfargs.loadfrozenpb:
+        boxes, probs, labels, *masks = model_func(resized_img)
+    else:
+        #print("Detect One Image from frozen graph")
+        boxes, probs, labels, *masks = DetectOneImageFromFrozenGraph(resized_img)
+
     boxes = boxes / scale
     # boxes are already clipped inside the graph, but after the floating point scaling, this may not be true any more.
     boxes = clip_boxes(boxes, orig_shape)
 
     if masks:
         # has mask
-        full_masks = [_paste_mask(box, mask, orig_shape)
+        full_masks = [fill_full_mask(box, mask, orig_shape)
                       for box, mask in zip(boxes, masks[0])]
         masks = full_masks
     else:
         # fill with none
         masks = [None] * len(boxes)
 
-    results = [DetectionResult(*args) for args in zip(boxes, probs, labels.tolist(), masks)]
+    results = [DetectionResult(*args) for args in zip(boxes, probs, labels, masks)]
     return results
 
 
-def predict_dataflow(df, model_func, tqdm_bar=None):
+def eval_coco(df, detect_func, tfargs=None):
     """
     Args:
         df: a DataFlow which produces (image, image_id)
-        model_func: a callable from the TF model.
-            It takes image and returns (boxes, probs, labels, [masks])
-        tqdm_bar: a tqdm object to be shared among multiple evaluation instances. If None,
-            will create a new one.
+        detect_func: a callable, takes [image] and returns [DetectionResult]
 
     Returns:
-        list of dict, in the format used by
-        `DetectionDataset.eval_or_save_inference_results`
+        list of dict, to be dumped to COCO json format
     """
     df.reset_state()
     all_results = []
-    with ExitStack() as stack:
-        # tqdm is not quite thread-safe: https://github.com/tqdm/tqdm/issues/323
-        if tqdm_bar is None:
-            tqdm_bar = stack.enter_context(get_tqdm(total=df.size()))
-        for img, img_id in df:
-            results = predict_image(img, model_func)
+
+    if tfargs.loadfrozenpb:
+        print("Loading and inferecing from frozen graph and not checkpoint.")
+        print("-----------------------------------------------------------.")
+        detectfrozen = DetectFromFrozenGraph()
+        detectfrozen.SetupDetectFromFrozenGraph(tfargs)
+
+    with tqdm.tqdm(total=df.size(), **get_tqdm_kwargs()) as pbar:
+        for img, img_id in df.get_data():
+            #print("Nirooooaoaoaoaoa")
+            #print(img.shape)
+            results = detect_func(img)
             for r in results:
-                # int()/float() to make it json-serializable
+                box = r.box
+                cat_id = COCOMeta.class_id_to_category_id[r.class_id]
+                box[2] -= box[0]
+                box[3] -= box[1]
+
                 res = {
                     'image_id': img_id,
-                    'category_id': int(r.class_id),
-                    'bbox': [round(float(x), 4) for x in r.box],
-                    'score': round(float(r.score), 4),
+                    'category_id': cat_id,
+                    'bbox': list(map(lambda x: float(round(x, 1)), box)),
+                    'score': float(round(r.score, 2)),
                 }
 
                 # also append segmentation to results
@@ -142,118 +204,32 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
                     rle['counts'] = rle['counts'].decode('ascii')
                     res['segmentation'] = rle
                 all_results.append(res)
-            tqdm_bar.update(1)
+            pbar.update(1)
     return all_results
 
 
-def multithread_predict_dataflow(dataflows, model_funcs):
-    """
-    Running multiple `predict_dataflow` in multiple threads, and aggregate the results.
+# https://github.com/pdollar/coco/blob/master/PythonAPI/pycocoEvalDemo.ipynb
+def print_evaluation_scores(json_file):
+    ret = {}
+    assert cfg.DATA.BASEDIR and os.path.isdir(cfg.DATA.BASEDIR)
+    annofile = os.path.join(
+        cfg.DATA.BASEDIR, 'annotations',
+        'instances_{}.json'.format(cfg.DATA.VAL))
+    coco = COCO(annofile)
+    cocoDt = coco.loadRes(json_file)
+    cocoEval = COCOeval(coco, cocoDt, 'bbox')
+    cocoEval.evaluate()
+    cocoEval.accumulate()
+    cocoEval.summarize()
+    fields = ['IoU=0.5:0.95', 'IoU=0.5', 'IoU=0.75', 'small', 'medium', 'large']
+    for k in range(6):
+        ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
-    Args:
-        dataflows: a list of DataFlow to be used in :func:`predict_dataflow`
-        model_funcs: a list of callable to be used in :func:`predict_dataflow`
-
-    Returns:
-        list of dict, in the format used by
-        `DetectionDataset.eval_or_save_inference_results`
-    """
-    num_worker = len(model_funcs)
-    assert len(dataflows) == num_worker
-    if num_worker == 1:
-        return predict_dataflow(dataflows[0], model_funcs[0])
-    kwargs = {'thread_name_prefix': 'EvalWorker'} if sys.version_info.minor >= 6 else {}
-    with ThreadPoolExecutor(max_workers=num_worker, **kwargs) as executor, \
-            tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
-        futures = []
-        for dataflow, pred in zip(dataflows, model_funcs):
-            futures.append(executor.submit(predict_dataflow, dataflow, pred, pbar))
-        all_results = list(itertools.chain(*[fut.result() for fut in futures]))
-        return all_results
-
-
-class EvalCallback(Callback):
-    """
-    A callback that runs evaluation once a while.
-    It supports multi-gpu evaluation.
-    """
-
-    _chief_only = False
-
-    def __init__(self, eval_dataset, in_names, out_names, output_dir):
-        self._eval_dataset = eval_dataset
-        self._in_names, self._out_names = in_names, out_names
-        self._output_dir = output_dir
-
-    def _setup_graph(self):
-        num_gpu = cfg.TRAIN.NUM_GPUS
-        if cfg.TRAINER == 'replicated':
-            # TF bug in version 1.11, 1.12: https://github.com/tensorflow/tensorflow/issues/22750
-            buggy_tf = get_tf_version_tuple() in [(1, 11), (1, 12)]
-
-            # Use two predictor threads per GPU to get better throughput
-            self.num_predictor = num_gpu if buggy_tf else num_gpu * 2
-            self.predictors = [self._build_predictor(k % num_gpu) for k in range(self.num_predictor)]
-            self.dataflows = [get_eval_dataflow(self._eval_dataset,
-                                                shard=k, num_shards=self.num_predictor)
-                              for k in range(self.num_predictor)]
-        else:
-            # Only eval on the first machine.
-            # Alternatively, can eval on all ranks and use allgather, but allgather sometimes hangs
-            self._horovod_run_eval = hvd.rank() == hvd.local_rank()
-            if self._horovod_run_eval:
-                self.predictor = self._build_predictor(0)
-                self.dataflow = get_eval_dataflow(self._eval_dataset,
-                                                  shard=hvd.local_rank(), num_shards=hvd.local_size())
-
-            self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
-
-    def _build_predictor(self, idx):
-        return self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
-
-    def _before_train(self):
-        eval_period = cfg.TRAIN.EVAL_PERIOD
-        self.epochs_to_eval = set()
-        for k in itertools.count(1):
-            if k * eval_period > self.trainer.max_epoch:
-                break
-            self.epochs_to_eval.add(k * eval_period)
-        self.epochs_to_eval.add(self.trainer.max_epoch)
-        logger.info("[EvalCallback] Will evaluate every {} epochs".format(eval_period))
-
-    def _eval(self):
-        logdir = self._output_dir
-        if cfg.TRAINER == 'replicated':
-            all_results = multithread_predict_dataflow(self.dataflows, self.predictors)
-        else:
-            filenames = [os.path.join(
-                logdir, 'outputs{}-part{}.json'.format(self.global_step, rank)
-            ) for rank in range(hvd.local_size())]
-
-            if self._horovod_run_eval:
-                local_results = predict_dataflow(self.dataflow, self.predictor)
-                fname = filenames[hvd.local_rank()]
-                with open(fname, 'w') as f:
-                    json.dump(local_results, f)
-            self.barrier.eval()
-            if hvd.rank() > 0:
-                return
-            all_results = []
-            for fname in filenames:
-                with open(fname, 'r') as f:
-                    obj = json.load(f)
-                all_results.extend(obj)
-                os.unlink(fname)
-
-        output_file = os.path.join(
-            logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
-
-        scores = DetectionDataset().eval_or_save_inference_results(
-            all_results, self._eval_dataset, output_file)
-        for k, v in scores.items():
-            self.trainer.monitors.put_scalar(k, v)
-
-    def _trigger_epoch(self):
-        if self.epoch_num in self.epochs_to_eval:
-            logger.info("Running evaluation ...")
-            self._eval()
+    if cfg.MODE_MASK:
+        cocoEval = COCOeval(coco, cocoDt, 'segm')
+        cocoEval.evaluate()
+        cocoEval.accumulate()
+        cocoEval.summarize()
+        for k in range(6):
+            ret['mAP(segm)/' + fields[k]] = cocoEval.stats[k]
+    return ret

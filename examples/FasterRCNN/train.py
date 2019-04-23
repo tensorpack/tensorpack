@@ -2,64 +2,138 @@
 # -*- coding: utf-8 -*-
 # File: train.py
 
-import argparse
-import itertools
-import numpy as np
 import os
-import shutil
+import argparse
 import cv2
-import six
-assert six.PY3, "FasterRCNN requires Python 3!"
-import tensorflow as tf
+import shutil
+import itertools
 import tqdm
-
-import tensorpack.utils.viz as tpviz
-from tensorpack import *
-from tensorpack.tfutils import optimizer
-from tensorpack.tfutils.common import get_tf_version_tuple
-from tensorpack.tfutils.summary import add_moving_summary
-
-import model_frcnn
-import model_mrcnn
-from basemodel import image_preprocess, resnet_c4_backbone, resnet_conv5, resnet_fpn_backbone
-from dataset import DetectionDataset
-from config import finalize_configs, config as cfg
-from data import get_all_anchors, get_all_anchors_fpn, get_eval_dataflow, get_train_dataflow
-from eval import DetectionResult, predict_image, multithread_predict_dataflow, EvalCallback
-from model_box import RPNAnchors, clip_boxes, crop_and_resize, roi_align
-from model_cascade import CascadeRCNNHead
-from model_fpn import fpn_model, generate_fpn_proposals, multilevel_roi_align, multilevel_rpn_losses
-from model_frcnn import BoxProposals, FastRCNNHead, fastrcnn_outputs, fastrcnn_predictions, sample_fast_rcnn_targets
-from model_mrcnn import maskrcnn_loss, maskrcnn_upXconv_head
-from model_rpn import generate_rpn_proposals, rpn_head, rpn_losses
-from viz import draw_annotation, draw_final_outputs, draw_predictions, draw_proposal_recall
-
+import numpy as np
+import json
+import six
+import tensorflow as tf
 try:
     import horovod.tensorflow as hvd
 except ImportError:
     pass
+
+assert six.PY3, "FasterRCNN requires Python 3!"
+
+from tensorpack import *
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils import optimizer
+from tensorpack.tfutils.common import get_tf_version_tuple
+import tensorpack.utils.viz as tpviz
+
+from coco import COCODetection
+from basemodel import (
+    image_preprocess, resnet_c4_backbone, resnet_conv5,
+    resnet_fpn_backbone)
+
+import model_frcnn
+import model_mrcnn
+from model_frcnn import (
+    sample_fast_rcnn_targets,
+    fastrcnn_outputs, fastrcnn_losses, fastrcnn_predictions)
+from model_mrcnn import maskrcnn_upXconv_head, maskrcnn_loss
+from model_rpn import rpn_head, rpn_losses, generate_rpn_proposals
+from model_fpn import (
+    fpn_model, multilevel_roi_align,
+    multilevel_rpn_losses, generate_fpn_proposals)
+from model_box import (
+    clip_boxes, decode_bbox_target, encode_bbox_target,
+    crop_and_resize, roi_align, RPNAnchors)
+
+from data import (
+    get_train_dataflow, get_eval_dataflow,
+    get_all_anchors, get_all_anchors_fpn)
+from viz import (
+    draw_annotation, draw_proposal_recall,
+    draw_predictions, draw_final_outputs)
+from eval import (
+    eval_coco, detect_one_image, print_evaluation_scores, DetectionResult)
+from config import finalize_configs, config as cfg
 
 
 class DetectionModel(ModelDesc):
     def preprocess(self, image):
         image = tf.expand_dims(image, 0)
         image = image_preprocess(image, bgr=True)
-        return tf.transpose(image, [0, 3, 1, 2])
-
-    @property
-    def training(self):
-        return get_current_tower_context().is_training
+        return image
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
 
-        # The learning rate in the config is set for 8 GPUs, and we use trainers with average=False.
-        lr = lr / 8.
+        factor = cfg.TRAIN.NUM_GPUS / 8.
+        if factor != 1:
+            lr = lr * factor
         opt = tf.train.MomentumOptimizer(lr, 0.9)
         if cfg.TRAIN.NUM_GPUS < 8:
             opt = optimizer.AccumGradOptimizer(opt, 8 // cfg.TRAIN.NUM_GPUS)
         return opt
+
+    def fastrcnn_training(self, image,
+                          rcnn_labels, fg_rcnn_boxes, gt_boxes_per_fg,
+                          rcnn_label_logits, fg_rcnn_box_logits):
+        """
+        Args:
+            image (NCHW):
+            rcnn_labels (n): labels for each sampled targets
+            fg_rcnn_boxes (fg x 4): proposal boxes for each sampled foreground targets
+            gt_boxes_per_fg (fg x 4): matching gt boxes for each sampled foreground targets
+            rcnn_label_logits (n): label logits for each sampled targets
+            fg_rcnn_box_logits (fg x #class x 4): box logits for each sampled foreground targets
+        """
+
+        with tf.name_scope('fg_sample_patch_viz'):
+            fg_sampled_patches = crop_and_resize(
+                image, fg_rcnn_boxes,
+                tf.zeros([tf.shape(fg_rcnn_boxes)[0]], dtype=tf.int32), 300)
+            fg_sampled_patches = tf.transpose(fg_sampled_patches, [0, 2, 3, 1])
+            fg_sampled_patches = tf.reverse(fg_sampled_patches, axis=[-1])  # BGR->RGB
+            tf.summary.image('viz', fg_sampled_patches, max_outputs=30)
+
+        encoded_boxes = encode_bbox_target(
+            gt_boxes_per_fg, fg_rcnn_boxes) * tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32)
+        fastrcnn_label_loss, fastrcnn_box_loss = fastrcnn_losses(
+            rcnn_labels, rcnn_label_logits,
+            encoded_boxes,
+            fg_rcnn_box_logits)
+        return fastrcnn_label_loss, fastrcnn_box_loss
+
+    def fastrcnn_inference(self, image_shape2d,
+                           rcnn_boxes, rcnn_label_logits, rcnn_box_logits):
+        """
+        Args:
+            image_shape2d: h, w
+            rcnn_boxes (nx4): the proposal boxes
+            rcnn_label_logits (n):
+            rcnn_box_logits (nx #class x 4):
+
+        Returns:
+            boxes (mx4):
+            labels (m): each >= 1
+        """
+        rcnn_box_logits = rcnn_box_logits[:, 1:, :]
+        rcnn_box_logits.set_shape([None, cfg.DATA.NUM_CATEGORY, None])
+        label_probs = tf.nn.softmax(rcnn_label_logits, name='fastrcnn_all_probs')  # #proposal x #Class
+        anchors = tf.tile(tf.expand_dims(rcnn_boxes, 1), [1, cfg.DATA.NUM_CATEGORY, 1])   # #proposal x #Cat x 4
+        decoded_boxes = decode_bbox_target(
+            rcnn_box_logits /
+            tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32), anchors)
+        decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
+
+        # indices: Nx2. Each index into (#proposal, #category)
+        pred_indices, final_probs = fastrcnn_predictions(decoded_boxes, label_probs)
+        final_probs = tf.identity(final_probs, 'final_probs')
+        final_boxes = tf.gather_nd(decoded_boxes, pred_indices, name='final_boxes')
+        final_labels = tf.add(pred_indices[:, 1], 1, name='final_labels')
+
+        if args.savepb:
+            SaveModelToPb()
+
+        return final_boxes, final_labels
 
     def get_inference_tensor_names(self):
         """
@@ -69,30 +143,10 @@ class DetectionModel(ModelDesc):
             [str]: input names
             [str]: output names
         """
-        out = ['output/boxes', 'output/scores', 'output/labels']
+        out = ['final_boxes', 'final_probs', 'final_labels']
         if cfg.MODE_MASK:
-            out.append('output/masks')
+            out.append('final_masks')
         return ['image'], out
-
-    def build_graph(self, *inputs):
-        inputs = dict(zip(self.input_names, inputs))
-
-        image = self.preprocess(inputs['image'])     # 1CHW
-
-        features = self.backbone(image)
-        anchor_inputs = {k: v for k, v in inputs.items() if k.startswith('anchor_')}
-        proposals, rpn_losses = self.rpn(image, features, anchor_inputs)  # inputs?
-
-        targets = [inputs[k] for k in ['gt_boxes', 'gt_labels', 'gt_masks'] if k in inputs]
-        head_losses = self.roi_heads(image, features, proposals, targets)
-
-        if self.training:
-            wd_cost = regularize_cost(
-                '.*/W', l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
-            total_cost = tf.add_n(
-                rpn_losses + head_losses + [wd_cost], 'total_cost')
-            add_moving_summary(total_cost, wd_cost)
-            return total_cost
 
 
 class ResNetC4Model(DetectionModel):
@@ -109,13 +163,18 @@ class ResNetC4Model(DetectionModel):
             )   # NR_GT x height x width
         return ret
 
-    def backbone(self, image):
-        return [resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS[:3])]
+    def build_graph(self, *inputs):
+        is_training = get_current_tower_context().is_training
+        if cfg.MODE_MASK:
+            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels, gt_masks = inputs
+        else:
+            image, anchor_labels, anchor_boxes, gt_boxes, gt_labels = inputs
+        image = self.preprocess(image)     # 1CHW
 
-    def rpn(self, image, features, inputs):
-        featuremap = features[0]
+        featuremap = resnet_c4_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCK[:3])
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
-        anchors = RPNAnchors(get_all_anchors(), inputs['anchor_labels'], inputs['anchor_boxes'])
+
+        anchors = RPNAnchors(get_all_anchors(), anchor_labels, anchor_boxes)
         anchors = anchors.narrow_to(featuremap)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
@@ -124,75 +183,84 @@ class ResNetC4Model(DetectionModel):
             tf.reshape(pred_boxes_decoded, [-1, 4]),
             tf.reshape(rpn_label_logits, [-1]),
             image_shape2d,
-            cfg.RPN.TRAIN_PRE_NMS_TOPK if self.training else cfg.RPN.TEST_PRE_NMS_TOPK,
-            cfg.RPN.TRAIN_POST_NMS_TOPK if self.training else cfg.RPN.TEST_POST_NMS_TOPK)
+            cfg.RPN.TRAIN_PRE_NMS_TOPK if is_training else cfg.RPN.TEST_PRE_NMS_TOPK,
+            cfg.RPN.TRAIN_POST_NMS_TOPK if is_training else cfg.RPN.TEST_POST_NMS_TOPK)
 
-        if self.training:
-            losses = rpn_losses(
-                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
-        else:
-            losses = []
-
-        return BoxProposals(proposal_boxes), losses
-
-    def roi_heads(self, image, features, proposals, targets):
-        image_shape2d = tf.shape(image)[2:]     # h,w
-        featuremap = features[0]
-
-        gt_boxes, gt_labels, *_ = targets
-
-        if self.training:
+        if is_training:
             # sample proposal boxes in training
-            proposals = sample_fast_rcnn_targets(proposals.boxes, gt_boxes, gt_labels)
-        # The boxes to be used to crop RoIs.
-        # Use all proposal boxes in inference
+            rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
+                proposal_boxes, gt_boxes, gt_labels)
+        else:
+            # The boxes to be used to crop RoIs.
+            # Use all proposal boxes in inference
+            rcnn_boxes = proposal_boxes
 
-        boxes_on_featuremap = proposals.boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE)
+        boxes_on_featuremap = rcnn_boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE)
         roi_resized = roi_align(featuremap, boxes_on_featuremap, 14)
 
-        feature_fastrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])    # nxcx7x7
+        feature_fastrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCK[-1])    # nxcx7x7
         # Keep C5 feature to be shared with mask branch
         feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
         fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CLASS)
 
-        fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits, gt_boxes,
-                                     tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
+        if is_training:
+            # rpn loss
+            rpn_label_loss, rpn_box_loss = rpn_losses(
+                anchors.gt_labels, anchors.encoded_gt_boxes(), rpn_label_logits, rpn_box_logits)
 
-        if self.training:
-            all_losses = fastrcnn_head.losses()
+            # fastrcnn loss
+            matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
+
+            fg_inds_wrt_sample = tf.reshape(tf.where(rcnn_labels > 0), [-1])   # fg inds w.r.t all samples
+            fg_sampled_boxes = tf.gather(rcnn_boxes, fg_inds_wrt_sample)
+            fg_fastrcnn_box_logits = tf.gather(fastrcnn_box_logits, fg_inds_wrt_sample)
+
+            fastrcnn_label_loss, fastrcnn_box_loss = self.fastrcnn_training(
+                image, rcnn_labels, fg_sampled_boxes,
+                matched_gt_boxes, fastrcnn_label_logits, fg_fastrcnn_box_logits)
 
             if cfg.MODE_MASK:
-                gt_masks = targets[2]
                 # maskrcnn loss
+                fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
                 # In training, mask branch shares the same C5 feature.
-                fg_feature = tf.gather(feature_fastrcnn, proposals.fg_inds())
+                fg_feature = tf.gather(feature_fastrcnn, fg_inds_wrt_sample)
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', fg_feature, cfg.DATA.NUM_CATEGORY, num_convs=0)   # #fg x #cat x 14x14
 
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks, 1),
-                    proposals.fg_boxes(),
-                    proposals.fg_inds_wrt_gt, 14,
+                    fg_sampled_boxes,
+                    fg_inds_wrt_gt, 14,
                     pad_border=False)  # nfg x 1x14x14
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
-                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
-            return all_losses
+                mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
+            else:
+                mrcnn_loss = 0.0
+
+            wd_cost = regularize_cost(
+                '(?:group1|group2|group3|rpn|fastrcnn|maskrcnn)/.*W',
+                l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+
+            total_cost = tf.add_n([
+                rpn_label_loss, rpn_box_loss,
+                fastrcnn_label_loss, fastrcnn_box_loss,
+                mrcnn_loss,
+                wd_cost], 'total_cost')
+
+            add_moving_summary(total_cost, wd_cost)
+            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
         else:
-            decoded_boxes = fastrcnn_head.decoded_output_boxes()
-            decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
-            label_scores = fastrcnn_head.output_scores(name='fastrcnn_all_scores')
-            final_boxes, final_scores, final_labels = fastrcnn_predictions(
-                decoded_boxes, label_scores, name_scope='output')
+            final_boxes, final_labels = self.fastrcnn_inference(
+                image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
 
             if cfg.MODE_MASK:
                 roi_resized = roi_align(featuremap, final_boxes * (1.0 / cfg.RPN.ANCHOR_STRIDE), 14)
-                feature_maskrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])
+                feature_maskrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCK[-1])
                 mask_logits = maskrcnn_upXconv_head(
                     'maskrcnn', feature_maskrcnn, cfg.DATA.NUM_CATEGORY, 0)   # #result x #cat x 14x14
-                indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
+                indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx14x14
-                tf.sigmoid(final_mask_logits, name='output/masks')
-            return []
+                tf.sigmoid(final_mask_logits, name='final_masks')
 
 
 class ResNetFPNModel(DetectionModel):
@@ -216,79 +284,83 @@ class ResNetFPNModel(DetectionModel):
             )   # NR_GT x height x width
         return ret
 
-    def slice_feature_and_anchors(self, p23456, anchors):
+    def slice_feature_and_anchors(self, image_shape2d, p23456, anchors):
         for i, stride in enumerate(cfg.FPN.ANCHOR_STRIDES):
             with tf.name_scope('FPN_slice_lvl{}'.format(i)):
+                if i < 3:
+                    # Images are padded for p5, which are too large for p2-p4.
+                    # This seems to have no effect on mAP.
+                    pi = p23456[i]
+                    target_shape = tf.to_int32(tf.ceil(tf.to_float(image_shape2d) * (1.0 / stride)))
+                    p23456[i] = tf.slice(pi, [0, 0, 0, 0],
+                                         tf.concat([[-1, -1], target_shape], axis=0))
+                    p23456[i].set_shape([1, pi.shape[1], None, None])
+
                 anchors[i] = anchors[i].narrow_to(p23456[i])
 
-    def backbone(self, image):
-        c2345 = resnet_fpn_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCKS)
+    def build_graph(self, *inputs):
+        num_fpn_level = len(cfg.FPN.ANCHOR_STRIDES)
+        assert len(cfg.RPN.ANCHOR_SIZES) == num_fpn_level
+        is_training = get_current_tower_context().is_training
+        image = inputs[0]
+        input_anchors = inputs[1: 1 + 2 * num_fpn_level]
+        multilevel_anchors = [RPNAnchors(*args) for args in
+                              zip(get_all_anchors_fpn(), input_anchors[0::2], input_anchors[1::2])]
+        gt_boxes, gt_labels = inputs[11], inputs[12]
+        if cfg.MODE_MASK:
+            gt_masks = inputs[-1]
+
+        image_shape2d = tf.shape(image)[:2]     # h,w
+        image = self.preprocess(image)     # 1CHW
+
+        c2345 = resnet_fpn_backbone(image, cfg.BACKBONE.RESNET_NUM_BLOCK)
         p23456 = fpn_model('fpn', c2345)
-        return p23456
-
-    def rpn(self, image, features, inputs):
-        assert len(cfg.RPN.ANCHOR_SIZES) == len(cfg.FPN.ANCHOR_STRIDES)
-
-        image_shape2d = tf.shape(image)[2:]     # h,w
-        all_anchors_fpn = get_all_anchors_fpn()
-        multilevel_anchors = [RPNAnchors(
-            all_anchors_fpn[i],
-            inputs['anchor_labels_lvl{}'.format(i + 2)],
-            inputs['anchor_boxes_lvl{}'.format(i + 2)]) for i in range(len(all_anchors_fpn))]
-        self.slice_feature_and_anchors(features, multilevel_anchors)
+        self.slice_feature_and_anchors(image_shape2d, p23456, multilevel_anchors)
 
         # Multi-Level RPN Proposals
         rpn_outputs = [rpn_head('rpn', pi, cfg.FPN.NUM_CHANNEL, len(cfg.RPN.ANCHOR_RATIOS))
-                       for pi in features]
+                       for pi in p23456]
         multilevel_label_logits = [k[0] for k in rpn_outputs]
         multilevel_box_logits = [k[1] for k in rpn_outputs]
-        multilevel_pred_boxes = [anchor.decode_logits(logits)
-                                 for anchor, logits in zip(multilevel_anchors, multilevel_box_logits)]
 
         proposal_boxes, proposal_scores = generate_fpn_proposals(
-            multilevel_pred_boxes, multilevel_label_logits, image_shape2d)
+            multilevel_anchors, multilevel_label_logits,
+            multilevel_box_logits, image_shape2d)
 
-        if self.training:
-            losses = multilevel_rpn_losses(
-                multilevel_anchors, multilevel_label_logits, multilevel_box_logits)
+        if is_training:
+            rcnn_boxes, rcnn_labels, fg_inds_wrt_gt = sample_fast_rcnn_targets(
+                proposal_boxes, gt_boxes, gt_labels)
         else:
-            losses = []
+            # The boxes to be used to crop RoIs.
+            rcnn_boxes = proposal_boxes
 
-        return BoxProposals(proposal_boxes), losses
-
-    def roi_heads(self, image, features, proposals, targets):
-        image_shape2d = tf.shape(image)[2:]     # h,w
-        assert len(features) == 5, "Features have to be P23456!"
-        gt_boxes, gt_labels, *_ = targets
-
-        if self.training:
-            proposals = sample_fast_rcnn_targets(proposals.boxes, gt_boxes, gt_labels)
+        roi_feature_fastrcnn = multilevel_roi_align(p23456[:4], rcnn_boxes, 7)
 
         fastrcnn_head_func = getattr(model_frcnn, cfg.FPN.FRCNN_HEAD_FUNC)
-        if not cfg.FPN.CASCADE:
-            roi_feature_fastrcnn = multilevel_roi_align(features[:4], proposals.boxes, 7)
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_head_func(
+            'fastrcnn', roi_feature_fastrcnn, cfg.DATA.NUM_CLASS)
 
-            head_feature = fastrcnn_head_func('fastrcnn', roi_feature_fastrcnn)
-            fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
-                'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
-            fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
-                                         gt_boxes, tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
-        else:
-            def roi_func(boxes):
-                return multilevel_roi_align(features[:4], boxes, 7)
+        if is_training:
+            # rpn loss:
+            rpn_label_loss, rpn_box_loss = multilevel_rpn_losses(
+                multilevel_anchors, multilevel_label_logits, multilevel_box_logits)
 
-            fastrcnn_head = CascadeRCNNHead(
-                proposals, roi_func, fastrcnn_head_func,
-                (gt_boxes, gt_labels), image_shape2d, cfg.DATA.NUM_CLASS)
+            # fastrcnn loss:
+            matched_gt_boxes = tf.gather(gt_boxes, fg_inds_wrt_gt)
 
-        if self.training:
-            all_losses = fastrcnn_head.losses()
+            fg_inds_wrt_sample = tf.reshape(tf.where(rcnn_labels > 0), [-1])   # fg inds w.r.t all samples
+            fg_sampled_boxes = tf.gather(rcnn_boxes, fg_inds_wrt_sample)
+            fg_fastrcnn_box_logits = tf.gather(fastrcnn_box_logits, fg_inds_wrt_sample)
+
+            fastrcnn_label_loss, fastrcnn_box_loss = self.fastrcnn_training(
+                image, rcnn_labels, fg_sampled_boxes,
+                matched_gt_boxes, fastrcnn_label_logits, fg_fastrcnn_box_logits)
 
             if cfg.MODE_MASK:
-                gt_masks = targets[2]
                 # maskrcnn loss
+                fg_labels = tf.gather(rcnn_labels, fg_inds_wrt_sample)
                 roi_feature_maskrcnn = multilevel_roi_align(
-                    features[:4], proposals.fg_boxes(), 14,
+                    p23456[:4], fg_sampled_boxes, 14,
                     name_scope='multilevel_roi_align_mask')
                 maskrcnn_head_func = getattr(model_mrcnn, cfg.FPN.MRCNN_HEAD_FUNC)
                 mask_logits = maskrcnn_head_func(
@@ -296,31 +368,67 @@ class ResNetFPNModel(DetectionModel):
 
                 target_masks_for_fg = crop_and_resize(
                     tf.expand_dims(gt_masks, 1),
-                    proposals.fg_boxes(),
-                    proposals.fg_inds_wrt_gt, 28,
+                    fg_sampled_boxes,
+                    fg_inds_wrt_gt, 28,
                     pad_border=False)  # fg x 1x28x28
                 target_masks_for_fg = tf.squeeze(target_masks_for_fg, 1, 'sampled_fg_mask_targets')
-                all_losses.append(maskrcnn_loss(mask_logits, proposals.fg_labels(), target_masks_for_fg))
-            return all_losses
+                mrcnn_loss = maskrcnn_loss(mask_logits, fg_labels, target_masks_for_fg)
+            else:
+                mrcnn_loss = 0.0
+
+            wd_cost = regularize_cost(
+                '(?:group1|group2|group3|rpn|fpn|fastrcnn|maskrcnn)/.*W',
+                l2_regularizer(cfg.TRAIN.WEIGHT_DECAY), name='wd_cost')
+
+            total_cost = tf.add_n([rpn_label_loss, rpn_box_loss,
+                                   fastrcnn_label_loss, fastrcnn_box_loss,
+                                   mrcnn_loss, wd_cost], 'total_cost')
+
+            add_moving_summary(total_cost, wd_cost)
+            return total_cost * (1. / cfg.TRAIN.NUM_GPUS)
         else:
-            decoded_boxes = fastrcnn_head.decoded_output_boxes()
-            decoded_boxes = clip_boxes(decoded_boxes, image_shape2d, name='fastrcnn_all_boxes')
-            label_scores = fastrcnn_head.output_scores(name='fastrcnn_all_scores')
-            final_boxes, final_scores, final_labels = fastrcnn_predictions(
-                decoded_boxes, label_scores, name_scope='output')
+            final_boxes, final_labels = self.fastrcnn_inference(
+                image_shape2d, rcnn_boxes, fastrcnn_label_logits, fastrcnn_box_logits)
             if cfg.MODE_MASK:
                 # Cascade inference needs roi transform with refined boxes.
-                roi_feature_maskrcnn = multilevel_roi_align(features[:4], final_boxes, 14)
+                roi_feature_maskrcnn = multilevel_roi_align(p23456[:4], final_boxes, 14)
                 maskrcnn_head_func = getattr(model_mrcnn, cfg.FPN.MRCNN_HEAD_FUNC)
                 mask_logits = maskrcnn_head_func(
                     'maskrcnn', roi_feature_maskrcnn, cfg.DATA.NUM_CATEGORY)   # #fg x #cat x 28 x 28
-                indices = tf.stack([tf.range(tf.size(final_labels)), tf.cast(final_labels, tf.int32) - 1], axis=1)
+                indices = tf.stack([tf.range(tf.size(final_labels)), tf.to_int32(final_labels) - 1], axis=1)
                 final_mask_logits = tf.gather_nd(mask_logits, indices)   # #resultx28x28
-                tf.sigmoid(final_mask_logits, name='output/masks')
-            return []
+                tf.sigmoid(final_mask_logits, name='final_masks')
 
 
-def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
+def SaveModelToPb(): 
+    # Save the graph def (pb)
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    dir_path = dir_path + "/temp/built_graph/"
+    
+    # Save the Graph pb tf way  
+    inference_graph_temp = tf.get_default_graph().as_graph_def()
+
+    inference_graph = tf.graph_util.extract_sub_graph(
+          inference_graph_temp, ['final_probs','final_boxes','final_labels'])
+    #with open("./mnist.pbtxt", "w") as f:
+    #    f.write(str(inference_graph))
+
+    tf.train.write_graph(inference_graph, dir_path, "Fasterrcnnfpn.pb", False)
+    tf.train.write_graph(inference_graph, dir_path, "Fasterrcnnfpn.pbtxt", True)
+    
+    # Save the graph pb 
+    #with open("./temp/built_graph/inference_graph2.pbtxt", "w") as f:
+    #    f.write(str(inference_graph))
+    
+    # Save the Frozen graph def tensor pack way     
+    #dir_path = os.path.dirname(os.path.realpath(__file__))
+    #dir_file = dir_path + "/temp/built_graph/Fasterrcnnfpn_graph_def_frozen.pb"
+    #ModelExporter(pred_config).export_compact(dir_file)
+    
+    # Return without doing anything more.
+    print("Saved model in {}".format(dir_path))
+
+def visualize(model, model_path, nr_visualize=100, output_dir='output'):
     """
     Visualize some intermediate results (proposals, raw predictions) inside the pipeline.
     """
@@ -333,32 +441,36 @@ def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
         input_names=['image', 'gt_boxes', 'gt_labels'],
         output_names=[
             'generate_{}_proposals/boxes'.format('fpn' if cfg.MODE_FPN else 'rpn'),
-            'generate_{}_proposals/scores'.format('fpn' if cfg.MODE_FPN else 'rpn'),
-            'fastrcnn_all_scores',
-            'output/boxes',
-            'output/scores',
-            'output/labels',
+            'generate_{}_proposals/probs'.format('fpn' if cfg.MODE_FPN else 'rpn'),
+            'fastrcnn_all_probs',
+            'final_boxes',
+            'final_probs',
+            'final_labels',
         ]))
 
     if os.path.isdir(output_dir):
         shutil.rmtree(output_dir)
     utils.fs.mkdir_p(output_dir)
     with tqdm.tqdm(total=nr_visualize) as pbar:
-        for idx, dp in itertools.islice(enumerate(df), nr_visualize):
-            img, gt_boxes, gt_labels = dp['image'], dp['gt_boxes'], dp['gt_labels']
+        for idx, dp in itertools.islice(enumerate(df.get_data()), nr_visualize):
+            img = dp[0]
+            if cfg.MODE_MASK:
+                gt_boxes, gt_labels, gt_masks = dp[-3:]
+            else:
+                gt_boxes, gt_labels = dp[-2:]
 
-            rpn_boxes, rpn_scores, all_scores, \
-                final_boxes, final_scores, final_labels = pred(img, gt_boxes, gt_labels)
+            rpn_boxes, rpn_scores, all_probs, \
+                final_boxes, final_probs, final_labels = pred(img, gt_boxes, gt_labels)
 
             # draw groundtruth boxes
             gt_viz = draw_annotation(img, gt_boxes, gt_labels)
             # draw best proposals for each groundtruth, to show recall
             proposal_viz, good_proposals_ind = draw_proposal_recall(img, rpn_boxes, rpn_scores, gt_boxes)
             # draw the scores for the above proposals
-            score_viz = draw_predictions(img, rpn_boxes[good_proposals_ind], all_scores[good_proposals_ind])
+            score_viz = draw_predictions(img, rpn_boxes[good_proposals_ind], all_probs[good_proposals_ind])
 
             results = [DetectionResult(*args) for args in
-                       zip(final_boxes, final_scores, final_labels,
+                       zip(final_boxes, final_probs, final_labels,
                            [None] * len(final_labels))]
             final_viz = draw_final_outputs(img, results)
 
@@ -372,59 +484,96 @@ def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
             pbar.update()
 
 
-def do_evaluate(pred_config, output_file):
-    num_gpu = cfg.TRAIN.NUM_GPUS
-    graph_funcs = MultiTowerOfflinePredictor(
-        pred_config, list(range(num_gpu))).get_predictors()
-
-    for dataset in cfg.DATA.VAL:
-        logger.info("Evaluating {} ...".format(dataset))
-        dataflows = [
-            get_eval_dataflow(dataset, shard=k, num_shards=num_gpu)
-            for k in range(num_gpu)]
-        all_results = multithread_predict_dataflow(dataflows, graph_funcs)
-        output = output_file + '-' + dataset
-        DetectionDataset().eval_or_save_inference_results(all_results, dataset, output)
+def offline_evaluate(pred_func, output_file):
+    df = get_eval_dataflow()
+    all_results = eval_coco(
+        df, 
+        lambda img: detect_one_image(img, pred_func, args, False), args)
+    with open(output_file, 'w') as f:
+        json.dump(all_results, f)
+    print_evaluation_scores(output_file)
 
 
-def do_predict(pred_func, input_file):
+def predict(pred_func, input_file):
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
-    results = predict_image(img, pred_func)
+    
+    results = detect_one_image(img, pred_func, args, True)
     final = draw_final_outputs(img, results)
     viz = np.concatenate((img, final), axis=1)
-    cv2.imwrite("output.png", viz)
-    logger.info("Inference output for {} written to output.png".format(input_file))
     tpviz.interactive_imshow(viz)
 
 
+class EvalCallback(Callback):
+    def __init__(self, in_names, out_names):
+        self._in_names, self._out_names = in_names, out_names
+
+    def _setup_graph(self):
+        self.pred = self.trainer.get_predictor(self._in_names, self._out_names)
+        self.df = get_eval_dataflow()
+
+    def _before_train(self):
+        EVAL_TIMES = 5  # eval 5 times during training
+        interval = self.trainer.max_epoch // (EVAL_TIMES + 1)
+        self.epochs_to_eval = set([interval * k for k in range(1, EVAL_TIMES + 1)])
+        self.epochs_to_eval.add(self.trainer.max_epoch)
+        logger.info("[EvalCallback] Will evaluate at epoch " + str(sorted(self.epochs_to_eval)))
+
+    def _eval(self):
+        all_results = eval_coco(self.df, lambda img: detect_one_image(img, self.pred))
+        output_file = os.path.join(
+            logger.get_logger_dir(), 'outputs{}.json'.format(self.global_step))
+        with open(output_file, 'w') as f:
+            json.dump(all_results, f)
+        try:
+            scores = print_evaluation_scores(output_file)
+        except Exception:
+            logger.exception("Exception in COCO evaluation.")
+            scores = {}
+        for k, v in scores.items():
+            self.trainer.monitors.put_scalar(k, v)
+
+    def _trigger_epoch(self):
+        if self.epoch_num in self.epochs_to_eval:
+            self._eval()
+
+
 if __name__ == '__main__':
+    model_name = "Fasterrcnnfpn_graph_def_freezed.pb"
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', help='load a model for evaluation or training. Can overwrite BACKBONE.WEIGHTS')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
     parser.add_argument('--visualize', action='store_true', help='visualize intermediate results')
-    parser.add_argument('--evaluate', help="Run evaluation. "
+    parser.add_argument('--evaluate', help="Run evaluation on COCO. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
-                                          "This argument is the path to the input image file", nargs='+')
+                                          "This argument is the path to the input image file")
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
+    parser.add_argument('--vscode', action='store_true', help='use vscode for debugging')
+    parser.add_argument('--savepb', action='store_true', help='save model to pb file. --evaluate should be specified.')
+    parser.add_argument('--loadfrozenpb', action='store_true', help='Evaluate from frozen pb file. --evaluate should be specified.', default=False)
+    parser.add_argument('--model_name', help='name of the directory', default=model_name)
 
-    if get_tf_version_tuple() < (1, 6):
-        # https://github.com/tensorflow/tensorflow/issues/14657
-        logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN if you're unlucky.")
+    #if get_tf_version_number() < 1.6:
+    #    # https://github.com/tensorflow/tensorflow/issues/14657
+    #    logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN training if you're unlucky.")
 
     args = parser.parse_args()
     if args.config:
+
+        if args.vscode:   
+            #for vscode only
+            for vsargs1 in args.config:
+                vsargs2 = vsargs1.replace('\"', '')
+                vsargs3 = []
+                vsargs3 = vsargs2.split(',')
+                args.config = vsargs3
+
         cfg.update_args(args.config)
 
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
-    DetectionDataset()  # initialize the config with information from our dataset
 
     if args.visualize or args.evaluate or args.predict:
-        if not tf.test.is_gpu_available():
-            from tensorflow.python.framework import test_util
-            assert get_tf_version_tuple() >= (1, 7) and test_util.IsMklEnabled(), \
-                "Inference requires either GPU support or MKL support!"
         assert args.load
         finalize_configs(is_training=False)
 
@@ -432,20 +581,19 @@ if __name__ == '__main__':
             cfg.TEST.RESULT_SCORE_THRESH = cfg.TEST.RESULT_SCORE_THRESH_VIS
 
         if args.visualize:
-            do_visualize(MODEL, args.load)
+            visualize(MODEL, args.load)
         else:
-            predcfg = PredictConfig(
+            pred = OfflinePredictor(PredictConfig(
                 model=MODEL,
                 session_init=get_model_loader(args.load),
                 input_names=MODEL.get_inference_tensor_names()[0],
-                output_names=MODEL.get_inference_tensor_names()[1])
-            if args.predict:
-                predictor = OfflinePredictor(predcfg)
-                for image_file in args.predict:
-                    do_predict(predictor, image_file)
-            elif args.evaluate:
+                output_names=MODEL.get_inference_tensor_names()[1]))
+            if args.evaluate:
                 assert args.evaluate.endswith('.json'), args.evaluate
-                do_evaluate(predcfg, args.evaluate)
+                offline_evaluate(pred, args.evaluate)
+            elif args.predict:
+                COCODetection(cfg.DATA.BASEDIR, 'val2014')   # Only to load the class names into caches
+                predict(pred, args.predict)
     else:
         is_horovod = cfg.TRAINER == 'horovod'
         if is_horovod:
@@ -456,25 +604,19 @@ if __name__ == '__main__':
             logger.set_logger_dir(args.logdir, 'd')
 
         finalize_configs(is_training=True)
+        factor = 8. / cfg.TRAIN.NUM_GPUS
         stepnum = cfg.TRAIN.STEPS_PER_EPOCH
 
         # warmup is step based, lr is epoch based
-        init_lr = cfg.TRAIN.WARMUP_INIT_LR * min(8. / cfg.TRAIN.NUM_GPUS, 1.)
-        warmup_schedule = [(0, init_lr), (cfg.TRAIN.WARMUP, cfg.TRAIN.BASE_LR)]
-        warmup_end_epoch = cfg.TRAIN.WARMUP * 1. / stepnum
-        lr_schedule = [(int(warmup_end_epoch + 0.5), cfg.TRAIN.BASE_LR)]
-
-        factor = 8. / cfg.TRAIN.NUM_GPUS
+        warmup_schedule = [(0, cfg.TRAIN.BASE_LR / 3), (cfg.TRAIN.WARMUP * factor, cfg.TRAIN.BASE_LR)]
+        warmup_end_epoch = cfg.TRAIN.WARMUP * factor * 1. / stepnum
+        lr_schedule = [(int(np.ceil(warmup_end_epoch)), warmup_schedule[-1][1])]
         for idx, steps in enumerate(cfg.TRAIN.LR_SCHEDULE[:-1]):
             mult = 0.1 ** (idx + 1)
             lr_schedule.append(
                 (steps * factor // stepnum, cfg.TRAIN.BASE_LR * mult))
         logger.info("Warm Up Schedule (steps, value): " + str(warmup_schedule))
         logger.info("LR Schedule (epochs, value): " + str(lr_schedule))
-        train_dataflow = get_train_dataflow()
-        # This is what's commonly referred to as "epochs"
-        total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
-        logger.info("Total passes of the training set is: {:.5g}".format(total_passes))
 
         callbacks = [
             PeriodicCallback(
@@ -484,36 +626,31 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter(
                 'learning_rate', warmup_schedule, interp='linear', step_based=True),
             ScheduledHyperParamSetter('learning_rate', lr_schedule),
+            EvalCallback(*MODEL.get_inference_tensor_names()),
             PeakMemoryTracker(),
             EstimatedTimeLeft(median=True),
             SessionRunTimeout(60000).set_chief_only(True),   # 1 minute timeout
-        ] + [
-            EvalCallback(dataset, *MODEL.get_inference_tensor_names(), args.logdir)
-            for dataset in cfg.DATA.VAL
         ]
         if not is_horovod:
             callbacks.append(GPUUtilizationTracker())
 
-        if is_horovod and hvd.rank() > 0:
-            session_init = None
+        if args.load:
+            session_init = get_model_loader(args.load)
         else:
-            if args.load:
-                session_init = get_model_loader(args.load)
-            else:
-                session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
+            session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
 
         traincfg = TrainConfig(
             model=MODEL,
-            data=QueueInput(train_dataflow),
+            data=QueueInput(get_train_dataflow()),
             callbacks=callbacks,
             steps_per_epoch=stepnum,
             max_epoch=cfg.TRAIN.LR_SCHEDULE[-1] * factor // stepnum,
             session_init=session_init,
-            starting_epoch=cfg.TRAIN.STARTING_EPOCH
         )
         if is_horovod:
+            # horovod mode has the best speed for this model
             trainer = HorovodTrainer(average=False)
         else:
-            # nccl mode appears faster than cpu mode
+            # nccl mode has better speed than cpu mode
             trainer = SyncMultiGPUTrainerReplicated(cfg.TRAIN.NUM_GPUS, average=False, mode='nccl')
         launch_train_with_config(traincfg, trainer)

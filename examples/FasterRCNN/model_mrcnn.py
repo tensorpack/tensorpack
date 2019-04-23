@@ -2,9 +2,9 @@
 
 import tensorflow as tf
 
-from tensorpack.models import Conv2D, Conv2DTranspose, layer_register
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.common import get_tf_version_tuple
+from tensorpack.models import (
+    Conv2D, layer_register, Conv2DTranspose)
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 
@@ -17,11 +17,11 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     """
     Args:
         mask_logits: #fg x #category xhxw
-        fg_labels: #fg, in 1~#class, int64
-        fg_target_masks: #fgxhxw, float32
+        fg_labels: #fg, in 1~#class
+        fg_target_masks: #fgxhxw, int
     """
-    num_fg = tf.size(fg_labels, out_type=tf.int64)
-    indices = tf.stack([tf.range(num_fg), fg_labels - 1], axis=1)  # #fgx2
+    num_fg = tf.size(fg_labels)
+    indices = tf.stack([tf.range(num_fg), tf.to_int32(fg_labels) - 1], axis=1)  # #fgx2
     mask_logits = tf.gather_nd(mask_logits, indices)  # #fgxhxw
     mask_probs = tf.sigmoid(mask_logits)
 
@@ -39,13 +39,13 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     pred_label = mask_probs > 0.5
     truth_label = fg_target_masks > 0.5
     accuracy = tf.reduce_mean(
-        tf.cast(tf.equal(pred_label, truth_label), tf.float32),
+        tf.to_float(tf.equal(pred_label, truth_label)),
         name='accuracy')
     pos_accuracy = tf.logical_and(
         tf.equal(pred_label, truth_label),
         tf.equal(truth_label, True))
-    pos_accuracy = tf.reduce_mean(tf.cast(pos_accuracy, tf.float32), name='pos_accuracy')
-    fg_pixel_ratio = tf.reduce_mean(tf.cast(truth_label, tf.float32), name='fg_pixel_ratio')
+    pos_accuracy = tf.reduce_mean(tf.to_float(pos_accuracy), name='pos_accuracy')
+    fg_pixel_ratio = tf.reduce_mean(tf.to_float(truth_label), name='fg_pixel_ratio')
 
     add_moving_summary(loss, accuracy, fg_pixel_ratio, pos_accuracy)
     return loss
@@ -64,11 +64,10 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
         mask_logits (N x num_category x 2s x 2s):
     """
     assert norm in [None, 'GN'], norm
-    l = feature
-    with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
+    l = tf.transpose(feature, [0, 2, 3, 1])
+    with argscope([Conv2D, Conv2DTranspose], data_format='channels_last',
                   kernel_initializer=tf.variance_scaling_initializer(
-                      scale=2.0, mode='fan_out',
-                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal')):
+                      scale=2.0, mode='fan_out', distribution='normal')):
         # c2's MSRAFill is fan_out
         for k in range(num_convs):
             l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)
@@ -76,6 +75,7 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
                 l = GroupNorm('gn{}'.format(k), l)
         l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
         l = Conv2D('conv', l, num_category, 1)
+        l = tf.transpose(l, [0, 3, 1, 2])
     return l
 
 

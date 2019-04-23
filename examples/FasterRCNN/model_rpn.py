@@ -2,13 +2,14 @@
 
 import tensorflow as tf
 
-from tensorpack.models import Conv2D, layer_register
-from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope
-from tensorpack.tfutils.summary import add_moving_summary
 
-from config import config as cfg
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.argscope import argscope
+from tensorpack.tfutils.scope_utils import under_name_scope, auto_reuse_variable_scope
+from tensorpack.models import Conv2D, layer_register
+
 from model_box import clip_boxes
+from config import config as cfg
 
 
 @layer_register(log_shape=True)
@@ -19,7 +20,8 @@ def rpn_head(featuremap, channel, num_anchors):
         label_logits: fHxfWxNA
         box_logits: fHxfWxNAx4
     """
-    with argscope(Conv2D, data_format='channels_first',
+    featuremap = tf.transpose(featuremap, [0, 2, 3, 1])
+    with argscope(Conv2D, data_format='channels_last',
                   kernel_initializer=tf.random_normal_initializer(stddev=0.01)):
         hidden = Conv2D('conv0', featuremap, channel, 3, activation=tf.nn.relu)
 
@@ -27,11 +29,11 @@ def rpn_head(featuremap, channel, num_anchors):
         box_logits = Conv2D('box', hidden, 4 * num_anchors, 1)
         # 1, NA(*4), im/16, im/16 (NCHW)
 
-        label_logits = tf.transpose(label_logits, [0, 2, 3, 1])  # 1xfHxfWxNA
+        # label_logits = tf.transpose(label_logits, [0, 2, 3, 1])  # 1xfHxfWxNA
         label_logits = tf.squeeze(label_logits, 0)  # fHxfWxNA
 
         shp = tf.shape(box_logits)  # 1x(NAx4)xfHxfW
-        box_logits = tf.transpose(box_logits, [0, 2, 3, 1])  # 1xfHxfWx(NAx4)
+        # box_logits = tf.transpose(box_logits, [0, 2, 3, 1])  # 1xfHxfWx(NAx4)
         box_logits = tf.reshape(box_logits, tf.stack([shp[2], shp[3], num_anchors, 4]))  # fHxfWxNAx4
     return label_logits, box_logits
 
@@ -71,19 +73,19 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
                         tf.equal(valid_prediction, valid_anchor_labels)),
                     dtype=tf.int32)
                 placeholder = 0.5   # A small value will make summaries appear lower.
-                recall = tf.cast(tf.truediv(pos_prediction_corr, nr_pos), tf.float32)
+                recall = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos))
                 recall = tf.where(tf.equal(nr_pos, 0), placeholder, recall, name='recall_th{}'.format(th))
-                precision = tf.cast(tf.truediv(pos_prediction_corr, nr_pos_prediction), tf.float32)
+                precision = tf.to_float(tf.truediv(pos_prediction_corr, nr_pos_prediction))
                 precision = tf.where(tf.equal(nr_pos_prediction, 0),
                                      placeholder, precision, name='precision_th{}'.format(th))
                 summaries.extend([precision, recall])
         add_moving_summary(*summaries)
 
     # Per-level loss summaries in FPN may appear lower due to the use of a small placeholder.
-    # But the total RPN loss will be fine.  TODO make the summary op smarter
+    # But the total loss is still the same.  TODO make the summary op smarter
     placeholder = 0.
     label_loss = tf.nn.sigmoid_cross_entropy_with_logits(
-        labels=tf.cast(valid_anchor_labels, tf.float32), logits=valid_label_logits)
+        labels=tf.to_float(valid_anchor_labels), logits=valid_label_logits)
     label_loss = tf.reduce_sum(label_loss) * (1. / cfg.RPN.BATCH_PER_IM)
     label_loss = tf.where(tf.equal(nr_valid, 0), placeholder, label_loss, name='label_loss')
 
@@ -97,7 +99,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 
     add_moving_summary(label_loss, box_loss, nr_valid, nr_pos)
-    return [label_loss, box_loss]
+    return label_loss, box_loss
 
 
 @under_name_scope()
