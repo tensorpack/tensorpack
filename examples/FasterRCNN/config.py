@@ -95,7 +95,7 @@ _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG
 _C.DATA.ABSOLUTE_COORD = True
 _C.DATA.NUM_WORKERS = 5  # number of data loading workers
 
-# basemodel ----------------------
+# backbone ----------------------
 _C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz
 _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101

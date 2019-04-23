@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# File: basemodel.py
+# File: backbone.py
 
 import numpy as np
 from contextlib import ExitStack, contextmanager

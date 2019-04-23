@@ -10,7 +10,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.tower import get_current_tower_context
 
-from basemodel import GroupNorm
+from backbone import GroupNorm
 from config import config as cfg
 from model_box import roi_align
 from model_rpn import generate_rpn_proposals, rpn_losses
