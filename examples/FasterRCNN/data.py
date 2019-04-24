@@ -8,7 +8,7 @@ from tabulate import tabulate
 from termcolor import colored
 
 from tensorpack.dataflow import (
-    DataFromList, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
+    DataFromList, MapDataComponent, MapData, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once, memoized
 
@@ -368,11 +368,15 @@ def get_train_dataflow():
             # tpviz.interactive_imshow(viz)
         return ret
 
-    if cfg.TRAINER == 'horovod':
-        ds = MultiThreadMapData(ds, cfg.DATA.NUM_WORKERS, preprocess)
-        # MPI does not like fork()
+    if cfg.DATA.NUM_WORKERS > 0:
+        buffer_size = cfg.DATA.NUM_WORKERS * 20
+        if cfg.TRAINER == 'horovod':
+            ds = MultiThreadMapData(ds, cfg.DATA.NUM_WORKERS, preprocess, buffer_size=buffer_size)
+            # MPI does not like fork()
+        else:
+            ds = MultiProcessMapDataZMQ(ds, cfg.DATA.NUM_WORKERS, preprocess, buffer_size=buffer_size)
     else:
-        ds = MultiProcessMapDataZMQ(ds, cfg.DATA.NUM_WORKERS, preprocess)
+        ds = MapData(ds, preprocess)
     return ds
 
 

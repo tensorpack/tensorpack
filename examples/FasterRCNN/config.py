@@ -93,7 +93,7 @@ _C.DATA.NUM_CATEGORY = 0  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
 # whether the coordinates in the annotations are absolute pixel values, or a relative value in [0, 1]
 _C.DATA.ABSOLUTE_COORD = True
-_C.DATA.NUM_WORKERS = 5  # number of data loading workers
+_C.DATA.NUM_WORKERS = 5  # number of data loading workers. set to 0 to disable parallel data loading
 
 # backbone ----------------------
 _C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz

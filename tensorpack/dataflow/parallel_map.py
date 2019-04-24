@@ -154,6 +154,7 @@ class MultiThreadMapData(_ParallelMapData):
             strict (bool): use "strict mode", see notes above.
         """
         super(MultiThreadMapData, self).__init__(ds, buffer_size, strict)
+        assert nr_thread > 0, nr_thread
 
         self._strict = strict
         self.nr_thread = nr_thread
@@ -259,6 +260,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         """
         _ParallelMapData.__init__(self, ds, buffer_size, strict)
         _MultiProcessZMQDataFlow.__init__(self)
+        assert nr_proc > 0, nr_proc
         self.nr_proc = nr_proc
         self.map_func = map_func
         self._strict = strict
