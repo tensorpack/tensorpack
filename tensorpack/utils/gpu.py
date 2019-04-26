@@ -56,12 +56,19 @@ def get_num_gpu():
             return warn_return(ctx.num_devices(), "NVML found nvidia devices. ")
     except Exception:
         # Fallback
-        # Note this will initialize all GPUs and therefore has side effect
-        # https://github.com/tensorflow/tensorflow/issues/8136
         logger.info("Loading local devices by TensorFlow ...")
-        from tensorflow.python.client import device_lib
-        local_device_protos = device_lib.list_local_devices()
-        return len([x.name for x in local_device_protos if x.device_type == 'GPU'])
+
+        try:
+            import tensorflow as tf
+            # available since TF 1.14
+            gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+        except AttributeError:
+            from tensorflow.python.client import device_lib
+            local_device_protos = device_lib.list_local_devices()
+            # Note this will initialize all GPUs and therefore has side effect
+            # https://github.com/tensorflow/tensorflow/issues/8136
+            gpu_devices = [x.name for x in local_device_protos if x.device_type == 'GPU']
+        return len(gpu_devices)
 
 
 get_nr_gpu = get_num_gpu

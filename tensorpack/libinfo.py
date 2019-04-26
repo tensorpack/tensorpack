@@ -54,14 +54,32 @@ try:
     _version = tf.__version__.split('.')
     assert (int(_version[0]), int(_version[1])) >= (1, 3), "TF>=1.3 is required!"
     _HAS_TF = True
+except ImportError:
+    print("Failed to import tensorflow.")
+    _HAS_TF = False
+else:
+    # Install stacktrace handler
     try:
         from tensorflow.python.framework import test_util
         test_util.InstallStackTraceHandler()
     except Exception:
         pass
-except ImportError:
-    print("Failed to import tensorflow.")
-    _HAS_TF = False
+
+    # Monkey-patch tf.test.is_gpu_available to avoid side effects:
+    # https://github.com/tensorflow/tensorflow/issues/26460
+    try:
+        list_dev = tf.config.experimental.list_physical_devices
+    except AttributeError:
+        pass
+    else:
+        old_is_gpu_available = tf.test.is_gpu_available
+
+        def is_gpu_available(*args, **kwargs):
+            if len(args) == 0 and len(kwargs) == 0:
+                return len(list_dev('GPU')) > 0
+            return old_is_gpu_available(*args, **kwargs)
+
+        tf.test.is_gpu_available = is_gpu_available
 
 
 # These lines will be programatically read/write by setup.py

@@ -340,6 +340,7 @@ class HorovodTrainer(SingleCostTrainer):
         2. Due to a TF bug (#8136), you must not initialize CUDA context before the trainer starts training.
            Therefore TF functions like `is_gpu_available()` or `list_local_devices()`
            must be avoided.
+           You can, however, use `tf.config.experimental.list_physical_devices('GPU')`, introduced in TF 1.14.
 
         2. MPI does not like `fork()`. If your dataflow contains multiprocessing, it may cause problems.
 

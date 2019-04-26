@@ -2,15 +2,16 @@
 # Performance Tuning
 
 __We do not know why your training is slow__ 
-(and most of the times it's not due to issues in tensorpack).
+(and most of the times it's not due to issues in tensorpack),
+unless we can reproduce the slowness with your instsructions.
 
 Tensorpack is designed to be high-performance, as can be seen in the [benchmarks](https://github.com/tensorpack/benchmarks).
 But performance is different across machines and tasks,
 and it requires knowledge of the entire stack to understand what might be wrong.
-Therefore when you have a performance issue, 
-it's not easy to let others understand what goes wrong without doing some investigations by your own.
+If you need help from others to understand a performance issue you saw, you have to either
+allow others to reproduce your slowness, or do some investigations on your own.
 
-Tensorpack has some tools to make it easier to understand the performance.
+Tensorpack has some tools to make it easier to investigate the performance.
 Here we provide a list of things you can do to understand why your training is slow.
 
 If you ask for help to understand and improve the speed, PLEASE do the
