@@ -144,7 +144,8 @@ class MultiProcessPrefetchData(ProxyDataFlow):
               `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
               and know that you'll likely see duplicates.
 
-           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
+           To utilize parallelism with more strict data integrity, you can use
+           the parallel versions of :class:`MapData`: :class:`MultiThreadMapData`, :class:`MultiProcessMapData`.
         2. This has more serialization overhead than :class:`PrefetchDataZMQ` when data is large.
         3. You can nest like this: ``PrefetchDataZMQ(PrefetchData(df, nr_proc=a), nr_proc=b)``.
            A total of ``a`` instances of ``df`` worker processes will be created.
@@ -241,7 +242,8 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
               `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
               and know that you'll likely see duplicates.
 
-           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
+           To utilize parallelism with more strict data integrity, you can use
+           the parallel versions of :class:`MapData`: :class:`MultiThreadMapData`, :class:`MultiProcessMapData`.
         2. `reset_state()` of the given dataflow will be called **once and only once** in the worker processes.
         3. The fork of processes happened in this dataflow's `reset_state()` method.
            Please note that forking a TensorFlow GPU session may be unsafe.
@@ -365,7 +367,8 @@ class MultiThreadPrefetchData(DataFlow):
               `Birthday Paradox <https://en.wikipedia.org/wiki/Birthday_problem>`_
               and know that you'll likely see duplicates.
 
-           To utilize parallelism with stricter data integrity, you can use the parallel versions of `MapData`.
+           To utilize parallelism with more strict data integrity, you can use
+           the parallel versions of :class:`MapData`: :class:`MultiThreadMapData`, :class:`MultiProcessMapData`.
     """
 
     class _Worker(StoppableThread):

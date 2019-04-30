@@ -94,6 +94,9 @@ class TrainConfig(object):
             starting_epoch (int): The index of the first epoch.
             steps_per_epoch (int): the number of steps (defined by :meth:`Trainer.run_step`) to run in each epoch.
                 Defaults to the input data size. You may want to divide it by the #GPUs in multi-GPU training.
+
+                Number of steps per epoch only affects the schedule of callbacks.
+                It does not affect the sequence of input data seen by the model.
             max_epoch (int): maximum number of epoch to run training.
         """
 
