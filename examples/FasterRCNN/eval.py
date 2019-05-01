@@ -21,7 +21,7 @@ from tensorpack.utils.utils import get_tqdm
 
 from common import CustomResize, clip_boxes
 from data import get_eval_dataflow
-from dataset import DetectionDataset
+from dataset import DatasetRegistry
 from config import config as cfg
 
 try:
@@ -116,7 +116,7 @@ def predict_dataflow(df, model_func, tqdm_bar=None):
 
     Returns:
         list of dict, in the format used by
-        `DetectionDataset.eval_or_save_inference_results`
+        `DatasetSplit.eval_inference_results`
     """
     df.reset_state()
     all_results = []
@@ -156,7 +156,7 @@ def multithread_predict_dataflow(dataflows, model_funcs):
 
     Returns:
         list of dict, in the format used by
-        `DetectionDataset.eval_or_save_inference_results`
+        `DatasetSplit.eval_inference_results`
     """
     num_worker = len(model_funcs)
     assert len(dataflows) == num_worker
@@ -248,8 +248,8 @@ class EvalCallback(Callback):
         output_file = os.path.join(
             logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
 
-        scores = DetectionDataset().eval_or_save_inference_results(
-            all_results, self._eval_dataset, output_file)
+        scores = DatasetRegistry.get(self._eval_dataset).eval_inference_results(
+            all_results, output_file)
         for k, v in scores.items():
             self.trainer.monitors.put_scalar(self._eval_dataset + '-' + k, v)
 

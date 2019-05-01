@@ -1,13 +1,14 @@
 
 ### File Structure
 This is a minimal implementation that simply contains these files:
-+ dataset.py: load and evaluate COCO dataset
++ dataset.py: the dataset interface
++ coco.py: load COCO data to the dataset interface
 + data.py: prepare data for training & inference
 + common.py: common data preparation utilities
 + backbone.py: implement backbones
-+ model_box.py: implement box-related symbolic functions
 + generalized_rcnn.py: implement variants of generalized R-CNN architecture
 + model_{fpn,rpn,frcnn,mrcnn,cascade}.py: implement FPN,RPN,Fast/Mask/Cascade R-CNN models.
++ model_box.py: implement box-related symbolic functions
 + train.py: main entry script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities
@@ -17,20 +18,25 @@ This is a minimal implementation that simply contains these files:
 
 Data:
 
-1. It's easy to train on your own data by changing `dataset.py`.
+1. It's easy to train on your own data, by calling `DatasetRegistry.register(name, lambda: YourDatasetSplit())`,
+	 and modify `cfg.DATA.*` accordingly.
 
-   + If your data is in COCO format, modify `COCODetection`
-     to change the class names and the id mapping.
-   + If your data is not in COCO format, ignore `COCODetection` completely and
-     rewrite all the methods of
-     `DetectionDataset` following its documents.
-     You'll implement the logic to load your dataset and evaluate predictions.
-   + If you load a COCO-trained model on a different dataset, you'll see error messages
-     complaining about unmatched number of categories for certain weights in the checkpoint.
-     You can either remove those weights in checkpoint, or rename them in the model.
-     See [tensorpack tutorial](https://tensorpack.readthedocs.io/tutorial/save-load.html) for more details.
+	`YourDatasetSplit` can be:
 
-2. You can easily add more augmentations such as rotation, but be careful how a box should be
+   + `COCODetection`, if your data is already in COCO format. In this case, you need to
+		 modify `COCODetection` to change the class names and the id mapping.
+
+   + Your own class, if your data is not in COCO format.
+		 You need to write a subclass of `DatasetSplit`, similar to `COCODetection`.
+     In this class you'll implement the logic to load your dataset and evaluate predictions.
+		 The documentation is in the docstring of `DatasetSplit.
+
+1. If you load a COCO-trained model on a different dataset, you may see error messages
+   complaining about unmatched number of categories for certain weights in the checkpoint.
+   You can either remove those weights in checkpoint, or rename them in the model.
+   See [tensorpack tutorial](https://tensorpack.readthedocs.io/tutorial/save-load.html) for more details.
+
+1. You can easily add more augmentations such as rotation, but be careful how a box should be
    augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
    which is probably not the optimal way.
    A TODO is to generate bounding box from segmentation, so more augmentations can be naturally supported.

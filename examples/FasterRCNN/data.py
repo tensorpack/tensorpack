@@ -4,6 +4,7 @@
 import copy
 import numpy as np
 import cv2
+import itertools
 from tabulate import tabulate
 from termcolor import colored
 
@@ -16,7 +17,7 @@ from common import (
     CustomResize, DataFromListOfDict, box_to_point8,
     filter_boxes_inside_shape, point8_to_box, segmentation_to_mask, np_iou)
 from config import config as cfg
-from dataset import DetectionDataset
+from dataset import DatasetRegistry
 from utils.generate_anchors import generate_anchors
 from utils.np_box_ops import area as np_area, ioa as np_ioa
 
@@ -30,20 +31,20 @@ class MalformedData(BaseException):
 def print_class_histogram(roidbs):
     """
     Args:
-        roidbs (list[dict]): the same format as the output of `load_training_roidbs`.
+        roidbs (list[dict]): the same format as the output of `training_roidbs`.
     """
-    dataset = DetectionDataset()
-    hist_bins = np.arange(dataset.num_classes + 1)
+    # labels are in [1, NUM_CATEGORY], hence +2 for bins
+    hist_bins = np.arange(cfg.DATA.NUM_CATEGORY + 2)
 
     # Histogram of ground-truth objects
-    gt_hist = np.zeros((dataset.num_classes,), dtype=np.int)
+    gt_hist = np.zeros((cfg.DATA.NUM_CATEGORY + 1,), dtype=np.int)
     for entry in roidbs:
         # filter crowd?
         gt_inds = np.where(
             (entry['class'] > 0) & (entry['is_crowd'] == 0))[0]
         gt_classes = entry['class'][gt_inds]
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
-    data = [[dataset.class_names[i], v] for i, v in enumerate(gt_hist)]
+    data = [[cfg.DATA.CLASS_NAMES[i], v] for i, v in enumerate(gt_hist)]
     data.append(['total', sum(x[1] for x in data)])
     # the first line is BG
     table = tabulate(data[1:], headers=['class', '#box'], tablefmt='pipe')
@@ -284,7 +285,7 @@ def get_train_dataflow():
     If MODE_MASK, gt_masks: (N, h, w)
     """
 
-    roidbs = DetectionDataset().load_training_roidbs(cfg.DATA.TRAIN)
+    roidbs = list(itertools.chain.from_iterable(DatasetRegistry.get(x).training_roidbs() for x in cfg.DATA.TRAIN))
     print_class_histogram(roidbs)
 
     # Valid training images should have at least one fg box.
@@ -387,7 +388,8 @@ def get_eval_dataflow(name, shard=0, num_shards=1):
         name (str): name of the dataset to evaluate
         shard, num_shards: to get subset of evaluation data
     """
-    roidbs = DetectionDataset().load_inference_roidbs(name)
+    roidbs = DatasetRegistry.get(name).inference_roidbs()
+    logger.info("Found {} images for inference.".format(len(roidbs)))
 
     num_imgs = len(roidbs)
     img_per_shard = num_imgs // num_shards

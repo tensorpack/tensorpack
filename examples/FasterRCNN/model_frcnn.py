@@ -111,7 +111,7 @@ def fastrcnn_outputs(feature, num_categories, class_agnostic_regression=False):
 
     Returns:
         cls_logits: N x num_class classification logits
-        reg_logits: N x num_classx4 or Nx2x4 if class agnostic
+        reg_logits: N x num_classx4 or Nx1x4 if class agnostic
     """
     num_classes = num_categories + 1
     classification = FullyConnected(
