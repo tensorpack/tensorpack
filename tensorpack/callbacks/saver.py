@@ -46,7 +46,7 @@ class ModelSaver(Callback):
 
     def _setup_graph(self):
         assert self.checkpoint_dir is not None, \
-            "ModelSaver() doesn't have a valid checkpoint directory."
+            "Please provide 'checkpoint_dir' for ModelSaver, or use logger.set_logger_dir()"
         vars = []
         for key in self.var_collections:
             vars.extend(tf.get_collection(key))

@@ -80,8 +80,8 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     1. Accepts an alternative `data_format` option when `axis` is None. For 2D input, this argument will be ignored.
     2. Default value for `momentum` and `epsilon` is different.
     3. Default value for `training` is automatically obtained from tensorpack's `TowerContext`, but can be overwritten.
-    4. Support the `internal_update` option, which cover more use cases than the standard collection-based update.
-    5. Support the `sync_statistics` option, which is very useful in small-batch models.
+    4. Support the ``internal_update`` option, which cover more use cases than the standard collection-based update.
+    5. Support the ``sync_statistics`` option, which is very useful in small-batch models.
 
     Args:
         internal_update (bool): if False, add EMA update ops to
