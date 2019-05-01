@@ -10,7 +10,8 @@ from utils.box_ops import pairwise_iou
 
 class CascadeRCNNHead(object):
     def __init__(self, proposals,
-                 roi_func, fastrcnn_head_func, gt_targets, image_shape2d, num_classes):
+                 roi_func, fastrcnn_head_func, gt_targets, image_shape2d,
+                 num_categories):
         """
         Args:
             proposals: BoxProposals
@@ -66,7 +67,7 @@ class CascadeRCNNHead(object):
         pooled_feature = self.scale_gradient(pooled_feature)
         head_feature = self.fastrcnn_head_func('head', pooled_feature)
         label_logits, box_logits = fastrcnn_outputs(
-            'outputs', head_feature, self.num_classes, class_agnostic_regression=True)
+            'outputs', head_feature, self.num_categories, class_agnostic_regression=True)
         head = FastRCNNHead(proposals, box_logits, label_logits, self.gt_boxes, reg_weights)
 
         refined_boxes = head.decoded_output_boxes_class_agnostic()
@@ -107,7 +108,7 @@ class CascadeRCNNHead(object):
         """
         ret = self._cascade_boxes[-1]
         ret = tf.expand_dims(ret, 1)     # class-agnostic
-        return tf.tile(ret, [1, self.num_classes, 1])
+        return tf.tile(ret, [1, self.num_categories + 1, 1])
 
     def output_scores(self, name=None):
         """

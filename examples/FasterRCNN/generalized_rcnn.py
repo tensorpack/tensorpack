@@ -137,7 +137,7 @@ class ResNetC4Model(GeneralizedRCNN):
         feature_fastrcnn = resnet_conv5(roi_resized, cfg.BACKBONE.RESNET_NUM_BLOCKS[-1])    # nxcx7x7
         # Keep C5 feature to be shared with mask branch
         feature_gap = GlobalAvgPooling('gap', feature_fastrcnn, data_format='channels_first')
-        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CLASS)
+        fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs('fastrcnn', feature_gap, cfg.DATA.NUM_CATEGORY)
 
         fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits, gt_boxes,
                                      tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
@@ -254,7 +254,7 @@ class ResNetFPNModel(GeneralizedRCNN):
 
             head_feature = fastrcnn_head_func('fastrcnn', roi_feature_fastrcnn)
             fastrcnn_label_logits, fastrcnn_box_logits = fastrcnn_outputs(
-                'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CLASS)
+                'fastrcnn/outputs', head_feature, cfg.DATA.NUM_CATEGORY)
             fastrcnn_head = FastRCNNHead(proposals, fastrcnn_box_logits, fastrcnn_label_logits,
                                          gt_boxes, tf.constant(cfg.FRCNN.BBOX_REG_WEIGHTS, dtype=tf.float32))
         else:
@@ -263,7 +263,7 @@ class ResNetFPNModel(GeneralizedRCNN):
 
             fastrcnn_head = CascadeRCNNHead(
                 proposals, roi_func, fastrcnn_head_func,
-                (gt_boxes, gt_labels), image_shape2d, cfg.DATA.NUM_CLASS)
+                (gt_boxes, gt_labels), image_shape2d, cfg.DATA.NUM_CATEGORY)
 
         if self.training:
             all_losses = fastrcnn_head.losses()

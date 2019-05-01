@@ -102,17 +102,18 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
 
 @layer_register(log_shape=True)
-def fastrcnn_outputs(feature, num_classes, class_agnostic_regression=False):
+def fastrcnn_outputs(feature, num_categories, class_agnostic_regression=False):
     """
     Args:
         feature (any shape):
-        num_classes(int): num_category + 1
+        num_categories (int):
         class_agnostic_regression (bool): if True, regression to N x 1 x 4
 
     Returns:
         cls_logits: N x num_class classification logits
         reg_logits: N x num_classx4 or Nx2x4 if class agnostic
     """
+    num_classes = num_categories + 1
     classification = FullyConnected(
         'class', feature, num_classes,
         kernel_initializer=tf.random_normal_initializer(stddev=0.01))
@@ -186,8 +187,7 @@ def fastrcnn_predictions(boxes, scores):
         scores: K
         labels: K
     """
-    assert boxes.shape[1] == cfg.DATA.NUM_CLASS
-    assert scores.shape[1] == cfg.DATA.NUM_CLASS
+    assert boxes.shape[1] == scores.shape[1]
     boxes = tf.transpose(boxes, [1, 0, 2])[1:, :, :]  # #catxnx4
     scores = tf.transpose(scores[:, 1:], [1, 0])  # #catxn
 
@@ -353,6 +353,7 @@ class FastRCNNHead(object):
             if k != 'self' and v is not None:
                 setattr(self, k, v)
         self._bbox_class_agnostic = int(box_logits.shape[1]) == 1
+        self._num_classes = box_logits.shape[1]
 
     @memoized_method
     def fg_box_logits(self):
@@ -373,7 +374,7 @@ class FastRCNNHead(object):
     def decoded_output_boxes(self):
         """ Returns: N x #class x 4 """
         anchors = tf.tile(tf.expand_dims(self.proposals.boxes, 1),
-                          [1, cfg.DATA.NUM_CLASS, 1])   # N x #class x 4
+                          [1, self._num_classes, 1])   # N x #class x 4
         decoded_boxes = decode_bbox_target(
             self.box_logits / self.bbox_regression_weights,
             anchors
