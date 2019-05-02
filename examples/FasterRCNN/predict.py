@@ -17,11 +17,10 @@ from tensorpack.predict import MultiTowerOfflinePredictor, OfflinePredictor, Pre
 from tensorpack.tfutils import get_model_loader, get_tf_version_tuple
 from tensorpack.utils import fs, logger
 
-from coco import register_coco
+from dataset import DatasetRegistry, register_coco
 from config import config as cfg
 from config import finalize_configs
 from data import get_eval_dataflow, get_train_dataflow
-from dataset import DatasetRegistry
 from eval import DetectionResult, multithread_predict_dataflow, predict_image
 from modeling.generalized_rcnn import ResNetC4Model, ResNetFPNModel
 from viz import draw_annotation, draw_final_outputs, draw_predictions, draw_proposal_recall
