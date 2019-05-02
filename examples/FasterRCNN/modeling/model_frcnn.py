@@ -10,10 +10,11 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized_method
 
-from backbone import GroupNorm
 from config import config as cfg
-from model_box import decode_bbox_target, encode_bbox_target
 from utils.box_ops import pairwise_iou
+
+from .model_box import decode_bbox_target, encode_bbox_target
+from .backbone import GroupNorm
 
 
 @under_name_scope()

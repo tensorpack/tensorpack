@@ -15,7 +15,7 @@ from config import config as cfg
 from config import finalize_configs
 from data import get_train_dataflow
 from eval import EvalCallback
-from generalized_rcnn import ResNetC4Model, ResNetFPNModel
+from modeling.generalized_rcnn import ResNetC4Model, ResNetFPNModel
 
 
 try:

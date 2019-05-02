@@ -5,10 +5,10 @@ This is a minimal implementation that simply contains these files:
 + coco.py: load COCO data to the dataset interface
 + data.py: prepare data for training & inference
 + common.py: common data preparation utilities
-+ backbone.py: implement backbones
-+ generalized_rcnn.py: implement variants of generalized R-CNN architecture
-+ model_{fpn,rpn,frcnn,mrcnn,cascade}.py: implement FPN,RPN,Fast/Mask/Cascade R-CNN models.
-+ model_box.py: implement box-related symbolic functions
++ modeling/generalized_rcnn.py: implement variants of generalized R-CNN architecture
++ modeling/backbone.py: implement backbones
++ modeling/model_{fpn,rpn,frcnn,mrcnn,cascade}.py: implement FPN,RPN,Fast/Mask/Cascade R-CNN models.
++ modeling/model_box.py: implement box-related symbolic functions
 + train.py: main entry script
 + utils/: third-party helper functions
 + eval.py: evaluation utilities

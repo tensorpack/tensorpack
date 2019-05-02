@@ -325,7 +325,7 @@ def get_train_dataflow():
         assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
         ret = {'image': im}
-        # rpn anchor:
+        # Add rpn data to dataflow:
         try:
             if cfg.MODE_FPN:
                 multilevel_anchor_inputs = get_multilevel_rpn_anchor_input(im, boxes, is_crowd)
@@ -333,7 +333,6 @@ def get_train_dataflow():
                     ret['anchor_labels_lvl{}'.format(i + 2)] = anchor_labels
                     ret['anchor_boxes_lvl{}'.format(i + 2)] = anchor_boxes
             else:
-                # anchor_labels, anchor_boxes
                 ret['anchor_labels'], ret['anchor_boxes'] = get_rpn_anchor_input(im, boxes, is_crowd)
 
             boxes = boxes[is_crowd == 0]    # skip crowd boxes in training target
