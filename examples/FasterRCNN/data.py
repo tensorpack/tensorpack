@@ -2,24 +2,26 @@
 # File: data.py
 
 import copy
+import itertools
 import numpy as np
 import cv2
-import itertools
 from tabulate import tabulate
 from termcolor import colored
 
 from tensorpack.dataflow import (
-    DataFromList, MapDataComponent, MapData, MultiProcessMapDataZMQ, MultiThreadMapData, TestDataSpeed, imgaug)
+    DataFromList, MapData, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData,
+    TestDataSpeed, imgaug)
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once, memoized
 
 from common import (
-    CustomResize, DataFromListOfDict, box_to_point8,
-    filter_boxes_inside_shape, point8_to_box, segmentation_to_mask, np_iou)
+    CustomResize, DataFromListOfDict, box_to_point8, filter_boxes_inside_shape, np_iou,
+    point8_to_box, segmentation_to_mask)
 from config import config as cfg
 from dataset import DatasetRegistry
 from utils.generate_anchors import generate_anchors
-from utils.np_box_ops import area as np_area, ioa as np_ioa
+from utils.np_box_ops import area as np_area
+from utils.np_box_ops import ioa as np_ioa
 
 # import tensorpack.utils.viz as tpviz
 

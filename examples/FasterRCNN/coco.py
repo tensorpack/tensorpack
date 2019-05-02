@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import json
 import numpy as np
 import os
 import tqdm
-import json
 
 from tensorpack.utils import logger
 from tensorpack.utils.timer import timed_operation
 
 from config import config as cfg
-from dataset import DatasetSplit, DatasetRegistry
+from dataset import DatasetRegistry, DatasetSplit
 
 __all__ = ['register_coco']
 
@@ -42,7 +42,7 @@ class COCODetection(DatasetSplit):
         self.name = name
         self._imgdir = os.path.realpath(os.path.join(
             basedir, self._INSTANCE_TO_BASEDIR.get(name, name)))
-        assert os.path.isdir(self._imgdir), self._imgdir
+        assert os.path.isdir(self._imgdir), "{} is not a directory!".format(self._imgdir)
         annotation_file = os.path.join(
             basedir, 'annotations/instances_{}.json'.format(name))
         assert os.path.isfile(annotation_file), annotation_file

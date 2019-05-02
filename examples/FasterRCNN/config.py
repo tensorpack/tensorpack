@@ -3,8 +3,8 @@
 
 import numpy as np
 import os
-import six
 import pprint
+import six
 
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_num_gpu

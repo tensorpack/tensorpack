@@ -2,17 +2,17 @@
 # File: eval.py
 
 import itertools
-import sys
-import os
 import json
 import numpy as np
+import os
+import sys
+import tensorflow as tf
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 import cv2
 import pycocotools.mask as cocomask
 import tqdm
-import tensorflow as tf
 
 from tensorpack.callbacks import Callback
 from tensorpack.tfutils.common import get_tf_version_tuple
@@ -20,9 +20,9 @@ from tensorpack.utils import logger
 from tensorpack.utils.utils import get_tqdm
 
 from common import CustomResize, clip_boxes
+from config import config as cfg
 from data import get_eval_dataflow
 from dataset import DatasetRegistry
-from config import config as cfg
 
 try:
     import horovod.tensorflow as hvd

@@ -63,12 +63,12 @@ Some reasonable configurations are listed in the table below.
 
 To predict on an image (needs DISPLAY to show the outputs):
 ```
-./train.py --predict input1.jpg input2.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
+./predict.py --predict input1.jpg input2.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
 ```
 
 To evaluate the performance of a model on COCO:
 ```
-./train.py --evaluate output.json --load /path/to/Trained-Model-Checkpoint \
+./predict.py --evaluate output.json --load /path/to/Trained-Model-Checkpoint \
     --config SAME-AS-TRAINING
 ```
 
@@ -99,7 +99,7 @@ be approximately reproduced.
  | R101-FPN                    | 40.4;36.6 [:arrow_down:][R101FPN2x]                            | 40.9;36.4                                          | 37h               | <details><summary>standard</summary>`MODE_FPN=True`<br/>`BACKBONE.RESNET_NUM_BLOCKS=[3,4,23,3]` </details>                                                                                                                                                                                                                                                                                                    |
  | R101-FPN                    | 46.5;40.1 [:arrow_down:][R101FPN3xCasAug] <sup>[3](#ft3)</sup> |                                                    | 73h               | <details><summary>3x+Cascade+TrainAug</summary>`MODE_FPN=True FPN.CASCADE=True`<br/>`BACKBONE.RESNET_NUM_BLOCKS=[3,4,23,3]`<br/>`TEST.RESULT_SCORE_THRESH=1e-4`<br/>`PREPROC.TRAIN_SHORT_EDGE_SIZE=[640,800]`<br/>`TRAIN.LR_SCHEDULE=[420000,500000,540000]` </details>                                                                                                                                       |
  | R101-FPN<br/>(From Scratch) | 47.5;41.2 [:arrow_down:][R101FPN9xGNCasAugScratch]             | 47.4;40.5<sup>[4](#ft4)</sup>                      | 45h (on 48 V100s) | <details><summary>9x+GN+Cascade+TrainAug</summary>`MODE_FPN=True FPN.CASCADE=True`<br/>`BACKBONE.RESNET_NUM_BLOCKS=[3,4,23,3]`<br/>`FPN.NORM=GN BACKBONE.NORM=GN`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head`<br/>`FPN.MRCNN_HEAD_FUNC=maskrcnn_up4conv_gn_head`<br/>`PREPROC.TRAIN_SHORT_EDGE_SIZE=[640,800]`<br/>`TRAIN.LR_SCHEDULE=[1500000,1580000,1620000]`<br/>`BACKBONE.FREEZE_AT=0`</details> |
- 
+
  [R50C42x]: http://models.tensorpack.com/FasterRCNN/COCO-R50C4-MaskRCNN-Standard.npz
  [R50FPN2x]: http://models.tensorpack.com/FasterRCNN/COCO-R50FPN-MaskRCNN-Standard.npz
  [R50FPN2xGN]: http://models.tensorpack.com/FasterRCNN/COCO-R50FPN-MaskRCNN-StandardGN.npz

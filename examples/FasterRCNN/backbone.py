@@ -2,8 +2,8 @@
 # File: backbone.py
 
 import numpy as np
-from contextlib import ExitStack, contextmanager
 import tensorflow as tf
+from contextlib import ExitStack, contextmanager
 
 from tensorpack.models import BatchNorm, Conv2D, MaxPooling, layer_register
 from tensorpack.tfutils import argscope

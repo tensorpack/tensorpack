@@ -4,22 +4,23 @@
 import tensorflow as tf
 
 from tensorpack import ModelDesc
-from tensorpack.models import regularize_cost, l2_regularizer, GlobalAvgPooling
-from tensorpack.tfutils.tower import get_current_tower_context
-from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.models import GlobalAvgPooling, l2_regularizer, regularize_cost
 from tensorpack.tfutils import optimizer
+from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.tower import get_current_tower_context
 
 import model_frcnn
 import model_mrcnn
 from backbone import image_preprocess, resnet_c4_backbone, resnet_conv5, resnet_fpn_backbone
+from config import config as cfg
+from data import get_all_anchors, get_all_anchors_fpn
 from model_box import RPNAnchors, clip_boxes, crop_and_resize, roi_align
 from model_cascade import CascadeRCNNHead
 from model_fpn import fpn_model, generate_fpn_proposals, multilevel_roi_align, multilevel_rpn_losses
-from model_frcnn import BoxProposals, FastRCNNHead, fastrcnn_outputs, fastrcnn_predictions, sample_fast_rcnn_targets
+from model_frcnn import (
+    BoxProposals, FastRCNNHead, fastrcnn_outputs, fastrcnn_predictions, sample_fast_rcnn_targets)
 from model_mrcnn import maskrcnn_loss, maskrcnn_upXconv_head
 from model_rpn import generate_rpn_proposals, rpn_head, rpn_losses
-from data import get_all_anchors, get_all_anchors_fpn
-from config import config as cfg
 
 
 class GeneralizedRCNN(ModelDesc):

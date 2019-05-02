@@ -2,8 +2,8 @@
 # File: model_box.py
 
 import numpy as np
-from collections import namedtuple
 import tensorflow as tf
+from collections import namedtuple
 
 from tensorpack.tfutils.scope_utils import under_name_scope
 
