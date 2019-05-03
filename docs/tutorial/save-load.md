@@ -34,7 +34,10 @@ It dumps the model to a `var-name: value` dict saved in npz format.
 ## Load a Model to a Session
 
 Model loading (in both training and inference) is through the `session_init` interface.
-Currently there are two major ways a session can be restored:
+For training, use `session_init` in `TrainConfig` or `Trainer.train()`.
+For inference, use `session_init` in `PredictConfig`.
+
+There are two ways a session can be initialized:
 [session_init=SaverRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore)
 which restores a TF checkpoint,
 or [session_init=DictRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore) which restores a dict.
@@ -43,7 +46,7 @@ you need (e.g., remove variables, rename variables) to the dict.
 
 To load multiple models, use [ChainInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.ChainInit).
 
-To load an npz file to a session, you can use `DictRestore(dict(np.load(filename)))`.
+To load an npz file from tensorpack model zoo to a session, you can use `DictRestore(dict(np.load(filename)))`.
 You can also use
 [get_model_loader(filename)](../modules/tfutils.html#tensorpack.tfutils.sessinit.get_model_loader),
 a small helper which returns either a `SaverRestore` or a `DictRestore` based on the file name.
@@ -64,23 +67,22 @@ graph, or rename/remove the variables in your loader.
 
 ## Resume Training
 
-"resume training" is mostly just "loading the last known checkpoint".
-Therefore you should refer to the [previous section](#load-a-model-to-a-session)
-on how to load a model.
+"Resume training" is mostly just "loading the last known checkpoint".
+To load a model, you should refer to the previous section: [Load a Model to a Session](#load-a-model-to-a-session).
 
 ```eval_rst
 .. note:: **A checkpoint does not resume everything!**
 
-    The TensorFlow checkpoint only saves TensorFlow variables,
+    Loading the checkpoint does most of the work in "resume trainig", but note that
+    TensorFlow checkpoint only saves TensorFlow variables,
     which means other Python state that are not TensorFlow variables will not be saved
     and resumed. This means:
 
     1. Training epoch number will not be resumed.
-       You can set it by providing a ``starting_epoch`` to your resume job.
+       You can set it by providing a ``starting_epoch`` to your ``TrainConfig``.
     2. State in your callbacks will not be resumed. Certain callbacks maintain a state
        (e.g., current best accuracy) in Python, which cannot be saved automatically.
 ```
-
 
 The [AutoResumeTrainConfig](../modules/train.html#tensorpack.train.AutoResumeTrainConfig)
 is an alternative of `TrainConfig` which applies some heuristics to load the lastest epoch number and lastest checkpoint.
