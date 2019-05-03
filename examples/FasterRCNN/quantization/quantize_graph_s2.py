@@ -1032,6 +1032,38 @@ class GraphRewriter(object):
                 return self.intel_cpu_find_relu_recursively(input_node)
             else:
                 return False
+   
+    def check_if_resnet50_node(self, current_node):
+        nodenamesplit = current_node.name.split("/")
+        if len(nodenamesplit) > 3:
+            convstring = nodenamesplit[3]
+            groupstring = nodenamesplit[0][:5]
+            blockstring = nodenamesplit[1][:5]
+            convopstring = nodenamesplit[2]
+            if convstring == "Conv2D" and groupstring == "group" and (blockstring == "block"):
+                return True
+            else:
+                return False
+
+    def model_and_node_specific_action(self, current_node, get_add_node=False):
+        should_quantize_conv = False
+        is_add_node = False
+        if FLAGS.model_name in ["FasterRCNN", "R-FCN"]:
+            if self.conv_count in [39]:
+                should_quantize_conv = False
+            else:
+                should_quantize_conv = True
+            self.conv_count = self.conv_count + 1
+        elif FLAGS.model_name in ["FasterRCNNFPN"]:            
+            should_quantize_conv = self.check_if_resnet50_node(current_node)
+        else:
+            should_quantize_conv = False
+        
+        if not get_add_node:
+            return should_quantize_conv
+        else:
+            return is_add_node
+
 
     # def intel_cpu_find_switch_input_any(self, current_node):
     #   should_quantize_concat = True
@@ -1062,14 +1094,10 @@ class GraphRewriter(object):
 
         if current_node.op == "Conv2D":
             # TODO: Clean up model-specific code
-            if FLAGS.model_name not in ["FasterRCNN", "R-FCN"]:
+            if FLAGS.model_name not in ["FasterRCNN", "R-FCN", "FasterRCNNFPN", "RESNET50"]:
                 should_quantize_conv = self.intel_cpu_find_relu_recursively(current_node)
             else:
-                if self.conv_count in [39]:
-                    should_quantize_conv = False
-                else:
-                    should_quantize_conv = True
-            self.conv_count = self.conv_count + 1
+                should_quantize_conv = self.model_and_node_specific_action(current_node)
             
             #Int8 Pad fusion
             pad_node = self.nodes_map[current_node.input[0]]

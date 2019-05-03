@@ -508,7 +508,6 @@ class GraphRewriter(object):
         self.mode = mode
         self.intel_cpu_eightbitize = intel_cpu_eightbitize
         self.conv_count = 0 # TODO: refactor to remove this counte
-        self.pad_fuse_map = {}
         self.per_channel = per_channel
         self.final_node_renames = {}
         self.quantized_node_dict = {}
@@ -928,7 +927,6 @@ class GraphRewriter(object):
                                                   all_input_names)
         copy_attr(quantized_conv_node, "strides", original_node.attr["strides"])
         copy_attr(quantized_conv_node, "padding", original_node.attr["padding"])
-        copy_attr(quantized_conv_node, "padding_list", original_node.attr["padding_list"])
         copy_attr(quantized_conv_node, "dilations", original_node.attr["dilations"])
         set_attr_dtype(quantized_conv_node, "Tinput", dtypes.quint8)
         set_attr_dtype(quantized_conv_node, "Tfilter", dtypes.qint8)
@@ -1028,7 +1026,7 @@ class GraphRewriter(object):
         else:
             first_input_node_name = node_name_from_input(current_node.input[0])
             input_node = self.nodes_map[first_input_node_name]
-            if input_node.op in ("ConcatV2", "MaxPool", "AvgPool", "Relu", "Relu6", "Pad"):
+            if input_node.op in ("ConcatV2", "MaxPool", "AvgPool", "Relu", "Relu6"):
                 return self.intel_cpu_find_relu_recursively(input_node)
             else:
                 return False
@@ -1070,14 +1068,6 @@ class GraphRewriter(object):
                 else:
                     should_quantize_conv = True
             self.conv_count = self.conv_count + 1
-            
-            #Int8 Pad fusion
-            pad_node = self.nodes_map[current_node.input[0]]
-            if pad_node.op == "Pad":
-              self.pad_fuse_map[current_node.name] = True
-            else:
-              self.pad_fuse_map[current_node.name] = False
-
         if current_node.op == "DepthwiseConv2dNative":
             should_quantize_conv = self.intel_cpu_find_relu_recursively(current_node)
         if current_node.op == "ConcatV2":
@@ -1113,13 +1103,6 @@ class GraphRewriter(object):
         if current_node.op in ("Conv2D", "DepthwiseConv2dNative") \
           and should_quantize_conv and quantize_input \
           and (current_node.name not in self.excluded_nodes):
-            
-            # Int8 Pad fusion
-            if self.pad_fuse_map[current_node.name] == True:
-                paddings_tensor= tensor_util.MakeNdarray(self.nodes_map[self.nodes_map[current_node.input[0]].input[1]].attr["value"].tensor).flatten()
-                current_node.input[0] = self.nodes_map[current_node.input[0]].input[0]
-                set_attr_int_list(current_node, "padding_list" , paddings_tensor)
-
             # match pattern for fusion with bias and relu
             grand_parent, parent = self.state.output_node_stack[-2:]
             if parent[0].op in ("BiasAdd", "Add") and (grand_parent[0].op in ("Relu", "Relu6")):
