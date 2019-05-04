@@ -592,7 +592,7 @@ if __name__ == '__main__':
                 assert args.evaluate.endswith('.json'), args.evaluate
                 offline_evaluate(pred, args.evaluate)
             elif args.predict:
-                COCODetection(cfg.DATA.BASEDIR, 'val2014')   # Only to load the class names into caches
+                COCODetection(cfg.DATA.BASEDIR, cfg.DATA.VAL)   # Only to load the class names into caches
                 predict(pred, args.predict)
     else:
         is_horovod = cfg.TRAINER == 'horovod'

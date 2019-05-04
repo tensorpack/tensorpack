@@ -24,6 +24,7 @@ cd ./examples/FasterRCNN/
 From the `FasterRCNN` directory of the above implementation, create a `temp` directory using the following command.
 ```
 mkdir ./temp
+mkdir ./temp/val2014
 ```
 
 From the `FasterRCNN` directory of the above implementation, download the validation images file to the `./temp` directory using the following command.
