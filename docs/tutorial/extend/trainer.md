@@ -10,7 +10,7 @@ Tensorpack follows the "define-and-run" paradigm. Therefore a training script ha
 	The goal of this step is to define "what to run" in later training steps,
 	and it can happen __either inside or outside__ tensorpack trainer.
 
-2. __Run__: Train the model (the [Trainer.train() method](../modules/train.html#tensorpack.train.Trainer.train)):
+2. __Run__: Train the model (the [Trainer.train() method](/modules/train.html#tensorpack.train.Trainer.train)):
 
 	1. Setup callbacks/monitors.
 	2. Finalize graph, initialize session.
@@ -38,7 +38,7 @@ Users or derived trainers should implement __what the iteration is__.
 
 2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
 But `steps_per_epoch` can be any number you set
-and it only affects the [schedule of callbacks](extend/callback.html).
+and it only affects the [schedule of callbacks](callback.html).
 In other words, an "epoch" in tensorpack is the __default period to run callbacks__ (validation, summary, checkpoint, etc.).
 
 
@@ -53,8 +53,8 @@ These trainers will take care of step 1 (define the graph), with the following a
 3. A function which takes input tensors and returns the cost.
 4. A function which returns an optimizer.
 
-These are documented in [SingleCostTrainer.setup_graph](../modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
-In practice you'll not use this method directly, but use [high-level interface](../tutorial/training-interface.html#with-modeldesc-and-trainconfig) instead.
+These are documented in [SingleCostTrainer.setup_graph](/modules/train.html#tensorpack.train.SingleCostTrainer.setup_graph).
+In practice you'll not use this method directly, but use [high-level interface](/tutorial/training-interface.html#with-modeldesc-and-trainconfig) instead.
 
 
 ### Write a Trainer
@@ -74,13 +74,13 @@ You will need to do two things for a new Trainer:
 2. Define what is the iteration. There are 2 ways to define the iteration:
 	1. Set `Trainer.train_op` to a TensorFlow operation. This op will be run by default.
 	2. Subclass `Trainer` and override the `run_step()` method. This way you can
-       do something more than running an op. 
+       do something more than running an op.
 
        Note that trainer has `self.sess` and `self.hooked_sess`: only the hooked
        session will trigger the `before_run`/`after_run` callbacks.
        If you need more than one `Session.run` in one steps, special care needs
-       to be taken to choose which session to use, because many states 
+       to be taken to choose which session to use, because many states
        (global steps, StagingArea, summaries) are maintained through `before_run`/`after_run`.
-       
+
 
 There are several different [GAN trainers](../../examples/GAN/GAN.py) for reference.

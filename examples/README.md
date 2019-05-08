@@ -9,7 +9,11 @@ Github is full of deep learning code that "implements" but does not "reproduce"
 methods, and you'll not know whether the implementation is actually correct.
 See [Unawareness of Deep Learning Mistakes](https://medium.com/@ppwwyyxx/unawareness-of-deep-learning-mistakes-d5b5774da0ba).
 
-We refuse toy examples. We refuse low-quality implementations.
+We refuse toy examples. 
+Instead of showing tiny CNNs trained on MNIST/Cifar10, 
+we provide training scripts that reproduce well-known papers.
+
+We refuse low-quality implementations.
 Unlike most open source repos which only __implement__ methods,
 [Tensorpack examples](examples) faithfully __reproduce__ 
 experiments and performance in the paper,

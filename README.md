@@ -34,7 +34,11 @@ See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/ind
 
 ## Examples:
 
-We refuse toy examples. We refuse low-quality implementations.
+We refuse toy examples.
+Instead of showing tiny CNNs trained on MNIST/Cifar10, 
+we provide training scripts that reproduce well-known papers.
+
+We refuse low-quality implementations.
 Unlike most open source repos which only __implement__ papers,
 [Tensorpack examples](examples) faithfully __reproduce__ papers,
 demonstrating its __flexibility__ for actual research.

@@ -51,7 +51,7 @@ People often think they should use `tf.data` because it's fast.
     above figure is hidden, __faster reader brings no gains to overall throughput__.
     For most types of problems, up to the scale of multi-GPU ImageNet training,
     Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
-    See the [Efficient DataFlow](efficient-dataflow.html) tutorial on how to build a fast Python reader with DataFlow.
+    See the [Efficient DataFlow](/tutorial/efficient-dataflow.html) tutorial on how to build a fast Python reader with DataFlow.
 
 ### TensorFlow Reader: Cons
 The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
