@@ -10,6 +10,7 @@ from tensorpack import *
 from tensorpack.contrib.keras import KerasPhaseCallback
 from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized
+from tensorpack.utils.gpu import get_num_gpu
 
 KL = keras.layers
 
@@ -23,19 +24,20 @@ Note: this example does not work for replicated-style data-parallel trainers.
 IMAGE_SIZE = 28
 
 
-@memoized        # this is necessary for sonnet/Keras to work under tensorpack
+@memoized  # this is necessary for sonnet/keras to work under tensorpack
 def get_keras_model():
-    M = keras.models.Sequential()
-    M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
-    M.add(KL.MaxPooling2D())
-    M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
-    M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
-    M.add(KL.MaxPooling2D())
-    M.add(KL.Conv2D(32, 3, padding='same', activation='relu'))
-    M.add(KL.Flatten())
-    M.add(KL.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(1e-5)))
-    M.add(KL.Dropout(0.5))
-    M.add(KL.Dense(10, activation=None, kernel_regularizer=keras.regularizers.l2(1e-5)))
+    with tf.name_scope('/'):
+        M = keras.models.Sequential()
+        M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
+        M.add(KL.MaxPooling2D())
+        M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
+        M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
+        M.add(KL.MaxPooling2D())
+        M.add(KL.Conv2D(32, 3, padding='same', activation='relu'))
+        M.add(KL.Flatten())
+        M.add(KL.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(1e-5)))
+        M.add(KL.Dropout(0.5))
+        M.add(KL.Dense(10, activation=None, kernel_regularizer=keras.regularizers.l2(1e-5)))
     return M
 
 
@@ -96,4 +98,11 @@ if __name__ == '__main__':
         max_epoch=100,
     )
 
-    launch_train_with_config(cfg, QueueInputTrainer())
+    if get_num_gpu() <= 1:
+        # single GPU:
+        launch_train_with_config(cfg, QueueInputTrainer())
+    else:
+        # multi GPU:
+        launch_train_with_config(cfg, SyncMultiGPUTrainerParameterServer(2))
+        # "Replicated" multi-gpu trainer is not supported for Keras model
+        # since Keras does not respect variable scopes.

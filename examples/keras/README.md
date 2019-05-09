@@ -15,9 +15,14 @@ are the only two tools I know that can scale the training of a large Keras model
 
 ### Simple Examples:
 
-[mnist-keras.py](mnist-keras.py): a simple MNIST model written mostly in tensorpack style, but use Keras model as symbolic functions.
+There are two flavors where you can use a Keras model inside tensorpack:
 
-[mnist-keras-v2.py](mnist-keras-v2.py): the same MNIST model written in Keras style.
+1. Write the tower function similar to a standard tensorpack program, but use some Keras layers in
+	 between. See [mnist-keras.py](mnist-keras.py) on how to do this.
+	 It does not support all tensorpack trainers.
+
+2. The entire model to train is a Keras model (and there will be no `ModelDesc`, etc).
+	 See [mnist-keras-v2.py](mnist-keras-v2.py).
 
 ### ImageNet Example:
 
@@ -36,7 +41,7 @@ It has:
 
 Keras does not respect variable scopes or variable
 collections, which contradicts with tensorpack trainers.
-Therefore Keras support is __experimental__. 
+Therefore Keras support is __experimental__.
 
 These simple examples can run within tensorpack smoothly, but note that a future
 version of Keras or a complicated model may break them (unlikely, though).

@@ -40,7 +40,7 @@ class KerasModelCaller(object):
         self.get_model = get_model
         self.cached_model = None
 
-    def __call__(self, input_tensors):
+    def __call__(self, *input_tensors):
         """
         Args:
             input_tensors ([tf.Tensor])
@@ -106,6 +106,8 @@ class KerasModelCaller(object):
 
         post_process_model(model)
 
+        if isinstance(outputs, list) and len(outputs) == 1:
+            return outputs[0]
         return outputs
 
 
@@ -167,7 +169,7 @@ def setup_keras_trainer(
         target_tensors = list(inputs[nr_inputs:])
         # TODO mapping between target tensors & output tensors
 
-        outputs = model_caller(input_tensors)
+        outputs = model_caller(*input_tensors)
 
         if isinstance(outputs, tf.Tensor):
             outputs = [outputs]
