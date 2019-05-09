@@ -75,25 +75,30 @@ class SessionUpdate(object):
                 value.shape, varshape, name))
             value = value.reshape(varshape)
 
-        # fix some common type incompatibility problems, but not all
-        def upcast(vartype, valtype):
-            # vartype: a tf dtype
-            # valtype: a numpy dtype
-            # allow up-casting
-            if vartype == tf.float64 and valtype == np.float32:
-                return np.float64
-            if vartype in [tf.int64, tf.int32] and valtype in [np.int32, np.int16, np.int8]:
-                return np.int64 if vartype == tf.int64 else np.int32
-            return None
+        # Be permissive, and allow some common type incompatibility problems
+        def allow_cast(to_type, from_type):
+            # to_type: a tf dtype
+            # from_type: a numpy dtype
+            from_type = tf.as_dtype(from_type)
+
+            # allow up/down casting between floating points
+            if from_type.is_floating and to_type.is_floating:
+                return True
+
+            if from_type.is_integer and to_type.is_integer:
+                # only allow up-casting between integers
+                if to_type.min <= from_type.min and to_type.max >= from_type.max:
+                    return True
+            return False
 
         if hasattr(value, 'dtype'):
             vartype = var.dtype.as_numpy_dtype
             if vartype != value.dtype:
-                msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, vartype, value.dtype)
-                newtype = upcast(var.dtype.base_dtype, value.dtype)
-                if newtype is not None:
-                    value = newtype(value)
-                    logger.warn(msg + " Load it after casting!")
+                msg = "Variable {} has dtype {} but was given a value of dtype {}.".format(name, var.dtype, value.dtype)
+
+                if allow_cast(var.dtype.base_dtype, value.dtype):
+                    value = vartype(value)
+                    logger.warn(msg + " The value will be loaded after casting!")
                 else:
                     assert vartype == value.dtype, msg
         return value

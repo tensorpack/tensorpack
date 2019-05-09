@@ -79,15 +79,15 @@ def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
 
 
 def do_evaluate(pred_config, output_file):
-    num_gpu = cfg.TRAIN.NUM_GPUS
+    num_tower = max(cfg.TRAIN.NUM_GPUS, 1)
     graph_funcs = MultiTowerOfflinePredictor(
-        pred_config, list(range(num_gpu))).get_predictors()
+        pred_config, list(range(num_tower))).get_predictors()
 
     for dataset in cfg.DATA.VAL:
         logger.info("Evaluating {} ...".format(dataset))
         dataflows = [
-            get_eval_dataflow(dataset, shard=k, num_shards=num_gpu)
-            for k in range(num_gpu)]
+            get_eval_dataflow(dataset, shard=k, num_shards=num_tower)
+            for k in range(num_tower)]
         all_results = multithread_predict_dataflow(dataflows, graph_funcs)
         output = output_file + '-' + dataset
         DatasetRegistry.get(dataset).eval_inference_results(all_results, output)
