@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from tensorflow import keras
+from contextlib import contextmanager
 
 from tensorpack import *
 from tensorpack.contrib.keras import KerasPhaseCallback
