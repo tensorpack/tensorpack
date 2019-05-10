@@ -24,9 +24,21 @@ Note: this example does not work for replicated-style data-parallel trainers.
 IMAGE_SIZE = 28
 
 
+# Work around a Keras issue: it append name scopes to variable names..
+# May not work well if you use Keras layers inside other name scopes.
+@contextmanager
+def clear_tower0_name_scope():
+    ns = tf.get_default_graph().get_name_scope()
+    if ns == 'tower0':
+        with tf.name_scope('/'):
+            yield
+    else:
+        yield
+
+
 @memoized  # this is necessary for sonnet/keras to work under tensorpack
 def get_keras_model():
-    with tf.name_scope('/'):
+    with clear_tower0_name_scope():
         M = keras.models.Sequential()
         M.add(KL.Conv2D(32, 3, activation='relu', input_shape=[IMAGE_SIZE, IMAGE_SIZE, 1], padding='same'))
         M.add(KL.MaxPooling2D())
@@ -36,7 +48,7 @@ def get_keras_model():
         M.add(KL.Conv2D(32, 3, padding='same', activation='relu'))
         M.add(KL.Flatten())
         M.add(KL.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(1e-5)))
-        M.add(KL.Dropout(0.5))
+        M.add(KL.Dropout(rate=0.5))
         M.add(KL.Dense(10, activation=None, kernel_regularizer=keras.regularizers.l2(1e-5)))
     return M
 
