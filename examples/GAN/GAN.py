@@ -169,8 +169,8 @@ class SeparateGANTrainer(TowerTrainer):
         # Build the graph
         self.tower_func = TowerFuncWrapper(model.build_graph, model.get_input_signature())
         with TowerContext('', is_training=True), \
-                argscope(BatchNorm, internal_update=True):
-            # should not hook the updates to both train_op, it will hurt training speed.
+                argscope(BatchNorm, ema_update='internal'):
+            # should not hook the EMA updates to both train_op, it will hurt training speed.
             self.tower_func(*input.get_input_tensors())
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         if len(update_ops):
