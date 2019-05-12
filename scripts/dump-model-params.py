@@ -3,6 +3,7 @@
 # File: dump-model-params.py
 
 import argparse
+import sys
 import numpy as np
 import os
 import six
@@ -10,6 +11,19 @@ import tensorflow as tf
 
 from tensorpack.tfutils import varmanip
 from tensorpack.tfutils.common import get_op_tensor_name
+
+
+def _import_external_ops(op_name):
+    if "horovod" in op_name.lower():
+        import horovod.tensorflow  # noqa
+        return
+    if op_name == "MaxBytesInUse":
+        from tensorflow.contrib.memory_stats import MaxBytesInUse  # noqa
+        return
+    print("Your graph contains op '{}' which is not loaded into your Tensorflow runtime.".format(op_name))
+    print("Therefore the graph cannot be loaded unless you import the relevant libraries first.")
+    sys.exit(1)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -22,11 +36,15 @@ if __name__ == '__main__':
     # this script does not need GPU
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    try:
-        tf.train.import_meta_graph(args.meta, clear_devices=True)
-    except KeyError:
-        print("If your graph contains non-standard ops, you need to import the relevant library first.")
-        raise
+    while True:
+        try:
+            tf.reset_default_graph()
+            tf.train.import_meta_graph(args.meta, clear_devices=True)
+        except KeyError as e:
+            op_name = e.args[0]
+            _import_external_ops(op_name)
+        else:
+            break
 
     # loading...
     if args.input.endswith('.npz'):

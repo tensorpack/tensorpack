@@ -49,7 +49,7 @@ Model:
 
 2. We use ROIAlign, and `tf.image.crop_and_resize` is __NOT__ ROIAlign.
 
-3. We currently only support single image per GPU.
+3. We currently only support single image per GPU in this example.
 
 4. Because of (3), BatchNorm statistics are supposed to be freezed during fine-tuning.
 

@@ -76,13 +76,14 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
               sync_statistics=None,
               internal_update=None):
     """
-    Almost equivalent to `tf.layers.batch_normalization`, but different (and more powerful)
-    in the following:
+    A more powerful version of `tf.layers.batch_normalization`. It differs from
+    the offical one in the following aspects:
 
-    1. Accepts an alternative `data_format` option when `axis` is None. For 2D input, this argument will be ignored.
-    2. Default value for `momentum` and `epsilon` is different.
-    3. Default value for `training` is automatically obtained from tensorpack's `TowerContext`, but can be overwritten.
-    4. Support the ``ema_update`` option, which cover more use cases than the standard EMA update.
+    1. Accepts an alternative ``data_format`` option when ``axis`` is None. For 2D input, this argument will be ignored.
+    2. Default value for ``momentum`` and ``epsilon`` is different.
+    3. Default value for ``training`` is automatically obtained from tensorpack's ``TowerContext``.
+       User-provided value can overwrite this behavior.
+    4. Support the ``ema_update`` option, which covers broader use cases than the standard EMA update.
     5. Support the ``sync_statistics`` option, which implements "SyncBN" and is very useful in small-batch models.
 
     Args:
@@ -90,46 +91,53 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
             to normalize. By default, it is equal to `get_current_tower_context().is_training`.
             This is not a good argument name, but it is what the Tensorflow layer uses.
         ema_update (str): Only effective when ``training=True``. It has the following options:
+
           * "default": same as "collection". Because this is the default behavior in tensorflow.
-          * "skip": do not update EMA.
+          * "skip": do not update EMA. This can be useful when you reuse a batch norm layer in several places
+            but do not want them to all update your EMA.
           * "collection": Add EMA update ops to collection `tf.GraphKeys.UPDATE_OPS`.
-            The ops in the collection will be run automatically by the callback :class:`RunUpdateOps`.
+            The ops in the collection will be run automatically by the callback :class:`RunUpdateOps`, along with
+            your training iterations. This can waste compute if your training iterations do not always depend
+            on the BatchNorm layer.
           * "internal": EMA is updated inside this layer itself by control dependencies.
-            It has similar speed to "collection", but "internal" is recommended and can be helpful when:
+            In common cases, it has similar speed to "collection". But it covers more cases, e.g.:
 
             1. BatchNorm is used inside dynamic control flow.
                The collection-based update does not support dynamic control flows.
-            2. BatchNorm layer is sometimes unused (e.g., when you have two networks to train alternatively).
+            2. BatchNorm layer is sometimes unused (e.g., in GANs you have two networks to train alternatively).
                Putting all update ops into a single collection will waste a lot of compute.
+            3. Other part of the model relies on the "updated" EMA. The collection-based method does not update
+               EMA immediately.
 
             Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
         sync_statistics (str or None): one of None, "nccl", or "horovod". It determines how to compute the
-            "per-batch statistics" when ``training==True``.
+          "per-batch statistics" when ``training==True``.
 
-          By default (None), it uses statistics of the input tensor to normalize during training.
-          This is the standard way BatchNorm was implemented in most frameworks.
+          * None: it uses statistics of the input tensor to normalize during training.
+            This is the standard way BatchNorm was implemented in most frameworks.
 
-          When set to "nccl", this layer must be used under tensorpack's multi-GPU trainers.
-          It uses the aggregated statistics of the whole batch (across all GPUs) to normalize.
+          * "nccl": this layer must be used under tensorpack's multi-GPU trainers.
+            It uses the aggregated statistics of the whole batch (across all GPUs) to normalize.
 
-          When set to "horovod", this layer must be used under tensorpack's :class:`HorovodTrainer`.
-          It uses the aggregated statistics of the whole batch (across all MPI ranks) to normalize.
-          Note that on single machine this is significantly slower than the "nccl" implementation.
+          * "horovod": this layer must be used under tensorpack's :class:`HorovodTrainer`.
+            It uses the aggregated statistics of the whole batch (across all MPI ranks) to normalize.
+            Note that on single machine this is significantly slower than the "nccl" implementation.
 
-          When enabled, per-GPU E[x] and E[x^2] among all GPUs are averaged to compute
-          global mean & variance. Therefore each GPU needs to have the same batch size.
+          When not None, each GPU computes its own E[x] and E[x^2],
+          which are then averaged among all GPUs to compute global mean & variance.
+          Therefore each GPU needs to have the same batch size.
 
           The synchronization is based on the current variable scope + the name of the layer
           (`BatchNorm('name', input)`). Therefore, you need to make sure that:
 
           1. The BatchNorm layer on different GPUs needs to have the same name, so that
              statistics can be synchronized. If names do not match, this layer will hang.
-          2. Different BatchNorm layers in one tower cannot share the same name.
+          2. A BatchNorm layer cannot be reused within one tower.
           3. A BatchNorm layer needs to be executed for the same number of times by all GPUs.
              If different GPUs execute one BatchNorm layer for different number of times
              (e.g., if some GPUs do not execute it), this layer may hang.
 
-          This option is also known as "SyncBN" or Cross-GPU BatchNorm" as mentioned in:
+          This option is also known as "SyncBN" or "Cross-GPU BatchNorm" as mentioned in:
           `MegDet: A Large Mini-Batch Object Detector <https://arxiv.org/abs/1711.07240>`_.
           Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/18222.
 
@@ -147,8 +155,9 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
     Note:
         This layer is more flexible than the standard "BatchNorm" layer and provides more features:
-        1. No matter whether you're doing training or not, you can set the `training` argument
-           to use batch statistics / EMA statistics.
+
+        1. No matter whether you're doing training or not, you can set the ``training`` argument
+           to use batch statistics or EMA statistics.
            i.e., you can use batch statistics during inference, or use EMA statistics during training.
            Using EMA statistics in training is useful when you load a pre-trained BN and
            don't want to update it.
