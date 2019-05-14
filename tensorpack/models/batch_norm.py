@@ -190,7 +190,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
     # 1. EMA update is possible only when we compute batch statistics (training=True)
     # 2. We know that in training, non-main training tower does not need EMA update
     #    We don't know about what to do in prediction context, so be conservative and do the update.
-    # 3. User and explicit disable update by "skip".
+    # 3. User can explicit disable update by "skip".
     do_ema_update = training and \
         (ctx.is_main_training_tower or not ctx.is_training) \
         and (ema_update != "skip")

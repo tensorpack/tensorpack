@@ -34,6 +34,7 @@ if is_tfv2():
         # promised at https://github.com/tensorflow/community/pull/24#issuecomment-440453886
         tf.layers = tf.keras.layers
 else:
-    tfv1 = tf
-
-
+    try:
+        tfv1 = tf.compat.v1  # this will silent some warnings
+    except AttributeError:
+        tfv1 = tf

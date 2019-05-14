@@ -55,8 +55,8 @@ class _ParallelMapData(ProxyDataFlow):
                 self._send(dp)
         except StopIteration:
             raise RuntimeError(
-                "[{}] buffer_size cannot be larger than the size of the DataFlow when strict=True!".format(
-                    type(self).__name__))
+                "[{}] buffer_size cannot be larger than the size of the DataFlow when strict=True! "
+                "Please use a smaller buffer_size!".format(type(self).__name__))
         self._buffer_occupancy += cnt
 
     def get_data_non_strict(self):
@@ -153,6 +153,13 @@ class MultiThreadMapData(_ParallelMapData):
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """
+        if strict:
+            # In strict mode, buffer size cannot be larger than the total number of datapoints
+            try:
+                buffer_size = min(buffer_size, len(ds))
+            except Exception:  # ds may not have a length
+                pass
+
         super(MultiThreadMapData, self).__init__(ds, buffer_size, strict)
         assert nr_thread > 0, nr_thread
 
@@ -258,6 +265,13 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
         """
+        if strict:
+            # In strict mode, buffer size cannot be larger than the total number of datapoints
+            try:
+                buffer_size = min(buffer_size, len(ds))
+            except Exception:  # ds may not have a length
+                pass
+
         _ParallelMapData.__init__(self, ds, buffer_size, strict)
         _MultiProcessZMQDataFlow.__init__(self)
         assert nr_proc > 0, nr_proc
