@@ -101,7 +101,11 @@ class ResNetC4Model(GeneralizedRCNN):
     def rpn(self, image, features, inputs):
         featuremap = features[0]
         rpn_label_logits, rpn_box_logits = rpn_head('rpn', featuremap, cfg.RPN.HEAD_DIM, cfg.RPN.NUM_ANCHOR)
-        anchors = RPNAnchors(get_all_anchors(), inputs['anchor_labels'], inputs['anchor_boxes'])
+        anchors = RPNAnchors(
+            get_all_anchors(
+                stride=cfg.RPN.ANCHOR_STRIDE, sizes=cfg.RPN.ANCHOR_SIZES,
+                ratios=cfg.RPN.ANCHOR_RATIOS, max_size=cfg.PREPROC.MAX_SIZE),
+            inputs['anchor_labels'], inputs['anchor_boxes'])
         anchors = anchors.narrow_to(featuremap)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
@@ -216,7 +220,11 @@ class ResNetFPNModel(GeneralizedRCNN):
         assert len(cfg.RPN.ANCHOR_SIZES) == len(cfg.FPN.ANCHOR_STRIDES)
 
         image_shape2d = tf.shape(image)[2:]     # h,w
-        all_anchors_fpn = get_all_anchors_fpn()
+        all_anchors_fpn = get_all_anchors_fpn(
+            strides=cfg.FPN.ANCHOR_STRIDES,
+            sizes=cfg.RPN.ANCHOR_SIZES,
+            ratios=cfg.RPN.ANCHOR_RATIOS,
+            max_size=cfg.PREPROC.MAX_SIZE)
         multilevel_anchors = [RPNAnchors(
             all_anchors_fpn[i],
             inputs['anchor_labels_lvl{}'.format(i + 2)],

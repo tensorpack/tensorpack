@@ -25,6 +25,8 @@ except ImportError:
 
 
 if __name__ == '__main__':
+    import multiprocessing as mp
+    mp.set_start_method('spawn')  # safer behavior & memory saving
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', help='load a model to start training from. Can overwrite BACKBONE.WEIGHTS')
     parser.add_argument('--logdir', help='log directory', default='train_log/maskrcnn')
