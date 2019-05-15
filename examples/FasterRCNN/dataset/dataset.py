@@ -87,5 +87,5 @@ class DatasetRegistry():
         Returns:
             DatasetSplit
         """
-        assert name in DatasetRegistry._registry, "Dataset {} was not egistered!".format(name)
+        assert name in DatasetRegistry._registry, "Dataset {} was not registered!".format(name)
         return DatasetRegistry._registry[name]()
