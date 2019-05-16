@@ -28,9 +28,9 @@ COCO/DIR/
     instances_train201?.json
     instances_val201?.json
   train201?/
-    COCO_train201?_*.jpg
+    # image files that are mentioned in the corresponding json
   val201?/
-    COCO_val201?_*.jpg
+    # image files that are mentioned in corresponding json
 ```
 
 You can use either the 2014 version or the 2017 version of the dataset.
