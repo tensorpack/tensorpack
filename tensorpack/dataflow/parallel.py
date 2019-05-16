@@ -306,7 +306,6 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
         self.nr_proc = nr_proc
         self._hwm = hwm
 
-        self._guard = DataFlowReentrantGuard()
         if nr_proc > 1:
             logger.info("[PrefetchDataZMQ] Will fork a dataflow more than one times. "
                         "This assumes the datapoints are i.i.d.")
@@ -330,6 +329,7 @@ class PrefetchDataZMQ(_MultiProcessZMQDataFlow):
 
     def reset_state(self):
         super(PrefetchDataZMQ, self).reset_state()
+        self._guard = DataFlowReentrantGuard()
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
         self.socket.set_hwm(self._hwm)

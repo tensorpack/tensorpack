@@ -279,11 +279,11 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         self.map_func = map_func
         self._strict = strict
         self._procs = []
-        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         _MultiProcessZMQDataFlow.reset_state(self)
         _ParallelMapData.reset_state(self)
+        self._guard = DataFlowReentrantGuard()
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.DEALER)
@@ -369,7 +369,6 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
             processes=nr_proc,
             initializer=_init_pool,
             initargs=(self._shared_mem, id_queue, map_func))
-        self._guard = DataFlowReentrantGuard()
 
     def _create_shared_arr(self):
         TYPE = {
@@ -388,6 +387,7 @@ class MultiProcessMapDataComponentSharedArray(DataFlow):
 
     def reset_state(self):
         self.ds.reset_state()
+        self._guard = DataFlowReentrantGuard()
 
     def __iter__(self):
         ds_itr = _repeat_iter(self.ds.get_data)

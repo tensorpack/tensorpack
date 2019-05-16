@@ -90,7 +90,6 @@ class LMDBData(RNGDataFlow):
         self._size = self._txn.stat()['entries']
         self._set_keys(keys)
         logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
-        self._guard = DataFlowReentrantGuard()
 
     def _set_keys(self, keys=None):
         def find_keys(txn, size):
@@ -128,6 +127,7 @@ class LMDBData(RNGDataFlow):
         self._txn = self._lmdb.begin()
 
     def reset_state(self):
+        self._guard = DataFlowReentrantGuard()
         self._lmdb.close()
         super(LMDBData, self).reset_state()
         self._open_lmdb()

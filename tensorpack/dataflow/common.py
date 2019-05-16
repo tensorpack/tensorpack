@@ -193,11 +193,11 @@ class BatchDataByShape(BatchData):
         """
         super(BatchDataByShape, self).__init__(ds, batch_size, remainder=False)
         self.idx = idx
-        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
         super(BatchDataByShape, self).reset_state()
         self.holder = defaultdict(list)
+        self._guard = DataFlowReentrantGuard()
 
     def __iter__(self):
         with self._guard:
@@ -235,7 +235,6 @@ class FixedSizeData(ProxyDataFlow):
         super(FixedSizeData, self).__init__(ds)
         self._size = int(size)
         self.itr = None
-        self._guard = DataFlowReentrantGuard()
         self._keep = keep_state
 
     def __len__(self):
@@ -244,6 +243,7 @@ class FixedSizeData(ProxyDataFlow):
     def reset_state(self):
         super(FixedSizeData, self).reset_state()
         self.itr = self.ds.__iter__()
+        self._guard = DataFlowReentrantGuard()
 
     def __iter__(self):
         with self._guard:
@@ -625,9 +625,9 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         self.shuffle_interval = shuffle_interval
         self.nr_reuse = nr_reuse
         self._inf_ds = RepeatedData(ds, -1)
-        self._guard = DataFlowReentrantGuard()
 
     def reset_state(self):
+        self._guard = DataFlowReentrantGuard()
         ProxyDataFlow.reset_state(self)
         RNGDataFlow.reset_state(self)
         self._iter_cnt = 0
@@ -664,11 +664,11 @@ class CacheData(ProxyDataFlow):
             shuffle (bool): whether to shuffle the datapoints before producing them.
         """
         self.shuffle = shuffle
-        self._guard = DataFlowReentrantGuard()
         super(CacheData, self).__init__(ds)
 
     def reset_state(self):
         super(CacheData, self).reset_state()
+        self._guard = DataFlowReentrantGuard()
         if self.shuffle:
             self.rng = get_rng(self)
         self.buffer = []
