@@ -30,7 +30,7 @@ down your training by 10%. Think about how many more copies are made during your
 
 Failure to hide the data preparation latency is the major reason why people
 cannot see good GPU utilization. You should __always choose a framework that enables latency hiding.__
-However most other TensorFlow wrappers are designed to be `feed_dict` based.
+However most other TensorFlow wrappers are designed without latency hiding in mind.
 Tensorpack has built-in mechanisms to hide latency of the above stages.
 This is one of the reasons why tensorpack is [faster](https://github.com/tensorpack/benchmarks).
 
@@ -47,11 +47,12 @@ People often think they should use `tf.data` because it's fast.
 * Indeed it's often fast, but not necessarily. With Python you have access to many other fast libraries, which might be unsupported in TF.
 * Python may be just fast enough.
 
-    As long as data preparation keeps up with training, and the latency of all four blocks in the
-    above figure is hidden, __faster reader brings no gains to overall throughput__.
+    Keep in mind: as long as data loading speed can keep up with training, and the latency of all four blocks in the
+    above figure is hidden, __a faster reader brings no gains to overall throughput__.
+
     For most types of problems, up to the scale of multi-GPU ImageNet training,
     Python can offer enough speed if you use a fast library (e.g. `tensorpack.dataflow`).
-    See the [Efficient DataFlow](/tutorial/efficient-dataflow.html) tutorial on how to build a fast Python reader with DataFlow.
+    See the [Efficient DataFlow](/tutorial/efficient-dataflow.html) tutorial on how to build a fast Python reader with `tensorpack.dataflow`.
 
 ### TensorFlow Reader: Cons
 The disadvantage of TF reader is obvious and it's huge: it's __too complicated__.
@@ -73,7 +74,7 @@ To support all these features which could've been done with __3 lines of code in
 API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
 (i.e. Python again) to the rescue.
 
-It only makes sense to use TF to read data, if your data is originally very clean and well-formated.
+It only makes sense to use TF to read data, if your data is originally very clean and well-formatted.
 If not, you may feel like writing a script to format your data, but then you're almost writing a Python loader already!
 
 Think about it: it's a waste of time to write a Python script to transform from some format to TF-friendly format,
@@ -108,3 +109,14 @@ If you need to use TF reading ops directly, either define a `tf.data.Dataset`
 and use `TFDatasetInput`, or use `TensorInput`.
 
 Refer to the documentation of these `InputSource` for more details.
+
+```eval_rst
+.. note:: **InputSource requires tensorpack**
+
+    `tensorpack.dataflow` is a pure Python library for efficient data loading which can be used
+    independently without TensorFlow or tensorpack trainers.
+    
+    However, the `InputSource` interface does require tensorpack and cannot be
+    used without tensorpack trainers.
+    Without tensorpack trainers, you'll have to optimize the copy latency by yourself.
+```

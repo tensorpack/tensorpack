@@ -7,7 +7,6 @@ Since it is simply a generator interface, you can use the DataFlow in any Python
 or your own code as well.
 
 
-
 **What we are going to do**: We'll use ILSVRC12 dataset, which contains 1.28 million images.
 The original images (JPEG compressed) are 140G in total.
 The average resolution is about 400x350 <sup>[[1]]</sup>.
@@ -37,10 +36,11 @@ Some things to know before reading:
     before doing any optimizations.
 
 The benchmark code for this tutorial can be found in [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ImageNet),
-including comparison with a similar (but simpler) pipeline built with `tf.data`.
+including comparison with a similar pipeline built with `tf.data`.
 
 ## Random Read
 
+### Basic
 We start from a simple DataFlow:
 ```python
 from tensorpack.dataflow import *
@@ -64,6 +64,8 @@ On a good filesystem you probably can already observe good speed here (e.g. 5 it
 because we are doing heavy random read on the filesystem (regardless of whether `shuffle` is True).
 Image decoding in `cv2.imread` could also be a bottleneck at this early stage.
 
+### Parallel Prefetch
+
 We will now add the cheapest pre-processing now to get an ndarray in the end instead of a list
 (because training will need ndarray eventually):
 ```eval_rst
@@ -85,11 +87,12 @@ Now it's time to add threads or processes:
 		ds = PrefetchDataZMQ(ds1, nr_proc=25)
 		ds = BatchData(ds, 256)
 ```
-Here we start 25 processes to run `ds1`, and collect their output through ZMQ IPC protocol,
+Here we fork 25 processes to run `ds1`, and collect their output through ZMQ IPC protocol,
 which is faster than `multiprocessing.Queue`. You can also apply prefetch after batch, of course.
 
+### Parallel Map
 The above DataFlow might be fast, but since it forks the ImageNet reader (`ds0`),
-it's **not a good idea to use it for validation** (for reasons mentioned at top).
+it's **not a good idea to use it for validation** (for reasons mentioned at top. More details at the [documentation](../modules/dataflow.html#tensorpack.dataflow.PrefetchDataZMQ)).
 Alternatively, you can use multi-threaded preprocessing like this:
 
 ```eval_rst
@@ -138,11 +141,11 @@ Let's summarize what the above dataflow does:
 3. Both 1 and 2 happen together in a separate process, and the results are sent back to main process through ZeroMQ.
 4. Main process makes batches, and other tensorpack modules will then take care of how they should go into the graph.
 
-Note that in an actual training setup, I used the above multiprocess version for training set since
-it's faster to run heavy preprocessing in processes, and use this multithread version only for validation set.
+There are also `MultiProcessMapData` as well for you to use.
 
 ## Sequential Read
 
+### Save and Load a Single-File DataFlow
 Random read may not be a good idea when the data is not on an SSD.
 We can also dump the dataset into one single LMDB file and read it sequentially.
 
@@ -189,6 +192,8 @@ Instead of shuffling all the training data in every epoch (which would require r
 the added line above maintains a buffer of datapoints and shuffle them once a while.
 It will not affect the model as long as the buffer is large enough,
 but it can also consume much memory if too large.
+
+### Augmentations & Parallel Prefetch
 
 Then we add necessary transformations:
 ```eval_rst
@@ -243,7 +248,7 @@ So DataFlow will not be a serious bottleneck if configured properly.
 
 ## Distributed DataFlow
 
-To further scale your DataFlow, you can run it on multiple machines and collect them on the
+To further scale your DataFlow, you can even run it on multiple machines and collect them on the
 training machine. E.g.:
 ```python
 # Data Machine #1, process 1-20:
