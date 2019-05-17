@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# File: model.py
+# File: model_frcnn.py
 
 import tensorflow as tf
 
@@ -164,8 +164,7 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
         fg_accuracy = tf.where(
             empty_fg, 0., tf.reduce_mean(tf.gather(correct, fg_inds)), name='fg_accuracy')
 
-    box_loss = tf.losses.huber_loss(
-        fg_boxes, fg_box_logits, reduction=tf.losses.Reduction.SUM)
+    box_loss = tf.reduce_sum(tf.abs(fg_boxes - fg_box_logits))
     box_loss = tf.truediv(
         box_loss, tf.cast(tf.shape(labels)[0], tf.float32), name='box_loss')
 
