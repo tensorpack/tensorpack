@@ -98,7 +98,7 @@ class KerasModelCaller(object):
             # NOTE: ctx.is_training won't be useful inside model,
             # because inference will always use the cached Keras model
             model = self.cached_model
-            outputs = model.call(input_tensors)
+            outputs = model.call(*input_tensors)
         else:
             # create new Keras model if not reuse
             model = self.get_model(*input_tensors)

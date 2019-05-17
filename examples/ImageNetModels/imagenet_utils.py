@@ -264,7 +264,11 @@ def fbresnet_mapper(isTrain):
 """
 
 
-def eval_on_ILSVRC12(model, sessinit, dataflow):
+def eval_classification(model, sessinit, dataflow):
+    """
+    Eval a classification model on the dataset. It assumes the model inputs are
+    named "input" and "label", and contains "wrong-top1" and "wrong-top5" in the graph.
+    """
     pred_config = PredictConfig(
         model=model,
         session_init=sessinit,

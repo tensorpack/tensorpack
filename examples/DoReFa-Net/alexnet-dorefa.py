@@ -18,7 +18,7 @@ from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.utils.gpu import get_num_gpu
 
 from dorefa import get_dorefa, ternarize
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor, get_imagenet_dataflow
+from imagenet_utils import ImageNetModel, eval_classification, fbresnet_augmentor, get_imagenet_dataflow
 
 """
 This is a tensorpack script for the ImageNet results in paper:
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     if args.eval:
         BATCH_SIZE = 128
         ds = get_data('val')
-        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
+        eval_classification(Model(), get_model_loader(args.load), ds)
         sys.exit()
 
     nr_tower = max(get_num_gpu(), 1)

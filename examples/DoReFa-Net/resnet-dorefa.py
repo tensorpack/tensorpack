@@ -13,7 +13,7 @@ from tensorpack.dataflow import dataset
 from tensorpack.tfutils.varreplace import remap_variables
 
 from dorefa import get_dorefa
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, fbresnet_augmentor
+from imagenet_utils import ImageNetModel, eval_classification, fbresnet_augmentor
 
 """
 This script loads the pre-trained ResNet-18 model with (W,A,G) = (1,4,32)
@@ -163,7 +163,7 @@ if __name__ == '__main__':
         ds = dataset.ILSVRC12(args.data, 'val', shuffle=False)
         ds = AugmentImageComponent(ds, get_inference_augmentor())
         ds = BatchData(ds, 192, remainder=True)
-        eval_on_ILSVRC12(Model(), get_model_loader(args.load), ds)
+        eval_classification(Model(), get_model_loader(args.load), ds)
     elif args.run:
         assert args.load.endswith('.npz')
         run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)

@@ -13,7 +13,7 @@ from tensorpack.tfutils import argscope, get_model_loader
 from tensorpack.train import SyncMultiGPUTrainerReplicated, TrainConfig, launch_train_with_config
 from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow, get_imagenet_tfdata
+from imagenet_utils import ImageNetModel, eval_classification, get_imagenet_dataflow, get_imagenet_tfdata
 from resnet_model import (
     preresnet_basicblock, preresnet_bottleneck, preresnet_group,
     resnet_backbone, resnet_group,
@@ -143,7 +143,7 @@ if __name__ == '__main__':
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_imagenet_dataflow(args.data, 'val', batch)
-        eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
+        eval_classification(model, get_model_loader(args.load), ds)
     else:
         if args.fake:
             logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')

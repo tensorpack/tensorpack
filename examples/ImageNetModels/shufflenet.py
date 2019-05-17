@@ -16,7 +16,7 @@ from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_num_gpu
 
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
+from imagenet_utils import ImageNetModel, eval_classification, get_imagenet_dataflow
 
 
 @layer_register(log_shape=True)
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_data('val', batch)
-        eval_on_ILSVRC12(model, get_model_loader(args.load), ds)
+        eval_classification(model, get_model_loader(args.load), ds)
     elif args.flops:
         # manually build the graph with batch=1
         with TowerContext('', is_training=False):

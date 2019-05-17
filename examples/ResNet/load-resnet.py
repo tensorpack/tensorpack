@@ -16,7 +16,7 @@ from tensorpack import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 from tensorpack.utils import logger
 
-from imagenet_utils import ImageNetModel, eval_on_ILSVRC12, get_imagenet_dataflow
+from imagenet_utils import ImageNetModel, eval_classification, get_imagenet_dataflow
 from resnet_model import resnet_bottleneck, resnet_group
 
 DEPTH = None
@@ -172,6 +172,6 @@ if __name__ == '__main__':
 
     if args.eval:
         ds = get_imagenet_dataflow(args.eval, 'val', 128, get_inference_augmentor())
-        eval_on_ILSVRC12(Model(), DictRestore(param), ds)
+        eval_classification(Model(), DictRestore(param), ds)
     elif args.input:
         run_test(param, args.input)

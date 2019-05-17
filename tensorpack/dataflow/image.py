@@ -45,7 +45,7 @@ class ExceptionHandler:
 
 
 class ImageFromFile(RNGDataFlow):
-    """ Produce images read from a list of files. """
+    """ Produce images read from a list of files as (h, w, c) arrays. """
     def __init__(self, files, channel=3, resize=None, shuffle=False):
         """
         Args:
