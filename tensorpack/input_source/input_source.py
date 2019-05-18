@@ -398,8 +398,8 @@ class DummyConstantInput(TensorInput):
             tlist = []
             ctx = get_current_tower_context()
             assert ctx is not None
-            assert len(self.shapes) == len(self._desc)
-            for idx, p in enumerate(self._desc):
+            assert len(self.shapes) == len(self._spec)
+            for idx, p in enumerate(self._spec):
                 tlist.append(tf.constant(
                     0, dtype=p.dtype,
                     name='dummy-{}-{}'.format(p.name, ctx.index),
