@@ -40,15 +40,15 @@ for inference demo after training.
 It has functionailities to build the graph, load the checkpoint, and
 return a callable for you for simple prediction. Refer to its docs for details.
 
-OfflinePredictor is only for quick demo purposes.
-It runs inference on numpy arrays, therefore may not be the most efficient way.
-It also has very limited functionalities.
+To use it, you need to provide your model, checkpoint, and define what are the
+input & output tensors to infer with. You can obtain names of tensors by
+`print()`, or assign a name to a tensor by `tf.identity(x, name=)`.
 
 A simple example of how it works:
 ```python
 pred_config = PredictConfig(
-    session_init=get_model_loader(model_path),
     model=YourModel(),
+    session_init=get_model_loader(model_path),
     input_names=['input1', 'input2'],  # tensor names in the graph, or name of the declared inputs
     output_names=['output1', 'output2'])  # tensor names in the graph
 predictor = OfflinePredictor(pred_config)
@@ -59,6 +59,10 @@ It's __common to use a different graph for inference__,
 e.g., use NHWC format, support encoded image format, etc. 
 You can make these changes inside the `model` or `tower_func` in your `PredictConfig`.
 The example in [examples/basics/export-model.py](../examples/basics/export-model.py) demonstrates such an altered inference graph.
+
+OfflinePredictor is only for quick demo purposes.
+It runs inference on numpy arrays, therefore may not be the most efficient way.
+It also has very limited functionalities.
 
 ### Exporter
 

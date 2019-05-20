@@ -37,12 +37,11 @@ def Conv2D(
         activity_regularizer=None,
         split=1):
     """
-    A wrapper around `tf.layers.Conv2D`.
-    Some differences to maintain backward-compatibility:
+    Similar to `tf.layers.Conv2D`, but with some differences:
 
     1. Default kernel initializer is variance_scaling_initializer(2.0).
     2. Default padding is 'same'.
-    3. Support 'split' argument to do group conv. Note that this is not efficient.
+    3. Support 'split' argument to do group convolution.
 
     Variable Names:
 

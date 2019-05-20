@@ -4,6 +4,7 @@
 
 import tensorflow as tf
 
+from ..utils.develop import log_deprecated
 from ..compat import tfv1
 from .batch_norm import BatchNorm
 from .common import VariableHolder, layer_register
@@ -36,7 +37,7 @@ def Maxout(x, num_unit):
 
 
 @layer_register()
-def PReLU(x, init=0.001, name='output'):
+def PReLU(x, init=0.001, name=None):
     """
     Parameterized ReLU as in the paper `Delving Deep into Rectifiers: Surpassing
     Human-Level Performance on ImageNet Classification
@@ -45,16 +46,18 @@ def PReLU(x, init=0.001, name='output'):
     Args:
         x (tf.Tensor): input
         init (float): initial value for the learnable slope.
-        name (str): name of the output.
+        name (str): deprecated argument. Don't use
 
     Variable Names:
 
     * ``alpha``: learnable slope.
     """
+    if name is not None:
+        log_deprecated("PReLU(name=...) is deprecated! The output tensor will be named `output`.")
     init = tfv1.constant_initializer(init)
     alpha = tfv1.get_variable('alpha', [], initializer=init)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
-    ret = tf.multiply(x, 0.5, name=name)
+    ret = tf.multiply(x, 0.5, name=name or None)
 
     ret.variables = VariableHolder(alpha=alpha)
     return ret
@@ -64,7 +67,14 @@ def PReLU(x, init=0.001, name='output'):
 def BNReLU(x, name=None):
     """
     A shorthand of BatchNormalization + ReLU.
+
+    Args:
+        x (tf.Tensor): the input
+        name: deprecated, don't use.
     """
+    if name is not None:
+        log_deprecated("BNReLU(name=...) is deprecated! The output tensor will be named `output`.")
+
     x = BatchNorm('bn', x)
     x = tf.nn.relu(x, name=name)
     return x

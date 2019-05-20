@@ -35,7 +35,7 @@ See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/ind
 ## Examples:
 
 We refuse toy examples.
-Instead of showing tiny CNNs trained on MNIST/Cifar10, 
+Instead of showing tiny CNNs trained on MNIST/Cifar10,
 we provide training scripts that reproduce well-known papers.
 
 We refuse low-quality implementations.
@@ -68,7 +68,7 @@ Dependencies:
 
 + Python 2.7 or 3.3+. Python 2.7 is supported until [it retires in 2020](https://pythonclock.org/).
 + Python bindings for OpenCV. (Optional, but required by a lot of features)
-+ TensorFlow ≥ 1.3, < 2. (Optional, if you only want to use `tensorpack.dataflow` alone as a data processing library)
++ TensorFlow ≥ 1.3, < 2. (Not required if you only want to use `tensorpack.dataflow` alone as a data processing library)
 ```
 pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories
