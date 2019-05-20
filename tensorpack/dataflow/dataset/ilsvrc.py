@@ -38,7 +38,7 @@ class ILSVRCMeta(object):
             dict: {cls_number: cls_name}
         """
         fname = os.path.join(self.dir, 'synset_words.txt')
-        assert os.path.isfile(fname)
+        assert os.path.isfile(fname), fname
         lines = [x.strip() for x in open(fname).readlines()]
         return dict(enumerate(lines))
 
