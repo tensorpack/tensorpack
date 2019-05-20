@@ -86,6 +86,7 @@ if __name__ == '__main__':
         ScheduledHyperParamSetter('learning_rate', lr_schedule),
         GPUMemoryTracker(),
         HostMemoryTracker(),
+        ThroughputTracker(samples_per_epoch=cfg.TRAIN.NUM_GPUS),
         EstimatedTimeLeft(median=True),
         SessionRunTimeout(60000),   # 1 minute timeout
     ]

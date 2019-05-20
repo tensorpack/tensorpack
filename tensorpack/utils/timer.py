@@ -16,7 +16,7 @@ if six.PY3:
 
 
 __all__ = ['total_timer', 'timed_operation',
-           'print_total_timer', 'IterSpeedCounter']
+           'print_total_timer', 'IterSpeedCounter', 'Timer']
 
 
 @contextmanager
@@ -113,3 +113,48 @@ class IterSpeedCounter(object):
         t = timer() - self.start
         logger.info("{}: {:.2f} sec, {} times, {:.3g} sec/time".format(
             self.name, t, self.cnt, t / self.cnt))
+
+
+class Timer():
+    """
+    A timer class which computes the time elapsed since the start/reset of the timer.
+    """
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """
+        Reset the timer.
+        """
+        self._start = timer()
+        self._paused = False
+        self._total_paused = 0
+
+    def pause(self):
+        """
+        Pause the timer.
+        """
+        assert self._paused is False
+        self._paused = timer()
+
+    def is_paused(self):
+        return self._paused is not False
+
+    def resume(self):
+        """
+        Resume the timer.
+        """
+        assert self._paused is not False
+        self._total_paused += timer() - self._paused
+        self._paused = False
+
+    def seconds(self):
+        """
+        Returns:
+            float: the total number of seconds since the start/reset of the timer, excluding the
+                time in between when the timer is paused.
+        """
+        if self._paused:
+            self.resume()
+            self.pause()
+        return timer() - self._start - self._total_paused
