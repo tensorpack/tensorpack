@@ -123,7 +123,7 @@ def DetectOneImageModelFuncReadfromFrozenGraph(input_image_np=None):
         i = 0
         avg=0
         if(args.image_count): 
-          print("dummy data")       
+          print("Input: Dummy data")       
           for _ in range(args.image_count):  
             # input dummy data          
             image_np_expanded=np.random.rand(800, 1202, 3).astype(np.uint8)
@@ -131,8 +131,12 @@ def DetectOneImageModelFuncReadfromFrozenGraph(input_image_np=None):
             start_time = time.time()  
             run_inference(sess, image_tensor, detection_boxes,detection_probs,detection_labels,image_np_expanded, i)  
             print("current inference time: {} ".format (time.time() - start_time)) 
-        else:
-          print("real data")
+            if(i>1):
+              avg+=(time.time()-start_time)            
+              if(i == args.image_count):
+                print('Average inference time: %.3f sec'%(float(avg)/float(i-1)))
+        elif(args.image_dir):
+          print("Input: Real data")
           args.image_count = len(reshapedimg)
           for img in reshapedimg:
             image_np_expanded=img
@@ -142,13 +146,14 @@ def DetectOneImageModelFuncReadfromFrozenGraph(input_image_np=None):
             elapsed_time= (time.time() - start_time)
             print("current inference {} time: {} ".format(i, elapsed_time))
         
-        if(i>1):
-          avg+=(time.time()-start_time)            
-        if(args.image_count):
-          print('Average inference time: %.3f sec'%(float(avg)/float(i-1)))
-
+            if(i>1):
+              avg+=(time.time()-start_time)            
+              if(i == args.image_count):
+                print('Average inference time: %.3f sec'%(float(avg)/float(i-1)))
+        else:
+          print("please specify image_count(for dummy data) or image_dir(containing real data \n")
       # return some thing
-      return (boxes, probs, labels)
+      return True #(boxes, probs, labels)
 
 if __name__ == '__main__':
   main_dir_path = os.path.dirname(os.path.realpath(__file__)) + "/temp/built_graph/"
@@ -157,7 +162,7 @@ if __name__ == '__main__':
   parser.add_argument('--main_dir', help='main directory containing temp folder', default=main_dir_path)
   parser.add_argument('--model_name', help='name of the directory', default=model_name)
   parser.add_argument('--image_count', type=int, help='number of input image/loop count')
-  parser.add_argument('--image_dir', help='directory number of input images', default='./temp/')
+  parser.add_argument('--image_dir', help='directory number of input images')
   parser.add_argument('--data_val', help='the value of dataset', default='val2017')
 
   parser.add_argument('--timeline', action='store_true', help='fetch timeline for pb file.')
@@ -167,4 +172,3 @@ if __name__ == '__main__':
 
   with tf.Graph().as_default() as graph:
     output=DetectOneImageModelFuncReadfromFrozenGraph()
-    print(output)

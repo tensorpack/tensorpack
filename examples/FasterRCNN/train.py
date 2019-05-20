@@ -503,6 +503,7 @@ def predict(pred_func, input_file):
     tpviz.interactive_imshow(viz)
 
 def predict_images(pred_func, input_folder):
+
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
     
     results = detect_one_image(img, pred_func, args, True)
