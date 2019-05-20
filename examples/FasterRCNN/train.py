@@ -502,6 +502,13 @@ def predict(pred_func, input_file):
     viz = np.concatenate((img, final), axis=1)
     tpviz.interactive_imshow(viz)
 
+def predict_images(pred_func, input_folder):
+    img = cv2.imread(input_file, cv2.IMREAD_COLOR)
+    
+    results = detect_one_image(img, pred_func, args, True)
+    final = draw_final_outputs(img, results)
+    viz = np.concatenate((img, final), axis=1)
+    tpviz.interactive_imshow(viz)
 
 class EvalCallback(Callback):
     def __init__(self, in_names, out_names):
@@ -546,6 +553,8 @@ if __name__ == '__main__':
     parser.add_argument('--evaluate', help="Run evaluation on COCO. "
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
+                                          "This argument is the path to the input image file")
+    parser.add_argument('--predict_images', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file")
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
@@ -594,6 +603,9 @@ if __name__ == '__main__':
             elif args.predict:
                 COCODetection(cfg.DATA.BASEDIR, cfg.DATA.VAL)   # Only to load the class names into caches
                 predict(pred, args.predict)
+            elif args.predict_images:
+                COCODetection(cfg.DATA.BASEDIR, cfg.DATA.VAL)   # Only to load the class names into caches
+                predict_images(pred, args.predict_images)
     else:
         is_horovod = cfg.TRAINER == 'horovod'
         if is_horovod:
