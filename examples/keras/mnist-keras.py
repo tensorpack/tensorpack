@@ -12,6 +12,7 @@ from tensorpack.contrib.keras import KerasPhaseCallback
 from tensorpack.dataflow import dataset
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.gpu import get_num_gpu
+from tensorpack.tfutils.tower import get_current_tower_context
 
 KL = keras.layers
 
@@ -61,9 +62,14 @@ class Model(ModelDesc):
 
     def build_graph(self, image, label):
         image = tf.expand_dims(image, 3) * 2 - 1
+        ctx = get_current_tower_context()
 
         M = get_keras_model()
         logits = M(image)
+        if ctx.is_main_training_tower:
+            for op in M.updates:
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS)
+
         # build cost function by tensorflow
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)
         cost = tf.reduce_mean(cost, name='cross_entropy_loss')  # the average cross-entropy loss

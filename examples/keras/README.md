@@ -41,7 +41,7 @@ It has:
 
 Keras does not respect variable scopes or variable
 collections, which contradicts with tensorpack trainers.
-Therefore Keras support is __experimental__.
+Therefore Keras support is __experimental__ and __unofficial__.
 
-These simple examples can run within tensorpack smoothly, but note that a future
-version of Keras or a complicated model may break them (unlikely, though).
+These simple examples can run within tensorpack smoothly, but note that a
+complicated model or a future version of Keras may break them.
