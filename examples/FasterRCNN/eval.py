@@ -13,6 +13,7 @@ from contextlib import ExitStack
 import cv2
 import pycocotools.mask as cocomask
 import tqdm
+from scipy import interpolate
 
 from tensorpack.callbacks import Callback
 from tensorpack.tfutils.common import get_tf_version_tuple
@@ -41,6 +42,23 @@ mask: None, or a binary image of the original image shape
 """
 
 
+def _scale_box(box, scale):
+    w_half = (box[2] - box[0]) * 0.5
+    h_half = (box[3] - box[1]) * 0.5
+    x_c = (box[2] + box[0]) * 0.5
+    y_c = (box[3] + box[1]) * 0.5
+
+    w_half *= scale
+    h_half *= scale
+
+    scaled_box = np.zeros_like(box)
+    scaled_box[0] = x_c - w_half
+    scaled_box[2] = x_c + w_half
+    scaled_box[1] = y_c - h_half
+    scaled_box[3] = y_c + h_half
+    return scaled_box
+
+
 def _paste_mask(box, mask, shape):
     """
     Args:
@@ -50,23 +68,42 @@ def _paste_mask(box, mask, shape):
     Returns:
         A uint8 binary image of hxw.
     """
-    # int() is floor
-    # box fpcoor=0.0 -> intcoor=0.0
-    x0, y0 = list(map(int, box[:2] + 0.5))
-    # box fpcoor=h -> intcoor=h-1, inclusive
-    x1, y1 = list(map(int, box[2:] - 0.5))    # inclusive
-    x1 = max(x0, x1)    # require at least 1x1
-    y1 = max(y0, y1)
+    assert mask.shape[0] == mask.shape[1], mask.shape
 
-    w = x1 + 1 - x0
-    h = y1 + 1 - y0
+    if True:
+        # This method is accurate but much slower.
+        mask = np.pad(mask, [(1, 1), (1, 1)], mode='constant')
+        box = _scale_box(box, float(mask.shape[0]) / (mask.shape[0] - 2))
 
-    # rounding errors could happen here, because masks were not originally computed for this shape.
-    # but it's hard to do better, because the network does not know the "original" scale
-    mask = (cv2.resize(mask, (w, h)) > 0.5).astype('uint8')
-    ret = np.zeros(shape, dtype='uint8')
-    ret[y0:y1 + 1, x0:x1 + 1] = mask
-    return ret
+        mask_pixels = np.arange(0.0, mask.shape[0]) + 0.5
+        mask_continuous = interpolate.interp2d(mask_pixels, mask_pixels, mask, fill_value=0.0)
+        h, w = shape
+        ys = np.arange(0.0, h) + 0.5
+        xs = np.arange(0.0, w) + 0.5
+        ys = (ys - box[1]) / (box[3] - box[1]) * mask.shape[0]
+        xs = (xs - box[0]) / (box[2] - box[0]) * mask.shape[1]
+        res = mask_continuous(xs, ys)
+        return (res >= 0.5).astype('uint8')
+    else:
+        # This method (inspired by Detectron) is less accurate but fast.
+
+        # int() is floor
+        # box fpcoor=0.0 -> intcoor=0.0
+        x0, y0 = list(map(int, box[:2] + 0.5))
+        # box fpcoor=h -> intcoor=h-1, inclusive
+        x1, y1 = list(map(int, box[2:] - 0.5))    # inclusive
+        x1 = max(x0, x1)    # require at least 1x1
+        y1 = max(y0, y1)
+
+        w = x1 + 1 - x0
+        h = y1 + 1 - y0
+
+        # rounding errors could happen here, because masks were not originally computed for this shape.
+        # but it's hard to do better, because the network does not know the "original" scale
+        mask = (cv2.resize(mask, (w, h)) > 0.5).astype('uint8')
+        ret = np.zeros(shape, dtype='uint8')
+        ret[y0:y1 + 1, x0:x1 + 1] = mask
+        return ret
 
 
 def predict_image(img, model_func):
@@ -82,7 +119,6 @@ def predict_image(img, model_func):
     Returns:
         [DetectionResult]
     """
-
     orig_shape = img.shape[:2]
     resizer = CustomResize(cfg.PREPROC.TEST_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
     resized_img = resizer.augment(img)

@@ -54,11 +54,8 @@ Model:
 4. Because of (3), BatchNorm statistics are supposed to be freezed during fine-tuning.
 
 5. An alternative to freezing BatchNorm is to sync BatchNorm statistics across
-   GPUs (the `BACKBONE.NORM=SyncBN` option). This would require [my bugfix](https://github.com/tensorflow/tensorflow/pull/20360)
-   which is available since TF 1.10. You can manually apply the patch to use it.
-   For now the total batch size is at most 8, so this option does not improve the model by much.
-
-6. Another alternative to BatchNorm is GroupNorm (`BACKBONE.NORM=GN`) which has better performance.
+   GPUs (the `BACKBONE.NORM=SyncBN` option).
+   Another alternative to BatchNorm is GroupNorm (`BACKBONE.NORM=GN`) which has better performance.
 
 Efficiency:
 
@@ -74,13 +71,21 @@ Efficiency:
 
 1. This implementation does not use specialized CUDA ops (e.g. AffineChannel, ROIAlign).
    Therefore it might be slower than other highly-optimized implementations.
-   
+
 1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
    set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
    (which may negatively impact your throughput). The training needs <10G RAM if `NUM_WORKERS=0`.
-   
+
 1. Inference is unoptimized. Tensorpack is a training interface, therefore it
    does not help you on optimized inference.
+
+1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
+   set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
+   (which may negatively impact your throughput). The training needs <10G RAM if `NUM_WORKERS=0`.
+
+1. Inference is unoptimized. Tensorpack is a training interface, therefore it
+   does not help you on optimized inference. In fact, the current implementation
+   uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
 
 Possible Future Enhancements:
 
