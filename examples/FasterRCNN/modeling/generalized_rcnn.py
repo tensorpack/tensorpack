@@ -20,7 +20,7 @@ from .model_cascade import CascadeRCNNHead
 from .model_fpn import fpn_model, generate_fpn_proposals, multilevel_roi_align, multilevel_rpn_losses
 from .model_frcnn import (
     BoxProposals, FastRCNNHead, fastrcnn_outputs, fastrcnn_predictions, sample_fast_rcnn_targets)
-from .model_mrcnn import maskrcnn_loss, maskrcnn_upXconv_head
+from .model_mrcnn import maskrcnn_loss, maskrcnn_upXconv_head, unpackbits_masks
 from .model_rpn import generate_rpn_proposals, rpn_head, rpn_losses
 
 
@@ -62,6 +62,9 @@ class GeneralizedRCNN(ModelDesc):
 
     def build_graph(self, *inputs):
         inputs = dict(zip(self.input_names, inputs))
+        if "gt_masks_packed" in inputs:
+            gt_masks = tf.cast(unpackbits_masks(inputs.pop("gt_masks_packed")), tf.uint8, name="gt_masks")
+            inputs["gt_masks"] = gt_masks
 
         image = self.preprocess(inputs['image'])     # 1CHW
 
@@ -91,8 +94,8 @@ class ResNetC4Model(GeneralizedRCNN):
             tf.TensorSpec((None,), tf.int64, 'gt_labels')]  # all > 0
         if cfg.MODE_MASK:
             ret.append(
-                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks')
-            )   # NR_GT x height x width
+                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks_packed')
+            )   # NR_GT x height x ceil(width/8), packed groundtruth masks
         return ret
 
     def backbone(self, image):
@@ -202,8 +205,8 @@ class ResNetFPNModel(GeneralizedRCNN):
             tf.TensorSpec((None,), tf.int64, 'gt_labels')])  # all > 0
         if cfg.MODE_MASK:
             ret.append(
-                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks')
-            )   # NR_GT x height x width
+                tf.TensorSpec((None, None, None), tf.uint8, 'gt_masks_packed')
+            )
         return ret
 
     def slice_feature_and_anchors(self, p23456, anchors):

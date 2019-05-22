@@ -85,3 +85,22 @@ def maskrcnn_up4conv_head(*args, **kwargs):
 
 def maskrcnn_up4conv_gn_head(*args, **kwargs):
     return maskrcnn_upXconv_head(*args, num_convs=4, norm='GN', **kwargs)
+
+
+def unpackbits_masks(masks):
+    """
+    Args:
+        masks (Tensor): uint8 Tensor of shape N, H, W. The last dimension is packed bits.
+
+    Returns:
+        masks (Tensor): bool Tensor of shape N, H, 8*W.
+
+    This is a reverse operation of `np.packbits`
+    """
+    assert masks.dtype == tf.uint8, masks
+    bits = tf.constant((128, 64, 32, 16, 8, 4, 2, 1), dtype=tf.uint8)
+    unpacked = tf.bitwise.bitwise_and(tf.expand_dims(masks, -1), bits) > 0
+    unpacked = tf.reshape(
+        unpacked,
+        tf.concat([tf.shape(masks)[:-1], [-1]], axis=0))
+    return unpacked

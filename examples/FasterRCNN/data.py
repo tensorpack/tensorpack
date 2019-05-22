@@ -179,13 +179,15 @@ class TrainingDataPreprocessor:
             # And produce one image-sized binary mask per box.
             masks = []
             width_height = np.asarray([width, height], dtype=np.float32)
+            gt_mask_width = int(np.ceil(im.shape[1] / 8.0) * 8)   # pad to 8 in order to pack mask into bits
             for polys in segmentation:
                 if not self.cfg.DATA.ABSOLUTE_COORD:
                     polys = [p * width_height for p in polys]
                 polys = [self.aug.augment_coords(p, params) for p in polys]
-                masks.append(segmentation_to_mask(polys, im.shape[0], im.shape[1]))
+                masks.append(segmentation_to_mask(polys, im.shape[0], gt_mask_width))
             masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
-            ret['gt_masks'] = masks
+            masks = np.packbits(masks, axis=-1)
+            ret['gt_masks_packed'] = masks
 
             # from viz import draw_annotation, draw_mask
             # viz = draw_annotation(im, boxes, klass)
