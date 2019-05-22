@@ -217,7 +217,7 @@ def setup_keras_trainer(
         input,
         get_cost,
         lambda: optimizer)
-    if len(keras.backend.learning_phase().consumers()) > 0:
+    if isinstance(keras.backend.learning_phase(), tf.Tensor) and len(keras.backend.learning_phase().consumers()) > 0:
         # check if learning_phase is used in this model
         trainer.register_callback(KerasPhaseCallback(True))
 
