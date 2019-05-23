@@ -171,6 +171,7 @@ class COCODetection(DatasetSplit):
 
         # add the keys
         img['boxes'] = boxes        # nx4
+        assert cls.min() > 0, "Category id in COCO format must > 0!"
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
         if add_mask:

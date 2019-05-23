@@ -8,13 +8,13 @@ __Training__ code of 4 variants of ResNet on ImageNet:
 * [Squeeze-and-Excitation ResNet](https://arxiv.org/abs/1709.01507)
 * [ResNeXt](https://arxiv.org/abs/1611.05431)
 
-The training follows the exact recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
+The training follows the exact standard recipe used by the [Training ImageNet in 1 Hour paper](https://arxiv.org/abs/1706.02677)
 and gets the same performance.
 __Distributed training__ code & results can be found at [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod).
 
 This recipe has better performance than most open source implementations.
 In fact, many papers that claim to "improve" ResNet by .5% only compete with a lower
-baseline and they actually cannot beat this ResNet recipe.
+baseline and they actually cannot beat this standard ResNet recipe.
 
 | Model            | Top 5 Error | Top 1 Error | Download                                                                          |
 |:-----------------|:------------|:-----------:|:---------------------------------------------------------------------------------:|

@@ -17,9 +17,10 @@ are the only two tools I know that can scale the training of a large Keras model
 
 There are two flavors where you can use a Keras model inside tensorpack:
 
-1. Write the tower function similar to a standard tensorpack program, but use some Keras layers in
+1. Write the tower function similar to a standard tensorpack program, but mix some Keras layers in
 	 between. See [mnist-keras.py](mnist-keras.py) on how to do this.
-	 It does not support all tensorpack trainers.
+	 It does not support all tensorpack trainers, and can be brittle due to
+	 incompatibilities between Keras and tensorpack.
 
 2. The entire model to train is a Keras model (and there will be no `ModelDesc`, etc).
 	 See [mnist-keras-v2.py](mnist-keras-v2.py).

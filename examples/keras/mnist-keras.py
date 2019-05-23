@@ -43,7 +43,6 @@ def get_keras_model():
     with clear_tower0_name_scope():
         M = keras.models.Sequential()
         M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
-        M.add(KL.BatchNormalization())
         M.add(KL.MaxPooling2D())
         M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
         M.add(KL.Conv2D(32, 3, activation='relu', padding='same'))
