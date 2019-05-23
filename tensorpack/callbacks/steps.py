@@ -44,7 +44,10 @@ class TensorPrinter(Callback):
 
 
 class ProgressBar(Callback):
-    """ A progress bar based on tqdm. Enabled by default. """
+    """ A progress bar based on tqdm.
+
+    This callback is one of the :func:`DEFAULT_CALLBACKS()`.
+    """
 
     _chief_only = False
 

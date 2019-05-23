@@ -39,6 +39,8 @@ Then it is a good time to open an issue.
 ## How to freeze some variables in training
 
 1. Learn `tf.stop_gradient`. You can simply use `tf.stop_gradient` in your model code in many situations (e.g. to freeze first several layers).
+	 Note that it stops the gradient flow in the current Tensor but your variables may still contribute to the
+	 final loss through other tensors (e.g., weight decay).
 
 2. [varreplace.freeze_variables](../modules/tfutils.html#tensorpack.tfutils.varreplace.freeze_variables) returns a context where variables are freezed.
 	It is implemented by `custom_getter` argument of `tf.variable_scope` -- learn it to gain more control over what & how variables are freezed.

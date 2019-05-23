@@ -199,6 +199,7 @@ def add_moving_summary(*args, **kwargs):
     """
     Summarize the moving average for scalar tensors.
     This function is a no-op if not calling from main training tower.
+    See tutorial at https://tensorpack.readthedocs.io/tutorial/summary.html
 
     Args:
         args: scalar tensors to summarize

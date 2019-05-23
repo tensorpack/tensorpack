@@ -81,6 +81,8 @@ class RunUpdateOps(RunOp):
 
     Be careful when using ``UPDATE_OPS`` if your model contains more than one sub-networks.
     Perhaps not all updates are supposed to be executed in every iteration.
+
+    This callback is one of the :func:`DEFAULT_CALLBACKS()`.
     """
 
     def __init__(self, collection=None):

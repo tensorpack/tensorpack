@@ -32,7 +32,7 @@ It's always better to copy-paste what you observed instead of describing them.
 It's always better to paste **as much as possible**, although sometimes a partial log is OK.
 
 Tensorpack typically saves stdout to its training log.
-If stderr is relevant, you can run a command with `CMD 2>&1 | tee logs.txt`
+If stderr is relevant, you can run a command with `my_command 2>&1 | tee logs.txt`
 to save both stdout and stderr to one file.
 
 (2) **Other observations, if any:**
@@ -53,7 +53,7 @@ We do not answer machine learning questions and it is your responsibility to
 figure out how to make your models more accurate.
 
 ### 4. Your environment:
-  + Paste the output of this command: `python3 -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
+  + Paste the output of this command: `python -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
     If this command failed, tell us your version of Python/TF/tensorpack.
   + You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`
     and see if your issue is already solved.

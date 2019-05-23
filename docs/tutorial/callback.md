@@ -69,7 +69,7 @@ monitors=[        # monitors are a special kind of callbacks. these are also ena
 ]
 ```
 
-Notice that callbacks cover every detail of training, ranging from graph operations to the progress bar.
+You can see from the above snippet, that callbacks cover every detail of training, ranging from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluate part of the summaries at a different frequency, etc.
 Similar concepts also exists in other frameworks, such as Keras callbacks, or
@@ -80,5 +80,7 @@ These features are not always necessary, but think about how messy the main loop
 were to write these logic together with the loops, and how easy your life will be if you could enable
 these features with just one line when you need them.
 
+See [list of callbacks](../modules/callbacks.html)
+for a long list of tensorpack builtin callbacks.
 See [Write a callback](extend/callback.html)
 for details on how callbacks work, what they can do, and how to write them.

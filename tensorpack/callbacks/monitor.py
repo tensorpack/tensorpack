@@ -547,7 +547,7 @@ class CometMLMonitor(MonitorBase):
 
     Note:
         1. comet_ml requires you to `import comet_ml` before importing tensorflow or tensorpack.
-        2. The "automatic output logging" feature will make the training progress bar appear to freeze.
+        2. The "automatic output logging" feature of comet_ml will make the training progress bar appear to freeze.
            Therefore the feature is disabled by default.
     """
     def __init__(self, experiment=None, api_key=None, tags=None, **kwargs):
