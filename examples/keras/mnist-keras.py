@@ -20,7 +20,8 @@ KL = keras.layers
 This is an mnist example demonstrating how to use Keras symbolic function inside tensorpack.
 This way you can define models in Keras-style, and benefit from the more efficeint trainers in tensorpack.
 
-Note: this example does not work for replicated-style data-parallel trainers.
+Note: this example does not work for replicated-style data-parallel trainers, so may be less efficient
+for some models.
 """
 
 IMAGE_SIZE = 28
