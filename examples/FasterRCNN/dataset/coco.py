@@ -52,6 +52,7 @@ class COCODetection(DatasetSplit):
 
         from pycocotools.coco import COCO
         self.coco = COCO(annotation_file)
+        self.annotation_file = annotation_file
         logger.info("Instances loaded from {}.".format(annotation_file))
 
     # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
@@ -126,6 +127,11 @@ class COCODetection(DatasetSplit):
         # ann_ids = self.coco.getAnnIds(imgIds=img['image_id'])
         # objs = self.coco.loadAnns(ann_ids)
         objs = self.coco.imgToAnns[img['image_id']]  # equivalent but faster than the above two lines
+        if 'minival' not in self.annotation_file:
+            # TODO better to check across the entire json, rather than per-image
+            ann_ids = [ann["id"] for ann in objs]
+            assert len(set(ann_ids)) == len(ann_ids), \
+                "Annotation ids in '{}' are not unique!".format(self.annotation_file)
 
         # clean-up boxes
         valid_objs = []
@@ -171,7 +177,8 @@ class COCODetection(DatasetSplit):
 
         # add the keys
         img['boxes'] = boxes        # nx4
-        assert cls.min() > 0, "Category id in COCO format must > 0!"
+        if len(cls):
+            assert cls.min() > 0, "Category id in COCO format must > 0!"
         img['class'] = cls          # n, always >0
         img['is_crowd'] = is_crowd  # n,
         if add_mask:
