@@ -31,7 +31,7 @@ A common pipeline usually would
 __read from disk (or other sources), 
 apply transformations, 
 group into batches, prefetch data__, etc, and all __run in parallel__.
-A simple pipeline in DataFlow is like the following:
+A simple DataFlow pipeline is like the following:
 
 ````python
 # a DataFlow you implement to produce [tensor1, tensor2, ..] lists from whatever sources:
@@ -45,8 +45,8 @@ df = MultiProcessRunnerZMQ(df, 3)
 ````
 
 A list of built-in DataFlow to compose with can be found at [API docs](../modules/dataflow.html).
-You can also find more complicated DataFlow in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
-with all the data preprocessing, or other tensorpack examples.
+You can also find complicated real-life DataFlow pipelines in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
+or other tensorpack examples.
 
 ### Parallelize the Pipeline
 

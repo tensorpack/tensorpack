@@ -5,16 +5,15 @@ The first thing to note: __you never have to write a layer__.
 Tensorpack layers are nothing but wrappers of symbolic functions.
 In tensorpack, you can use __any__ symbolic functions you have written or seen elsewhere with or without tensorpack layers.
 
-If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from the framework.
+If you would like, you can make a symbolic function become a "layer" by following some simple rules, and then gain benefits from tensorpack.
 
-Take a look at the [Convolutional Layer](../../tensorpack/models/conv2d.py#L14) implementation for an example of how to define a layer:
+Take a look at the [ShuffleNet example](../../examples/ImageNetModels/shufflenet.py#L22) 
+to see an example of how to define a custom layer:
 
 ```python
 @layer_register(log_shape=True)
-def Conv2D(x, out_channel, kernel_shape,
-           padding='SAME', stride=1,
-           W_init=None, b_init=None,
-           nl=tf.nn.relu, split=1, use_bias=True):
+def DepthConv(x, out_channel, kernel_shape, padding='SAME', stride=1,
+              W_init=None, activation=tf.identity):
 ```
 
 Basically, a tensorpack layer is just a symbolic function, but with the following rules:

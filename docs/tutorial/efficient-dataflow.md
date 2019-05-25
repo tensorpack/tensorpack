@@ -13,7 +13,7 @@ The average resolution is about 400x350 <sup>[[1]]</sup>.
 Following the [ResNet example](../examples/ResNet), we need images in their original resolution,
 so we will read the original dataset (instead of a down-sampled version), and
 then apply complicated preprocessing to it.
-We aim to reach a speed of, roughly **1k~3k images per second**, to keep GPUs busy.
+We hope to reach a speed of **1k~5k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
 1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some multiprocess runner should usually work well enough.

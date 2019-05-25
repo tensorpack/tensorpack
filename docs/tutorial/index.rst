@@ -22,6 +22,7 @@ Basic Tutorials
   summary
   inference
   faq
+  philosophy/dataflow
 
 Advanced Tutorials
 ==================
