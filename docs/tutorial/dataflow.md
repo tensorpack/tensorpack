@@ -18,6 +18,7 @@ DataFlow is __independent of TensorFlow__ since it produces any python objects
 (usually numpy arrays).
 To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
 You can simply use DataFlow as a data processing pipeline and plug it into any other frameworks.
+And we plan to make it installable as a separate project.
 
 ### Load Raw Data
 We do not make any assumptions about your data format.
@@ -72,17 +73,11 @@ for dp in df:
     # dp is now a list. do whatever
 ```
 
-### Why DataFlow
+### Why DataFlow?
 
-1. It's easy: write everything in pure Python, and reuse existing utilities.
-	 On the contrary, writing data loaders in TF operators is usually painful, and performance is hard to tune.
-	 See more discussions in [Python Reader or TF Reader](extend/input-source.html#python-reader-or-tf-reader).
-2. It's fast: see [Efficient DataFlow](efficient-dataflow.html)
-	on how to build a fast DataFlow with parallelism.
-	If you're using DataFlow with tensorpack, also see [Input Pipeline tutorial](extend/input-source.html)
-	on how tensorpack further accelerates data loading in the graph.
-
-Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
+It's easy and fast. For more discussions, see [Why DataFlow?](/tutorial/philosophy/dataflow.html)
+Nevertheless, using DataFlow is not required. 
+Tensorpack supports data loading with native TF operators / TF datasets as well.
 
 Read the [API documentation](../../modules/dataflow.html)
 to see API details of DataFlow and a complete list of built-in DataFlow.
