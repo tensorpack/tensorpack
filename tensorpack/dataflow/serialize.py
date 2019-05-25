@@ -7,7 +7,7 @@ import platform
 from collections import defaultdict
 
 from ..utils import logger
-from ..utils.compatible_serialize import dumps, loads
+from ..utils.serialize import dumps, loads
 from ..utils.develop import create_dummy_class  # noqa
 from ..utils.utils import get_tqdm
 from .base import DataFlow
@@ -150,17 +150,10 @@ class TFRecordSerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output tfrecord file.
         """
-        if os.environ.get('TENSORPACK_COMPATIBLE_SERIALIZE', 'msgpack') == 'msgpack':
-            def _dumps(dp):
-                return dumps(dp)
-        else:
-            def _dumps(dp):
-                return dumps(dp).to_pybytes()
-
         size = _reset_df_and_get_size(df)
         with tf.python_io.TFRecordWriter(path) as writer, get_tqdm(total=size) as pbar:
             for dp in df:
-                writer.write(_dumps(dp))
+                writer.write(dumps(dp))
                 pbar.update()
 
     @staticmethod

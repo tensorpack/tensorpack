@@ -5,7 +5,6 @@ import numpy as np
 from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..utils.argtools import get_data_format, shape2d
-from ..utils.develop import log_deprecated
 from ._test import TestModel
 from .common import layer_register
 from .shape_utils import StaticDynamicShape
@@ -140,61 +139,6 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
     return ret
 
 
-# Removed (not importable) already; leave it here just for testing purposes.
-def BilinearUpSample(x, shape):
-    """
-    Deterministic bilinearly-upsample the input images.
-    It is implemented by deconvolution with "BilinearFiller" in Caffe.
-    It is aimed to mimic caffe behavior.
-
-    Args:
-        x (tf.Tensor): a NHWC tensor
-        shape (int): the upsample factor
-
-    Returns:
-        tf.Tensor: a NHWC tensor.
-    """
-    log_deprecated("BilinearUpsample", "Please implement it in your own code instead!", "2019-03-01")
-    inp_shape = x.shape.as_list()
-    ch = inp_shape[3]
-    assert ch is not None and ch == 1
-
-    shape = int(shape)
-    filter_shape = 2 * shape
-
-    def bilinear_conv_filler(s):
-        """
-        s: width, height of the conv filter
-        https://github.com/BVLC/caffe/blob/99bd99795dcdf0b1d3086a8d67ab1782a8a08383/include/caffe/filler.hpp#L219-L268
-        """
-        f = np.ceil(float(s) / 2)
-        c = float(2 * f - 1 - f % 2) / (2 * f)
-        ret = np.zeros((s, s), dtype='float32')
-        for x in range(s):
-            for y in range(s):
-                ret[x, y] = (1 - abs(x / f - c)) * (1 - abs(y / f - c))
-        return ret
-    w = bilinear_conv_filler(filter_shape)
-    w = np.repeat(w, ch * ch).reshape((filter_shape, filter_shape, ch, ch))
-
-    weight_var = tf.constant(w, tf.float32,
-                             shape=(filter_shape, filter_shape, ch, ch),
-                             name='bilinear_upsample_filter')
-    x = tf.pad(x, [[0, 0], [shape - 1, shape - 1], [shape - 1, shape - 1], [0, 0]], mode='SYMMETRIC')
-    out_shape = tf.shape(x) * tf.constant([1, shape, shape, 1], tf.int32)
-    deconv = tf.nn.conv2d_transpose(x, weight_var, out_shape,
-                                    [1, shape, shape, 1], 'SAME')
-    edge = shape * (shape - 1)
-    deconv = deconv[:, edge:-edge, edge:-edge, :]
-
-    if inp_shape[1]:
-        inp_shape[1] *= shape
-    if inp_shape[2]:
-        inp_shape[2] *= shape
-    deconv.set_shape(inp_shape)
-    return deconv
-
-
 class TestPool(TestModel):
     def test_FixedUnPooling(self):
         h, w = 3, 4
@@ -213,23 +157,24 @@ class TestPool(TestModel):
         res[0, ::scale, ::scale, :] = 0
         self.assertTrue((res == 0).all())
 
-    def test_BilinearUpSample(self):
-        h, w = 12, 12
-        scale = 2
-
-        mat = np.random.rand(h, w).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 1])
-
-        output = BilinearUpSample(inp, scale)
-        res = self.run_variable(output)[0, :, :, 0]
-
-        from skimage.transform import rescale
-        res2 = rescale(mat, scale, mode='edge')
-
-        diff = np.abs(res2 - res)
-
-        # if not diff.max() < 1e-4:
-        #     import IPython
-        #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-        self.assertTrue(diff.max() < 1e-4, diff.max())
+# Below was originally for the BilinearUpsample layer used in the HED example
+#     def test_BilinearUpSample(self):
+#         h, w = 12, 12
+#         scale = 2
+#
+#         mat = np.random.rand(h, w).astype('float32')
+#         inp = self.make_variable(mat)
+#         inp = tf.reshape(inp, [1, h, w, 1])
+#
+#         output = BilinearUpSample(inp, scale)
+#         res = self.run_variable(output)[0, :, :, 0]
+#
+#         from skimage.transform import rescale
+#         res2 = rescale(mat, scale, mode='edge')
+#
+#         diff = np.abs(res2 - res)
+#
+#         # if not diff.max() < 1e-4:
+#         #     import IPython
+#         #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())
+#         self.assertTrue(diff.max() < 1e-4, diff.max())

@@ -39,7 +39,7 @@ def rms(x, name=None):
 # don't hurt to leave it here
 @deprecated("Please implement it by yourself.", "2018-04-28")
 def psnr(prediction, ground_truth, maxp=None, name='psnr'):
-    """`Peek Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
+    """`Peak Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
 
     .. math::
 

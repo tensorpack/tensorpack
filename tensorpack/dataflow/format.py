@@ -9,7 +9,7 @@ from six.moves import range
 
 from ..utils import logger
 from ..utils.argtools import log_once
-from ..utils.compatible_serialize import loads
+from ..utils.serialize import loads
 from ..utils.develop import create_dummy_class  # noqa
 from ..utils.loadcaffe import get_caffe_pb
 from ..utils.timer import timed_operation

@@ -13,7 +13,6 @@ from six.moves import map, range
 from termcolor import colored
 
 from ..utils import logger
-from ..utils.develop import log_deprecated
 from ..utils.utils import get_rng, get_tqdm, get_tqdm_kwargs
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow, RNGDataFlow
 
@@ -38,13 +37,9 @@ class TestDataSpeed(ProxyDataFlow):
 
     def __iter__(self):
         """ Will run testing at the beginning, then produce data normally. """
-        self.start_test()
+        self.start()
         for dp in self.ds:
             yield dp
-
-    def start_test(self):
-        log_deprecated("TestDataSpeed.start_test() was renamed to start()", "2019-03-30")
-        self.start()
 
     def start(self):
         """

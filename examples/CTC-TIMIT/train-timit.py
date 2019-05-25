@@ -10,7 +10,6 @@ from six.moves import range
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import GlobalNormClip, SummaryGradient
-from tensorpack.utils import serialize
 
 from timitdata import TIMITBatch
 

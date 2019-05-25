@@ -1,7 +1,6 @@
-import platform
 from os import path
 import setuptools
-from setuptools import setup
+from setuptools import setup, find_packages
 
 version = int(setuptools.__version__.split('.')[0])
 assert version > 30, "Tensorpack installation requires setuptools > 30"
@@ -38,10 +37,20 @@ add_git_version()
 
 setup(
     name='tensorpack',
+    author="TensorPack contributors",
+    author_email="ppwwyyxxc@gmail.com",
+    url="https://github.com/tensorpack/tensorpack",
+    keywords="tensorflow, deep learning, neural network",
+    license="Apache",
+
     version=__version__,   # noqa
-    description='Neural Network Toolbox on TensorFlow',
+    description='A Neural Network Training Interface on TensorFlow',
     long_description=long_description,
     long_description_content_type='text/markdown',
+
+    packages=find_packages(exclude=["examples", "tests"]),
+    zip_safe=False,  		    # dataset and __init__ use file
+
     install_requires=[
         "numpy>=1.14",
         "six",
@@ -61,4 +70,7 @@ setup(
         'all: "linux" in sys_platform': ['python-prctl'],
         'all: python_version < "3.0"': ['tornado'],
     },
+
+    # https://packaging.python.org/guides/distributing-packages-using-setuptools/#universal-wheels
+    options={'bdist_wheel': {'universal': '1'}},
 )

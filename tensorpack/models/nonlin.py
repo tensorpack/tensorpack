@@ -53,7 +53,7 @@ def PReLU(x, init=0.001, name=None):
     * ``alpha``: learnable slope.
     """
     if name is not None:
-        log_deprecated("PReLU(name=...) is deprecated! The output tensor will be named `output`.")
+        log_deprecated("PReLU(name=...)", "The output tensor will be named `output`.")
     init = tfv1.constant_initializer(init)
     alpha = tfv1.get_variable('alpha', [], initializer=init)
     x = ((1 + alpha) * x + (1 - alpha) * tf.abs(x))
@@ -73,7 +73,7 @@ def BNReLU(x, name=None):
         name: deprecated, don't use.
     """
     if name is not None:
-        log_deprecated("BNReLU(name=...) is deprecated! The output tensor will be named `output`.")
+        log_deprecated("BNReLU(name=...)", "The output tensor will be named `output`.")
 
     x = BatchNorm('bn', x)
     x = tf.nn.relu(x, name=name)
