@@ -19,32 +19,58 @@ DataFlow is __independent of TensorFlow__ since it produces any python objects
 To `import tensorpack.dataflow`, you don't even have to install TensorFlow.
 You can simply use DataFlow as a data processing pipeline and plug it into any other frameworks.
 
+### Load Raw Data
+We do not make any assumptions about your data format.
+You would usually want to write the source DataFlow (`MyDataFlow` in the example below) for your own data format.
+See [another tutorial](extend/dataflow.html) for simple instructions on writing a DataFlow.
 
-### Composition of DataFlow
-There are a lot of existing DataFlow utilities in tensorpack, which you can use to compose
-one DataFlow with complex data pipeline. A common pipeline usually
-would __read from disk (or other sources), apply transformations (possibly in parallel), group into batches,
-prefetch data__, etc, and all __run in parallel__. A simple example is as the following:
+### Assemble the Pipeline
+There are a lot of existing DataFlow utilities in tensorpack, which you can use to assemble
+the source DataFlow with complex data pipeline.
+A common pipeline usually would 
+__read from disk (or other sources), 
+apply transformations, 
+group into batches, prefetch data__, etc, and all __run in parallel__.
+A simple pipeline in DataFlow is like the following:
 
 ````python
 # a DataFlow you implement to produce [tensor1, tensor2, ..] lists from whatever sources:
 df = MyDataFlow(dir='/my/data', shuffle=True)
-# resize the image component of each datapoint
-df = AugmentImageComponent(df, [imgaug.Resize((225, 225))])
+# apply transformation to your data
+df = MapDataComponent(df, lambda t: transform(t), 0)
 # group data into batches of size 128
 df = BatchData(df, 128)
 # start 3 processes to run the dataflow in parallel
 df = MultiProcessRunnerZMQ(df, 3)
 ````
-You can find more complicated DataFlow in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
-with all the data preprocessing.
 
-### Work with Your Data
-We do not make any assumptions about your data format.
-You would usually want to write the source DataFlow (`MyDataFlow` in the above example) for your own data format.
-See [another tutorial](extend/dataflow.html) for simple instructions on writing a DataFlow.
-Once you have the source reader, all the [built-in
-DataFlows](../modules/dataflow.html) are ready for you to assemble the rest of the data pipeline.
+A list of built-in DataFlow to compose with can be found at [API docs](../modules/dataflow.html).
+You can also find more complicated DataFlow in the [ImageNet training script](../examples/ImageNetModels/imagenet_utils.py)
+with all the data preprocessing, or other tensorpack examples.
+
+### Parallelize the Pipeline
+
+DataFlow includes optimized parallel runner and parallel mapper.
+You can find them in the [API docs](../modules/dataflow.html) under the
+"parallel" and "parallel_map" section.
+
+The [Efficient DataFlow](efficient-dataflow.html) give a deeper dive
+on how to use them to optimize your data pipeline.
+
+### Run the DataFlow
+
+When training with tensorpack, typically it is the `InputSource` interface that runs the DataFlow.
+However, DataFlow can be used without other tensorpack components.
+To run a DataFlow by yourself, call `reset_state()` first to initialize it,
+and then use the generator however you like:
+
+```python
+df = SomeDataFlow()
+
+df.reset_state()
+for dp in df:
+    # dp is now a list. do whatever
+```
 
 ### Why DataFlow
 
@@ -58,19 +84,5 @@ DataFlows](../modules/dataflow.html) are ready for you to assemble the rest of t
 
 Nevertheless, tensorpack supports data loading with native TF operators / TF datasets as well.
 
-### Use DataFlow in Your Own Code
-
-When training with tensorpack, typically it is the `InputSource` interface that runs the DataFlow.
-However, DataFlow can be used without other tensorpack components.
-To run a DataFlow by yourself, call `reset_state()` first to initialize it,
-and then use the generator however you like:
-```python
-df = SomeDataFlow()
-
-df.reset_state()
-for dp in df:
-    # dp is now a list. do whatever
-```
-
-Read the [API documentation](../../modules/dataflow.html#tensorpack.dataflow.DataFlw)
-to see API details of DataFlow.
+Read the [API documentation](../../modules/dataflow.html)
+to see API details of DataFlow and a complete list of built-in DataFlow.

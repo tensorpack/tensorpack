@@ -10,7 +10,7 @@ There are several existing DataFlow, e.g. [ImageFromFile](../../modules/dataflow
 [DataFromList](../../modules/dataflow.html#tensorpack.dataflow.DataFromList),
 which you can use if your data format is simple.
 In general, you probably need to write a source DataFlow to produce data for your task,
-and then compose it with existing modules (e.g. mapping, batching, prefetching, ...).
+and then compose it with other DataFlow (e.g. mapping, batching, prefetching, ...).
 
 The easiest way to create a DataFlow to load custom data, is to wrap a custom generator, e.g.:
 ```python
@@ -47,7 +47,7 @@ for the semantics.
 
 DataFlow implementations for several well-known datasets are provided in the
 [dataflow.dataset](../../modules/dataflow.dataset.html)
-module, you can take them as a reference.
+module. You can take them as examples.
 
 #### More Data Processing
 

@@ -87,13 +87,14 @@ Now it's time to add threads or processes:
 		ds = MultiProcessRunnerZMQ(ds1, num_proc=25)
 		ds = BatchData(ds, 256)
 ```
-Here we fork 25 processes to run `ds1`, and collect their output through ZMQ IPC protocol,
-which is faster than `multiprocessing.Queue`. You can also apply parallel runner after batching, of course.
+Here we fork 25 processes to run `ds1`, and collect their output through ZMQ IPC protocol.
+You can also apply parallel runner after batching, of course.
 
 ### Parallel Map
 The above DataFlow might be fast, but since it forks the ImageNet reader (`ds0`),
-it's **not a good idea to use it for validation** (for reasons mentioned at top. More details at the [documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)).
-Alternatively, you can use multi-threaded preprocessing like this:
+it's **not a good idea to use it for validation** (for reasons mentioned at top.
+More details at the [documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)).
+Alternatively, you can use parallel mapper like this:
 
 ```eval_rst
 .. code-block:: python
@@ -141,7 +142,7 @@ Let's summarize what the above dataflow does:
 3. Both 1 and 2 happen together in a separate process, and the results are sent back to main process through ZeroMQ.
 4. Main process makes batches, and other tensorpack modules will then take care of how they should go into the graph.
 
-There are also `MultiProcessMapData` as well for you to use.
+And, of course, there is also a `MultiProcessMapData` as well for you to use.
 
 ## Sequential Read
 
@@ -190,8 +191,8 @@ As a reference, on Samsung SSD 850, the uncached speed is about 16it/s.
 ```
 Instead of shuffling all the training data in every epoch (which would require random read),
 the added line above maintains a buffer of datapoints and shuffle them once a while.
-It will not affect the model as long as the buffer is large enough,
-but it can also consume much memory if too large.
+It will not affect the model very much as long as the buffer is large enough,
+but it can be memory-consuming if buffer is too large.
 
 ### Augmentations & Parallel Runner
 
@@ -229,7 +230,7 @@ Since we are reading the database sequentially, having multiple forked instances
 base LMDB reader will result in biased data distribution. Therefore we use `MultiProcessRunner` to
 launch the base DataFlow in only **one process**, and only parallelize the transformations
 with another `MultiProcessRunnerZMQ`
-(Nesting two `MultiProcessRunnerZMQ`, however, will result in a different behavior.
+(Nesting two `MultiProcessRunnerZMQ`, however, is not allowed.
 These differences are explained in the API documentation in more details.).
 Similar to what we did earlier, you can use `MultiThreadMapData` to parallelize as well.
 
@@ -240,10 +241,10 @@ Let me summarize what this DataFlow does:
 	 send them through ZMQ IPC pipe.
 3. The main process takes data from the pipe, makes batches.
 
-The two DataFlow mentioned in this tutorial (both random read and sequential read) can run at a speed of 1k ~ 2.5k images per second if you have good CPUs, RAM, disks.
-With fewer augmentations, it can reach 5k images/s.
+The two DataFlow mentioned in this tutorial (both random read and sequential read) can run at a speed of 1k ~ 5k images per second,
+depend on your hardware condition of CPUs, RAM, disks, and the amount of augmentation.
 As a reference, tensorpack can train ResNet-18 at 1.2k images/s on 4 old TitanX.
-8 P100s can train ResNet-50 at 1.7k images/s according to the [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+8 V100s can train ResNet-50 at 2.8k images/s according to [tensorpack benchmark](https://github.com/tensorpack/benchmarks/tree/master/ResNet-MultiGPU).
 So DataFlow will not be a serious bottleneck if configured properly.
 
 ## Distributed DataFlow

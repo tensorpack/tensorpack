@@ -17,6 +17,10 @@ $(function (){
       if (fullname.startsWith('tensorpack.'))
         fullname = fullname.substr(11);
 
+      if (fullname == "tensorpack.dataflow.MultiProcessMapData") {
+        groupName = "parallel_map";
+      }
+
       var n = $(e).children('.descname').clone();
       n[0].innerText = fullname;
 
