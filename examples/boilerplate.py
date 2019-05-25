@@ -37,7 +37,7 @@ def get_data(subset):
     # something that yields [[SHAPE, SHAPE, CHANNELS], [1]]
     ds = FakeData([[SHAPE, SHAPE, CHANNELS], [1]], 1000, random=False,
                   dtype=['float32', 'uint8'], domain=[(0, 255), (0, 10)])
-    ds = PrefetchDataZMQ(ds, 2)
+    ds = MultiProcessRunnerZMQ(ds, 2)
     ds = BatchData(ds, BATCH_SIZE)
     return ds
 

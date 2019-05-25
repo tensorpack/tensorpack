@@ -115,7 +115,7 @@ def get_data():
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
     ds = AugmentImageComponent(ds, get_augmentors())
     ds = BatchData(ds, args.batch)
-    ds = PrefetchDataZMQ(ds, 5)
+    ds = MultiProcessRunnerZMQ(ds, 5)
     return ds
 
 

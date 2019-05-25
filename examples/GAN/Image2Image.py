@@ -173,7 +173,7 @@ def get_data():
     augs = [imgaug.Resize(286), imgaug.RandomCrop(256)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
-    ds = PrefetchData(ds, 100, 1)
+    ds = MultiProcessRunner(ds, 100, 1)
     return ds
 
 

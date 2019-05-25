@@ -68,7 +68,7 @@ def get_data(train_or_test):
 
     ds = AugmentImageComponent(ds, augmentors, copy=False)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, min(25, multiprocessing.cpu_count()))
+        ds = MultiProcessRunnerZMQ(ds, min(25, multiprocessing.cpu_count()))
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     return ds
 

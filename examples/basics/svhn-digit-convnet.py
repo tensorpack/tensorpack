@@ -78,7 +78,7 @@ def get_data():
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
-    data_train = PrefetchData(data_train, 5, 5)
+    data_train = MultiProcessRunner(data_train, 5, 5)
 
     augmentors = [imgaug.Resize((40, 40))]
     data_test = AugmentImageComponent(data_test, augmentors)

@@ -10,11 +10,12 @@ from six.moves import queue
 
 from ..utils.concurrency import StoppableThread, enable_death_signal
 from ..utils.serialize import dumps, loads
+from ..utils.develop import log_deprecated
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow
 from .common import RepeatedData
 from .parallel import _bind_guard, _get_pipe_name, _MultiProcessZMQDataFlow, _repeat_iter, _zmq_catch_error
 
-__all__ = ['ThreadedMapData', 'MultiThreadMapData',
+__all__ = ['MultiThreadMapData',
            'MultiProcessMapData', 'MultiProcessMapDataZMQ']
 
 
@@ -115,7 +116,7 @@ class MultiThreadMapData(_ParallelMapData):
         1. You should avoid starting many threads in your main process to reduce GIL contention.
 
            The threads will only start in the process which calls :meth:`reset_state()`.
-           Therefore you can use ``PrefetchDataZMQ(MultiThreadMapData(...), 1)``
+           Therefore you can use ``MultiProcessRunnerZMQ(MultiThreadMapData(...), 1)``
            to reduce GIL contention.
     """
     class _Worker(StoppableThread):
@@ -143,16 +144,21 @@ class MultiThreadMapData(_ParallelMapData):
             finally:
                 self.stop()
 
-    def __init__(self, ds, nr_thread, map_func, buffer_size=200, strict=False):
+    def __init__(self, ds, num_thread=None, map_func=None, buffer_size=200, strict=False, nr_thread=None):
         """
         Args:
             ds (DataFlow): the dataflow to map
-            nr_thread (int): number of threads to use
+            num_thread (int): number of threads to use
             map_func (callable): datapoint -> datapoint | None. Return None to
                 discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
+            nr_thread: deprecated name
         """
+        if nr_thread is not None:
+            log_deprecated("MultiThreadMapData(nr_thread)", "Renamed to 'num_thread'", "2020-01-01")
+            num_thread = nr_thread
+
         if strict:
             # In strict mode, buffer size cannot be larger than the total number of datapoints
             try:
@@ -161,10 +167,10 @@ class MultiThreadMapData(_ParallelMapData):
                 pass
 
         super(MultiThreadMapData, self).__init__(ds, buffer_size, strict)
-        assert nr_thread > 0, nr_thread
+        assert num_thread > 0, num_thread
 
         self._strict = strict
-        self.nr_thread = nr_thread
+        self.num_thread = num_thread
         self.map_func = map_func
         self._threads = []
         self._evt = None
@@ -181,7 +187,7 @@ class MultiThreadMapData(_ParallelMapData):
         self._evt = threading.Event()
         self._threads = [MultiThreadMapData._Worker(
             self._in_queue, self._out_queue, self._evt, self.map_func)
-            for _ in range(self.nr_thread)]
+            for _ in range(self.num_thread)]
         for t in self._threads:
             t.start()
 
@@ -209,10 +215,6 @@ class MultiThreadMapData(_ParallelMapData):
             p.join(timeout=5.0)
             # if p.is_alive():
             #     logger.warn("Cannot join thread {}.".format(p.name))
-
-
-# TODO deprecated
-ThreadedMapData = MultiThreadMapData
 
 
 class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
@@ -255,16 +257,20 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
                 dp = self.map_func(dp)
                 socket.send(dumps(dp), copy=False)
 
-    def __init__(self, ds, nr_proc, map_func, buffer_size=200, strict=False):
+    def __init__(self, ds, num_proc=None, map_func=None, buffer_size=200, strict=False, nr_proc=None):
         """
         Args:
             ds (DataFlow): the dataflow to map
-            nr_proc(int): number of threads to use
+            num_proc(int): number of threads to use
             map_func (callable): datapoint -> datapoint | None. Return None to
                 discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
+            nr_proc: deprecated name
         """
+        if nr_proc is not None:
+            log_deprecated("MultiProcessMapDataZMQ(nr_proc)", "Renamed to 'num_proc'", "2020-01-01")
+            num_proc = nr_proc
         if strict:
             # In strict mode, buffer size cannot be larger than the total number of datapoints
             try:
@@ -274,8 +280,8 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
         _ParallelMapData.__init__(self, ds, buffer_size, strict)
         _MultiProcessZMQDataFlow.__init__(self)
-        assert nr_proc > 0, nr_proc
-        self.nr_proc = nr_proc
+        assert num_proc > 0, num_proc
+        self.num_proc = num_proc
         self.map_func = map_func
         self._strict = strict
         self._procs = []
@@ -291,11 +297,11 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
         pipename = _get_pipe_name('dataflow-map')
         _bind_guard(self.socket, pipename)
 
-        self._proc_ids = [u'{}'.format(k).encode('utf-8') for k in range(self.nr_proc)]
-        worker_hwm = int(self._buffer_size * 2 // self.nr_proc)
+        self._proc_ids = [u'{}'.format(k).encode('utf-8') for k in range(self.num_proc)]
+        worker_hwm = int(self._buffer_size * 2 // self.num_proc)
         self._procs = [MultiProcessMapDataZMQ._Worker(
             self._proc_ids[k], self.map_func, pipename, worker_hwm)
-            for k in range(self.nr_proc)]
+            for k in range(self.num_proc)]
 
         self._start_processes()
         self._fill_buffer()     # pre-fill the bufer

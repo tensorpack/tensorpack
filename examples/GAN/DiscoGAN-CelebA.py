@@ -186,7 +186,7 @@ def get_celebA_data(datadir, styleA, styleB=None):
         imgaug.Resize(64)]
     df = AugmentImageComponents(df, augs, (0, 1))
     df = BatchData(df, BATCH)
-    df = PrefetchDataZMQ(df, 3)
+    df = MultiProcessRunnerZMQ(df, 3)
     return df
 
 

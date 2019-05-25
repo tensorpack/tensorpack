@@ -9,7 +9,7 @@ from tabulate import tabulate
 from termcolor import colored
 
 from tensorpack.dataflow import (
-    DataFromList, MapData, MapDataComponent, MultiProcessMapDataZMQ, MultiThreadMapData,
+    DataFromList, MapData, MapDataComponent, MultiProcessMapData, MultiThreadMapData,
     TestDataSpeed, imgaug)
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import log_once, memoized
@@ -392,7 +392,7 @@ def get_train_dataflow():
             # MPI does not like fork()
         else:
             buffer_size = cfg.DATA.NUM_WORKERS * 20
-            ds = MultiProcessMapDataZMQ(ds, cfg.DATA.NUM_WORKERS, preprocess, buffer_size=buffer_size)
+            ds = MultiProcessMapData(ds, cfg.DATA.NUM_WORKERS, preprocess, buffer_size=buffer_size)
     else:
         ds = MapData(ds, preprocess)
     return ds

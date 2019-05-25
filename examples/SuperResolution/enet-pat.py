@@ -254,7 +254,7 @@ def get_data(file_name):
                   imgaug.Flip(horiz=True)]
     ds = AugmentImageComponent(ds, augmentors, index=0, copy=True)
     ds = MapData(ds, lambda x: [cv2.resize(x[0], (32, 32), interpolation=cv2.INTER_CUBIC), x[0]])
-    ds = PrefetchDataZMQ(ds, 3)
+    ds = MultiProcessRunnerZMQ(ds, 3)
     ds = BatchData(ds, BATCH_SIZE)
     return ds
 

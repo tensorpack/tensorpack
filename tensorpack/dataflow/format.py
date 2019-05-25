@@ -166,7 +166,7 @@ class LMDBDataDecoder(MapData):
 
 def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
     """
-    Read a Caffe LMDB file where each value contains a ``caffe.Datum`` protobuf.
+    Read a Caffe-format LMDB file where each value contains a ``caffe.Datum`` protobuf.
     Produces datapoints of the format: [HWC image, label].
 
     Note that Caffe LMDB format is not efficient: it stores serialized raw
@@ -174,9 +174,6 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
 
     Args:
         lmdb_path, shuffle, keys: same as :class:`LMDBData`.
-
-    Returns:
-        a :class:`LMDBDataDecoder` instance.
 
     Example:
         .. code-block:: python

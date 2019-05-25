@@ -372,7 +372,6 @@ _DEPRECATED_NAMES = set([
     # deprecated stuff:
     'QueueInputTrainer',
     'dump_dataflow_to_process_queue',
-    'PrefetchOnGPUs',
     'DistributedTrainerReplicated',
     'DistributedTrainerParameterServer',
     'InputDesc',
@@ -382,10 +381,13 @@ _DEPRECATED_NAMES = set([
     'DumpTensor',
     'DumpParamAsImage',
     'get_nr_gpu',
-    'start_test',  # TestDataSpeed
-    'ThreadedMapData',
     'TrainingMonitor',
     'PeakMemoryTracker',
+
+    'PrefetchData',
+    'MultiProcessPrefetchData',
+    'PrefetchDataZMQ',
+    'MultiThreadPrefetchData',
 
     # deprecated or renamed symbolic code
     'Deconv2D', 'psnr',

@@ -225,7 +225,7 @@ def get_data():
     ds = ThetaImages(ds)
     ds = RepeatedData(ds, 50)  # just pretend this dataset is bigger
     # this pre-computation is pretty heavy
-    ds = PrefetchDataZMQ(ds, min(20, multiprocessing.cpu_count()))
+    ds = MultiProcessRunnerZMQ(ds, min(20, multiprocessing.cpu_count()))
     ds = BatchData(ds, BATCH)
     return ds
 

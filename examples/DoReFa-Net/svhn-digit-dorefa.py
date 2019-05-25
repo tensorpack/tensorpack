@@ -148,7 +148,7 @@ def get_config():
     ]
     data_train = AugmentImageComponent(data_train, augmentors)
     data_train = BatchData(data_train, 128)
-    data_train = PrefetchDataZMQ(data_train, 5)
+    data_train = MultiProcessRunnerZMQ(data_train, 5)
 
     augmentors = [imgaug.Resize((40, 40))]
     data_test = AugmentImageComponent(data_test, augmentors)

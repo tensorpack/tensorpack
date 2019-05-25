@@ -133,7 +133,7 @@ def get_data(train_or_test):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, BATCH_SIZE, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchData(ds, 3, 2)
+        ds = MultiProcessRunner(ds, 3, 2)
     return ds
 
 

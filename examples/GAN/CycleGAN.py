@@ -177,7 +177,7 @@ def get_data(datadir, isTrain=True):
     names = ['trainA', 'trainB'] if isTrain else ['testA', 'testB']
     df = get_image_pairs(*[os.path.join(datadir, n) for n in names])
     df = BatchData(df, BATCH if isTrain else TEST_BATCH)
-    df = PrefetchDataZMQ(df, 2 if isTrain else 1)
+    df = MultiProcessRunnerZMQ(df, 2 if isTrain else 1)
     return df
 
 

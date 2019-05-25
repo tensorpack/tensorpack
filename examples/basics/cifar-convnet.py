@@ -103,7 +103,7 @@ def get_data(train_or_test, cifar_classnum):
     ds = AugmentImageComponent(ds, augmentors)
     ds = BatchData(ds, 128, remainder=not isTrain)
     if isTrain:
-        ds = PrefetchDataZMQ(ds, 5)
+        ds = MultiProcessRunnerZMQ(ds, 5)
     return ds
 
 

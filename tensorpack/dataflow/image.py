@@ -92,7 +92,7 @@ class AugmentImageComponent(MapDataComponent):
         Args:
             ds (DataFlow): input DataFlow.
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
-            index (int): the index of the image component to be augmented in the datapoint.
+            index (int or str): the index or key of the image component to be augmented in the datapoint.
             copy (bool): Some augmentors modify the input images. When copy is
                 True, a copy will be made before any augmentors are applied,
                 to keep the original images not modified.
@@ -134,8 +134,8 @@ class AugmentImageCoordinates(MapData):
         Args:
             ds (DataFlow): input DataFlow.
             augmentors (AugmentorList): a list of :class:`imgaug.ImageAugmentor` to be applied in order.
-            img_index (int): the index of the image component to be augmented.
-            coords_index (int): the index of the coordinate component to be augmented.
+            img_index (int or str): the index/key of the image component to be augmented.
+            coords_index (int or str): the index/key of the coordinate component to be augmented.
             copy, catch_exceptions: same as in :class:`AugmentImageComponent`
         """
         if isinstance(augmentors, AugmentorList):

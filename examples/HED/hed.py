@@ -233,7 +233,7 @@ def get_data(name):
         ]
         ds = AugmentImageComponent(ds, augmentors, copy=False)
         ds = BatchDataByShape(ds, 8, idx=0)
-        ds = PrefetchDataZMQ(ds, 1)
+        ds = MultiProcessRunnerZMQ(ds, 1)
     else:
         ds = BatchData(ds, 1)
     return ds
