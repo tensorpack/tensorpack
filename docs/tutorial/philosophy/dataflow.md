@@ -42,7 +42,7 @@ And for us, we may optimize DataFlow even more, but we just haven't found the re
 
 Certain libraries advocate for a new binary data format (e.g., TFRecords, RecordIO).
 Do you need to use them?
-We think you usually do not. Not after you try DataFlow.
+We think you usually do not, at least not after you try DataFlow, because they are:
 
 1. **Not Easy**: To use the new binary format,
 	 you need to write a script, to process your data from its original format,
@@ -102,10 +102,10 @@ __it's extremely inflexible__.
 
 Why would you ever want to do anything in a computation graph? Here are the possible reasons:
 
-1. Automatic differentiation
-2. Run the computation on different devices
-3. Serialize the description of your computation
-4. Automatic performance optimization
+* Automatic differentiation
+* Run the computation on different devices
+* Serialize the description of your computation
+* Automatic performance optimization
 
 They all make sense for training neural networks, but **not much for data loading**.
 
