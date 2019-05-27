@@ -424,7 +424,8 @@ class HorovodTrainer(SingleCostTrainer):
             # the op will be created later in initialize()
             self.trainer._broadcast_op.run()
 
-        cb = CallbackFactory(trigger=broadcast).set_chief_only(False)
+        # TODO provide a way to sync manually
+        cb = CallbackFactory(before_train=broadcast).set_chief_only(False)
         return [cb]
 
     @HIDE_DOC

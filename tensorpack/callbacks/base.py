@@ -325,3 +325,15 @@ class CallbackFactory(Callback):
     def _after_train(self):
         if self._cb_after_train:
             self._cb_after_train(self)
+
+    def __str__(self):
+        strs = []
+        if self._cb_setup_graph is not None:
+            strs.append("setup_graph=" + str(self._cb_setup_graph))
+        if self._cb_before_train is not None:
+            strs.append("before_train=" + str(self._cb_before_train))
+        if self._cb_trigger is not None:
+            strs.append("trigger=" + str(self._cb_trigger))
+        if self._cb_after_train is not None:
+            strs.append("after_train=" + str(self._cb_after_train))
+        return "CallbackFactory({})".format(', '.join(strs))
