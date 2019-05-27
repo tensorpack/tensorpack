@@ -105,7 +105,7 @@ class GANTrainer(TowerTrainer):
         not needed. Just calling model.build_graph directly is OK.
         """
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_input_signature())
+        self.tower_func = TowerFuncWrapper(model.build_graph, model.inputs())
         with TowerContext('', is_training=True):
             self.tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
@@ -167,7 +167,7 @@ class SeparateGANTrainer(TowerTrainer):
         self.register_callback(cbs)
 
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.get_input_signature())
+        self.tower_func = TowerFuncWrapper(model.build_graph, model.inputs())
         with TowerContext('', is_training=True), \
                 argscope(BatchNorm, ema_update='internal'):
             # should not hook the EMA updates to both train_op, it will hurt training speed.

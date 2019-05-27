@@ -63,6 +63,7 @@ Train a simple GAN on mnist, conditioned on the class labels.
 ## [WGAN.py](WGAN.py), [Improved-WGAN.py](Improved-WGAN.py), [BEGAN.py](BEGAN.py)
 
 These variants are implemented by some small modifications on top of DCGAN.py.
+BEGAN has the best visual quality among them.
 Some BEGAN samples:
 
 ![began-sample](demo/BEGAN-CelebA-samples.jpg)

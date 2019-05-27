@@ -93,7 +93,7 @@ if __name__ == '__main__':
         logger.auto_set_dir()
         SeparateGANTrainer(
             QueueInput(DCGAN.get_data()),
-            M, g_period=6).train_with_defaults(
+            M, g_period=5).train_with_defaults(
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,

@@ -3,7 +3,6 @@
 # File: dump-model-params.py
 
 import argparse
-import sys
 import numpy as np
 import os
 import six
@@ -21,7 +20,7 @@ def _import_external_ops(message):
         logger.info("Importing horovod ...")
         import horovod.tensorflow  # noqa
         return
-    if  "MaxBytesInUse" in message:
+    if "MaxBytesInUse" in message:
         logger.info("Importing memory_stats ...")
         from tensorflow.contrib.memory_stats import MaxBytesInUse  # noqa
         return
@@ -34,9 +33,9 @@ def _import_external_ops(message):
                 pass
             else:
                 _validate_and_load_nccl_so()
-            from tensorflow.contrib.nccl.ops import gen_nccl_ops
+            from tensorflow.contrib.nccl.ops import gen_nccl_ops  # noqa
         else:
-            from tensorflow.python.ops import gen_nccl_ops
+            from tensorflow.python.ops import gen_nccl_ops  # noqa
         return
 
 
