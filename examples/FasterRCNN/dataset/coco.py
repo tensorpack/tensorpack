@@ -35,19 +35,31 @@ class COCODetection(DatasetSplit):
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch", "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]  # noqa
     cfg.DATA.CLASS_NAMES = ["BG"] + class_names
 
-    def __init__(self, basedir, name):
+    def __init__(self, basedir, split):
         """
         Args:
-            basedir (str): root to the dataset
-            name (str): the name of the split, e.g. "train2017"
+            basedir (str): root of the dataset which contains the subdirectories for each split and annotations
+            split (str): the name of the split, e.g. "train2017".
+                The split has to match an annotation file in "annotations/" and a directory of images.
+
+        Examples:
+            For a directory of this structure:
+
+            DIR/
+              annotations/
+                instances_XX.json
+                instances_YY.json
+              XX/
+              YY/
+
+            use `COCODetection(DIR, 'XX')` and `COCODetection(DIR, 'YY')`
         """
         basedir = os.path.expanduser(basedir)
-        self.name = name
         self._imgdir = os.path.realpath(os.path.join(
-            basedir, self._INSTANCE_TO_BASEDIR.get(name, name)))
+            basedir, self._INSTANCE_TO_BASEDIR.get(split, split)))
         assert os.path.isdir(self._imgdir), "{} is not a directory!".format(self._imgdir)
         annotation_file = os.path.join(
-            basedir, 'annotations/instances_{}.json'.format(name))
+            basedir, 'annotations/instances_{}.json'.format(split))
         assert os.path.isfile(annotation_file), annotation_file
 
         from pycocotools.coco import COCO

@@ -144,7 +144,7 @@ if __name__ == '__main__':
             callbacks=[
                 ModelSaver(),
                 StatMonitorParamSetter(
-                    'learning_rate', 'measure', lambda x: x * 0.5, 0, 10)
+                    'learning_rate', 'losses/measure', lambda x: x * 0.5, 0, 10)
             ],
             session_init=SaverRestore(args.load) if args.load else None,
             steps_per_epoch=500, max_epoch=400)
