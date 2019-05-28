@@ -272,6 +272,17 @@ df = RemoteDataZMQ('ipc://@my-socket', 'tcp://0.0.0.0:8877')
 TestDataSpeed(df).start()
 ```
 
+
+## Common Issues on Windows:
+
+1. Windows does not support ZMQ. You can only use `MultiProcessRunner`,
+   `MultiThreadRunner`, and `MultiThreadMapData`. But you cannot use 
+   `MultiProcessRunnerZMQ` or `MultiProcessMapData` (which is an alias of `MultiProcessMapDataZMQ`).
+2. Windows needs to pickle your dataflow to run it in multiple processes.
+   As a result you cannot use lambda functions for mappings, like the examples above.
+   You need to write a new function in global scope that does the mapping.
+   This issue also exist on Linux if you do not use the 'fork' start method.
+
 [1]: #ref
 
 <div id=ref> </div>
