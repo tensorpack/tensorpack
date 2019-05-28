@@ -91,6 +91,11 @@ class LMDBData(RNGDataFlow):
         self._set_keys(keys)
         logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
 
+        # Clean them up after finding the list of keys, since we don't want to fork them
+        self._lmdb.close()
+        del self._lmdb
+        del self._txn
+
     def _set_keys(self, keys=None):
         def find_keys(txn, size):
             logger.warn("Traversing the database to find keys is slow. Your should specify the keys.")
@@ -128,9 +133,8 @@ class LMDBData(RNGDataFlow):
 
     def reset_state(self):
         self._guard = DataFlowReentrantGuard()
-        self._lmdb.close()
         super(LMDBData, self).reset_state()
-        self._open_lmdb()
+        self._open_lmdb()  # open the LMDB in the worker process
 
     def __len__(self):
         return self._size

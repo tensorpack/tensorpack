@@ -41,6 +41,7 @@ class LMDBSerializer():
             df (DataFlow): the DataFlow to serialize.
             path (str): output path. Either a directory or an lmdb file.
             write_frequency (int): the frequency to write back data to disk.
+                A smaller value reduces memory usage.
         """
         assert isinstance(df, DataFlow), type(df)
         isdir = os.path.isdir(path)
@@ -103,7 +104,11 @@ class LMDBSerializer():
             and run deserialization as a mapper in parallel.
         """
         df = LMDBData(path, shuffle=shuffle)
-        return MapData(df, lambda dp: loads(dp[1]))
+        return MapData(df, LMDBSerializer._deserialize_lmdb)
+
+    @staticmethod
+    def _deserialize_lmdb(dp):
+        return loads(dp[1])
 
 
 class NumpySerializer():
