@@ -20,7 +20,7 @@ feel free to delete everything in this template.
 
   It's always better to copy-paste what you did than to describe them.
 
-  Please try to provide enough information to let other __reproduce__ your issues. 
+  Please try to provide enough information to let others __reproduce__ your issues.
   Without reproducing the issue, we may not be able to investigate it.
 
 ### 2. What you observed:
@@ -41,15 +41,15 @@ For example, CPU/GPU utilization, output images, tensorboard curves, if relevant
 ### 3. What you expected, if not obvious.
 
 If you expect higher speed, please read
-http://tensorpack.readthedocs.io/tutorial/performance-tuning.html 
+http://tensorpack.readthedocs.io/tutorial/performance-tuning.html
 before posting.
 
-If you expect certain accuracy, only in one of the two conditions can we help with it:
-(1) You're unable to reproduce the accuracy documented in tensorpack examples.
+If you expect certain training results (e.g., accuracy), only in one of the two conditions can we help with it:
+(1) You're unable to reproduce the results documented in tensorpack examples.
 (2) It appears to be a tensorpack bug.
 
-Otherwise, how to train a model to certain accuracy is a machine learning question.
-We do not answer machine learning questions and it is your responsibility to 
+Otherwise, how to train a model is a machine learning question.
+We do not answer machine learning questions and it is your responsibility to
 figure out how to make your models more accurate.
 
 ### 4. Your environment:
@@ -58,7 +58,7 @@ figure out how to make your models more accurate.
   + You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`
     and see if your issue is already solved.
   + If you're not using tensorpack under a normal command line shell (e.g.,
-    using an IDE or jupyter notebook), please retry under a normal command line shell. 
+    using an IDE or jupyter notebook), please retry under a normal command line shell.
   + Include relevant hardware information, e.g. number of GPUs used for training, amount of RAM.
 
 You may often want to provide extra information related to your issue, but

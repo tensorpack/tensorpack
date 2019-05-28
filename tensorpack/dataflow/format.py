@@ -92,9 +92,7 @@ class LMDBData(RNGDataFlow):
         logger.info("Found {} entries in {}".format(self._size, self._lmdb_path))
 
         # Clean them up after finding the list of keys, since we don't want to fork them
-        self._lmdb.close()
-        del self._lmdb
-        del self._txn
+        self._close_lmdb()
 
     def _set_keys(self, keys=None):
         def find_keys(txn, size):
@@ -130,6 +128,11 @@ class LMDBData(RNGDataFlow):
                                readonly=True, lock=False, readahead=True,
                                map_size=1099511627776 * 2, max_readers=100)
         self._txn = self._lmdb.begin()
+
+    def _close_lmdb(self):
+        self._lmdb.close()
+        del self._lmdb
+        del self._txn
 
     def reset_state(self):
         self._guard = DataFlowReentrantGuard()
