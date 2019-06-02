@@ -16,15 +16,20 @@ then apply complicated preprocessing to it.
 We hope to reach a speed of **1k~5k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
-1. For smaller datasets (e.g. several GBs of images with lightweight preprocessing), a simple reader plus some multiprocess runner should usually work well enough.
-	 Therefore you don't have to understand this tutorial in depth unless you really find your data being the bottleneck.
-	 This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
+1. You only need the data loader to be **fast enough, but not faster**.
+   See [How Fast Do You Actually Need](philosophy/dataflow.html#how-fast-do-you-actually-need) for details.
+   For smaller datasets (e.g. several GBs of images with lightweight preprocessing), 
+   a simple reader plus some multiprocess runner is usually fast enough.
+
+   Therefore you don't have to understand this tutorial in depth, unless you really find your data loader being the bottleneck.
+   **Premature optimization is the root of evil.** Always benchmark and make sure you need optimization before optimizing.
+
 2. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
 	 [InputSource tutorial](extend/input-source.html).
 3. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
-	 data distribution roughly stays the same.
+	 data distribution stays the same.
 	 But in validation we often need the exact set of data, to be able to compute a correct and comparable score.
 	 This will affect how we build the DataFlow.
 4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
@@ -33,10 +38,12 @@ Some things to know before reading:
     The solutions in this tutorial may not help you.
     To improve your own DataFlow, read the 
     [performance tuning tutorial](performance-tuning.html#investigate-dataflow)
-    before doing any optimizations.
+    before performing or asking about any actual optimizations.
 
 The benchmark code for this tutorial can be found in [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ImageNet),
 including comparison with a similar pipeline built with `tf.data`.
+
+This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
 
 ## Random Read
 
@@ -275,7 +282,7 @@ TestDataSpeed(df).start()
 
 ## Common Issues on Windows:
 
-1. Windows does not support ZMQ. You can only use `MultiProcessRunner`,
+1. Windows does not support IPC protocol of ZMQ. You can only use `MultiProcessRunner`,
    `MultiThreadRunner`, and `MultiThreadMapData`. But you cannot use 
    `MultiProcessRunnerZMQ` or `MultiProcessMapData` (which is an alias of `MultiProcessMapDataZMQ`).
 2. Windows needs to pickle your dataflow to run it in multiple processes.

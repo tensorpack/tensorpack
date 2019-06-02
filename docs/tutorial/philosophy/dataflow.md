@@ -143,7 +143,7 @@ it assumes your dataset has a `__len__` and supports `__getitem__`,
 which does not work when you have a dynamic/unreliable data source, 
 or when you need to filter your data on the fly.
 
-`torch.utils.data.DataLoader` is quite good, depiste that it also makes some
+`torch.utils.data.DataLoader` is quite good, despite that it also makes some
 **bad assumptions on batching** and is not always efficient.
 
 1. It assumes you always do batch training, has a constant batch size, and 
@@ -152,6 +152,7 @@ or when you need to filter your data on the fly.
    
 2. Its multiprocessing implementation is efficient on `torch.Tensor`,
    but inefficient for generic data type or numpy arrays.
+   Also, its implementation [does not always clean up the subprocesses correctly](https://github.com/pytorch/pytorch/issues/16608).
    
 On the other hand, DataFlow:
 

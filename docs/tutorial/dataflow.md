@@ -1,11 +1,11 @@
 
 # DataFlow
 
-### What is DataFlow
-
 DataFlow is a pure-Python library to create iterators for efficient data loading.
 
-**Definition**: A DataFlow is a idiomatic Python iterator object that has a `__iter__()` method
+### What is DataFlow
+
+**Definition**: A DataFlow instance is a idiomatic Python iterator object that has a `__iter__()` method
 which yields `datapoints`, and optionally a `__len__()` method returning the size of the DataFlow.
 A datapoint is a **list or dict** of Python objects, each of which are called the `components` of a datapoint.
 

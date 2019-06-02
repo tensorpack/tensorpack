@@ -13,16 +13,25 @@ Basic Tutorials
 .. toctree::
   :maxdepth: 1
 
-  dataflow
-  symbolic
   trainer
   training-interface
   callback
+  symbolic
   save-load
   summary
   inference
   faq
+
+DataFlow Tutorials
+========================
+
+.. toctree::
+  :maxdepth: 1
+
+  dataflow
   philosophy/dataflow
+  extend/dataflow
+  efficient-dataflow
 
 Advanced Tutorials
 ==================
@@ -30,18 +39,9 @@ Advanced Tutorials
 .. toctree::
   :maxdepth: 1
 
-  extend/dataflow
   extend/input-source
+  extend/callback
   extend/augmentor
   extend/model
-  extend/callback
   extend/trainer
-
-Performance
-============
-
-.. toctree::
-  :maxdepth: 1
-
-  efficient-dataflow
   performance-tuning

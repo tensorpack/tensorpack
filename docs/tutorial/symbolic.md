@@ -4,7 +4,7 @@
 Tensorpack contains a small collection of common model primitives,
 such as conv/deconv, fc, bn, pooling layers.
 However, tensorpack is model-agnostic, which means
-**you can skip this tutorial and do not need to use tensorpack's symbolic layers.**
+**you do not need to use tensorpack's symbolic layers and can skip this tutorial.**
 
 These layers were written only because there were no alternatives when tensorpack was first developed.
 Nowadays, many of these implementation actually call `tf.layers` directly.
