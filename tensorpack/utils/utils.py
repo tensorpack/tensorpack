@@ -103,8 +103,6 @@ def fix_rng_seed(seed):
 
     .. code-block:: python
 
-            import tensorpack.utils.utils as utils
-
             seed = 42
             utils.fix_rng_seed(seed)
             tesnorflow.set_random_seed(seed)

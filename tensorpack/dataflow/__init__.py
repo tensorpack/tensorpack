@@ -48,8 +48,8 @@ for _, module_name, __ in iter_modules(
         _global_import(module_name)
 
 
-globals()['dataset'] = LazyLoader('dataset', globals(), 'tensorpack.dataflow.dataset')
-globals()['imgaug'] = LazyLoader('imgaug', globals(), 'tensorpack.dataflow.imgaug')
+globals()['dataset'] = LazyLoader('dataset', globals(), __name__ + '.dataset')
+globals()['imgaug'] = LazyLoader('imgaug', globals(), __name__ + '.imgaug')
 
 del LazyLoader
 

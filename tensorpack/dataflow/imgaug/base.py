@@ -48,7 +48,7 @@ class Augmentor(object):
         is responsible for calling this method (once or more times) in the **process that uses the augmentor**
         before using it.
 
-        If you use tensorpack's built-in augmentation dataflow (:class:`AugmentImageComponent`, etc),
+        If you use a built-in augmentation dataflow (:class:`AugmentImageComponent`, etc),
         this method will be called in the dataflow's own `reset_state` method.
 
         If you use Python≥3.7 on Unix, this method will be automatically called after fork,

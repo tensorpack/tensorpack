@@ -69,7 +69,7 @@ def create_dummy_func(func, dependency):
 def building_rtfd():
     """
     Returns:
-        bool: if tensorpack is being imported to generate docs now.
+        bool: if the library is being imported to generate docs now.
     """
     return os.environ.get('READTHEDOCS') == 'True' \
         or os.environ.get('DOC_BUILDING')

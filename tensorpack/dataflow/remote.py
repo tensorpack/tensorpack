@@ -34,7 +34,7 @@ def send_dataflow_zmq(df, addr, hwm=50, format=None, bind=False):
         addr: a ZMQ socket endpoint.
         hwm (int): ZMQ high-water mark (buffer size)
         format (str): The serialization format.
-             Default format uses :mod:`tensorpack.utils.serialize`.
+             Default format uses :mod:`utils.serialize`.
              This format works with :class:`dataflow.RemoteDataZMQ`.
              An alternate format is 'zmq_ops', used by https://github.com/tensorpack/zmq_ops
              and :class:`input_source.ZMQInput`.

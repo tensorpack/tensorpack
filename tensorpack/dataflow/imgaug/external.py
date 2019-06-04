@@ -24,8 +24,9 @@ class IAAugmentor(ImageAugmentor):
 
     .. code-block:: python
 
-        from tensorpack import imgaug  # this is not the aleju/imgaug library
         from imgaug import augmentors as iaa  # this is the aleju/imgaug library
+        from tensorpack import imgaug  # this is not the aleju/imgaug library
+        # or from dataflow import imgaug  # if you're using the standalone version of dataflow
         myaug = imgaug.IAAugmentor(
             iaa.Sequential([
                 iaa.Sharpen(alpha=(0, 1), lightness=(0.75, 1.5)),
@@ -68,6 +69,7 @@ class Albumentations(ImageAugmentor):
     .. code-block:: python
 
         from tensorpack import imgaug
+        # or from dataflow import imgaug  # if you're using the standalone version of dataflow
         import albumentations as AB
         myaug = imgaug.Albumentations(AB.RandomRotate90(p=1))
     """
