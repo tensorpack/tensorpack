@@ -8,6 +8,7 @@ from ..compat import tfv1 as tf
 from ..graph_builder import ModelDescBase
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import JustCurrentSession, SessionInit
+from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TowerFuncWrapper
 from ..utils import logger
 
@@ -61,7 +62,7 @@ class PredictConfig(object):
                 tensors can be any tensor in the graph that's computable from the tensors correponding to `input_names`.
 
             session_creator (tf.train.SessionCreator): how to create the
-                session. Defaults to :class:`tf.train.ChiefSessionCreator()`.
+                session. Defaults to :class:`NewSessionCreator()`.
             session_init (SessionInit): how to initialize variables of the session.
                 Defaults to do nothing.
 
@@ -98,7 +99,7 @@ class PredictConfig(object):
         assert_type(self.session_init, SessionInit, 'session_init')
 
         if session_creator is None:
-            self.session_creator = tf.train.ChiefSessionCreator(config=get_default_sess_config())
+            self.session_creator = NewSessionCreator(config=get_default_sess_config())
         else:
             self.session_creator = session_creator
 
