@@ -77,13 +77,6 @@ Efficiency:
    (which may negatively impact your throughput). The training needs <10G RAM if `NUM_WORKERS=0`.
 
 1. Inference is unoptimized. Tensorpack is a training interface, therefore it
-   does not help you on optimized inference.
-
-1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
-   set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
-   (which may negatively impact your throughput). The training needs <10G RAM if `NUM_WORKERS=0`.
-
-1. Inference is unoptimized. Tensorpack is a training interface, therefore it
    does not help you on optimized inference. In fact, the current implementation
    uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
 

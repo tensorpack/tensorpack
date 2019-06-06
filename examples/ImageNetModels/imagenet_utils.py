@@ -18,9 +18,9 @@ from tensorpack.input_source import QueueInput, StagingInput
 from tensorpack.models import regularize_cost, l2_regularizer
 from tensorpack.predict import FeedfreePredictor, PredictConfig
 from tensorpack.tfutils.summary import add_moving_summary
+from tensorpack.tfutils.optimizer import AccumGradOptimizer
 from tensorpack.utils import logger
 from tensorpack.utils.stats import RatioCounter
-
 
 """
 ====== DataFlow =======
@@ -329,6 +329,11 @@ class ImageNetModel(ModelDesc):
     """
     label_smoothing = 0.
 
+    """
+    Accumulate gradients across several steps (by default 1, which means no accumulation across steps).
+    """
+    accum_grad = 1
+
     def inputs(self):
         return [tf.TensorSpec([None, self.image_shape, self.image_shape, 3], self.image_dtype, 'input'),
                 tf.TensorSpec([None], tf.int32, 'label')]
@@ -372,7 +377,10 @@ class ImageNetModel(ModelDesc):
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.1, trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
-        return tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
+        opt = tf.train.MomentumOptimizer(lr, 0.9, use_nesterov=True)
+        if self.accum_grad != 1:
+            opt = AccumGradOptimizer(opt, self.accum_grad)
+        return opt
 
     def image_preprocess(self, image):
         with tf.name_scope('image_preprocess'):
