@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 
 from ...utils.argtools import shape2d
+from ...utils.develop import log_deprecated
 from .base import ImageAugmentor
 from .transform import CropTransform, TransformAugmentorBase
 from .misc import ResizeShortestEdge
@@ -67,10 +68,10 @@ class RandomCropRandomShape(TransformAugmentorBase):
 
         Args:
             wmin, hmin, wmax, hmax: range to sample shape.
-            max_aspect_ratio (float): the upper bound of ``max(w,h)/min(w,h)``.
+            max_aspect_ratio (float): this argument has no effect and is deprecated.
         """
-        if max_aspect_ratio is None:
-            max_aspect_ratio = 9999999
+        if max_aspect_ratio is not None:
+            log_deprecated("RandomCropRandomShape(max_aspect_ratio)", "It is never implemented!", "2020-06-06")
         self._init(locals())
 
     def _get_augment_params(self, img):
