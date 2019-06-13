@@ -11,6 +11,7 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 1. __What to Log__: Define what you want to log in the graph. 
    When you call `tf.summary.xxx` in your graph code, TensorFlow adds an op to
 	`tf.GraphKeys.SUMMARIES` collection (by default).
+   Tensorpack further removes summaries not from the first training tower.
 2. __When to Log__: [MergeAllSummaries](../modules/callbacks.html#tensorpack.callbacks.MergeAllSummaries)
 	callback is one of the [default callbacks](../modules/train.html#tensorpack.train.DEFAULT_CALLBACKS).
 	It runs ops in the `tf.GraphKeys.SUMMARIES` collection (by default) every epoch (by default),
@@ -25,6 +26,8 @@ This is how TensorFlow summaries eventually get logged/saved/printed:
 		saves scalars to a JSON file.
 
 All the "what, when, where" can be customized in either the graph or with the callbacks/monitors setting.
+You can call `tf.summary.xxx(collections=[...])` to add your custom summaries a different collection,
+and use the `MergeAllSummaries(key=...)` callback to write them to monitors.
 
 The design goal to disentangle "what, when, where" is to make components reusable.
 Suppose you have `M` items to log 

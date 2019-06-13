@@ -16,11 +16,13 @@ Otherwise, you can post here for:
 
 Some typical questions that we DO NOT answer:
 
-+ "Could you improve/implement an example/paper ?" --
-
-  We have no plans to do so. We don't consider feature
-  requests for examples or implement a paper for you.
++ "Could you implement a paper / other variants of a paper / additional features of a paper ?"
+  -- The answer is: we have no plans to do so.
+	We take feature requests on the library, but not on examples.
+  We don't implement papers or variants/features of a paper for you,
+  unless it can demonstrate some Tensorpack features not yet demonstrated in the existing examples.
   If you don't know how to do something yourself, you may ask a usage question.
+
 + "The examples do not perform as expected after I change the models/dataset/parameters/etc."
 
   Tensorpack maintainers make sure the examples perform well without modifications.
