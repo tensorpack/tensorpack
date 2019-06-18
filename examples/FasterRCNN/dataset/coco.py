@@ -110,7 +110,8 @@ class COCODetection(DatasetSplit):
         """
         if add_mask:
             assert add_gt
-        with timed_operation('Load Groundtruth Boxes for {}'.format(self.name)):
+        with timed_operation('Load Groundtruth Boxes for {}'.format(
+                os.path.basename(self.annotation_file))):
             img_ids = self.coco.getImgIds()
             img_ids.sort()
             # list of dict, each has keys: height,width,id,file_name
