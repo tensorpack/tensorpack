@@ -49,23 +49,27 @@ We think you usually do not, at least not after you try DataFlow, because they a
 	 to this new format. Then you read data from this format to training workers.
 	 It's a waste of your effort: the intermediate format does not have to exist.
 
-1. **Still Not Easy**: There are cases when having an intermediate format is useful
-	 for performance reasons.
-	 For example, to apply some one-time expensive preprocessing to your dataset, or
-	 merge small files to large files to reduce disk burden.
-	 However, those binary data formats are not necessarily good for the cases.
+1. **Not Easy**: Even when you do need to use an intermediate format that's different from your
+	 original data format
+	(for performance reasons, for example), there are many formats you can choose from.
 
-	 Why use a single dedicated binary format when you could use something else?
+	 Why use a special binary format when you could use something else?
 	 A different format may bring you:
+
 	 * Simpler code for data loading.
 	 * Easier visualization.
 	 * Interoperability with other libraries.
 	 * More functionalities.
 
-	 After all, why merging all the images into a binary file on the disk,
-	 when you know that saving all the images separately is fast enough for your task?
+	 Different formats have their strength and weakness in the above aspects.
+	 Forcing a single binary format on users is certainly not ideal.
+	 We should let users make the choice.
 
 1. **Not Necessarily Fast**:
+	There are cases when having an intermediate format is useful for performance reasons.
+	For example, to apply some one-time expensive preprocessing to your dataset.
+	But other formats are probably equally fast.
+
 	Formats like TFRecords and RecordIO are just as fast as your disk, and of course,
 	as fast as other libraries.
 	Decades of engineering in dataset systems have provided
@@ -73,11 +77,11 @@ We think you usually do not, at least not after you try DataFlow, because they a
 	* Equally fast (if not faster)
 	* More generic (not tied to your training framework)
 	* Providing more features (e.g. random access)
-    
+
     The only unique benefit a format like TFRecords or RecordIO may give you,
     is the native integration with the training framework, which may bring a
     small gain to speed.
-    
+
 On the other hand, DataFlow is:
 
 1. **Easy**: Any Python function that produces data can be made a DataFlow and
@@ -87,13 +91,13 @@ On the other hand, DataFlow is:
    And we have provided tools to easily
    [serialize a DataFlow](../../modules/dataflow.html#tensorpack.dataflow.LMDBSerializer)
    to a single-file binary format when you need.
-   
+
 
 ### Alternative Data Loading Solutions:
 
 Some frameworks have also provided good framework-specific solutions for data loading.
-In addition to that DataFlow is framework-agnostic, there are other reasons you
-might prefer DataFlow over the alternatives:
+On the contrary, DataFlow is framework-agnostic: you can use it in any Python environment.
+In addition to this benefit, there are other reasons you might prefer DataFlow over the alternatives:
 
 #### tf.data or other TF operations
 
@@ -131,7 +135,7 @@ It only makes sense to use TF to read data, if your data is originally very clea
 If not, you may feel like writing a Python script to reformat your data, but then you're
 almost writing a DataFlow (a DataFlow can be made from a Python iterator)!
 
-As for speed, when TF happens to support the operators you need, 
+As for speed, when TF happens to support and optimize the operators you need,
 it does offer a similar or higher speed (it takes effort to tune, of course).
 But how do you make sure you'll not run into one of the unsupported situations listed above?
 
@@ -140,20 +144,20 @@ But how do you make sure you'll not run into one of the unsupported situations l
 In the design, `torch.utils.data.Dataset` is simply a Python container/iterator, similar to DataFlow.
 However it has made some **bad assumptions**:
 it assumes your dataset has a `__len__` and supports `__getitem__`,
-which does not work when you have a dynamic/unreliable data source, 
+which does not work when you have a dynamic/unreliable data source,
 or when you need to filter your data on the fly.
 
 `torch.utils.data.DataLoader` is quite good, despite that it also makes some
-**bad assumptions on batching** and is not always efficient.
+**bad assumptions on batching** and is not always efficient:
 
-1. It assumes you always do batch training, has a constant batch size, and 
+1. It assumes you always do batch training, has a constant batch size, and
    the batch grouping can be purely determined by indices.
    All of these are not necessarily true.
-   
+
 2. Its multiprocessing implementation is efficient on `torch.Tensor`,
    but inefficient for generic data type or numpy arrays.
    Also, its implementation [does not always clean up the subprocesses correctly](https://github.com/pytorch/pytorch/issues/16608).
-   
+
 On the other hand, DataFlow:
 
 1. Is a pure iterator, not necessarily has a length. This is more generic.
