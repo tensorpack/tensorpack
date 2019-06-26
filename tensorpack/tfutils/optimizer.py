@@ -189,9 +189,7 @@ class AccumGradOptimizer(ProxyOptimizer):
             slots = self._create_accum_slots(vs)
             slots_and_vars = [(s, gv[1]) for s, gv in zip(slots, grads_and_vars)]
 
-            # Create the counter on the same device as the first variable.
-            with tf.variable_scope(self._name), \
-                    vs[0].graph.colocate_with(vs[0]):
+            with tf.variable_scope(self._name), tf.device('/cpu:0'):
                 counter = tf.Variable(
                     0, name="counter", trainable=False, dtype=tf.int32)
 
