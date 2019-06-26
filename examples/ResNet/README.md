@@ -26,14 +26,15 @@ baseline and they actually cannot beat this standard ResNet recipe.
 | ResNeXt101-32x4d | 5.73%       | 21.05%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNeXt101-32x4d.npz) |
 | ResNet152        | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)        |
 
-To reproduce,
+To reproduce training or evaluation,
 first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
-./imagenet-resnet.py --data /path/to/original/ILSVRC -d 50 --mode resnet --batch 512
+./imagenet-resnet.py --data /directory/of/ILSVRC -d 50 --batch 512
+./imagenet-resnet.py --data /directory/of/ILSVRC -d 50 --load ResNet50.npz --eval
 # See ./imagenet-resnet.py -h for other options.
 ```
 
-You should be able to see good GPU utilization (95%~99%), if your data is fast enough.
+You should be able to see good GPU utilization (95%~99%) in training, if your data is fast enough.
 With batch=64x8, ResNet50 training can finish 100 epochs in 16 hours on AWS p3.16xlarge (8 V100s).
 
 The default data pipeline is probably OK for machines with SSD & 20 CPU cores.
