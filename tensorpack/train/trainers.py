@@ -29,7 +29,7 @@ __all__ = ['NoOpTrainer', 'SimpleTrainer',
            'AsyncMultiGPUTrainer',
            'DistributedTrainerParameterServer',
            'DistributedTrainerReplicated',
-           'HorovodTrainer']
+           'HorovodTrainer', 'BytePSTrainer']
 
 
 def _int_to_range(x):
@@ -378,11 +378,10 @@ class HorovodTrainer(SingleCostTrainer):
             logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
                         "Uninstall pyarrow and use msgpack instead.")
         # lazy import
-        import horovod.tensorflow as _hvd
+        import horovod.tensorflow as hvd
         import horovod
-        global hvd
-        hvd = _hvd
         hvd_version = tuple(map(int, horovod.__version__.split('.')))
+        self.hvd = hvd
 
         hvd.init()
         self.is_chief = hvd.rank() == 0
@@ -395,17 +394,17 @@ class HorovodTrainer(SingleCostTrainer):
         super(HorovodTrainer, self).__init__()
 
     def allreduce(self, grads):
-        if hvd.size() == 1:
+        if self.hvd.size() == 1:
             return grads
         # copied from https://github.com/uber/horovod/blob/master/horovod/tensorflow/__init__.py
         averaged_gradients = []
-        with tf.name_scope("HVDAllReduce"):
+        with tf.name_scope("AllReduce"):
             for grad, var in grads:
                 if grad is not None:
                     if self._compression is not None and self._has_compression:
-                        avg_grad = hvd.allreduce(grad, average=self._average, compression=self._compression)
+                        avg_grad = self.hvd.allreduce(grad, average=self._average, compression=self._compression)
                     else:
-                        avg_grad = hvd.allreduce(grad, average=self._average)
+                        avg_grad = self.hvd.allreduce(grad, average=self._average)
                     averaged_gradients.append((avg_grad, var))
                 else:
                     averaged_gradients.append((None, var))
@@ -420,7 +419,7 @@ class HorovodTrainer(SingleCostTrainer):
             self.train_op = opt.apply_gradients(grads, name='train_op')
 
         def broadcast(self):
-            logger.info("Running horovod broadcast ...")
+            logger.info("Running broadcast ...")
             # the op will be created later in initialize()
             self.trainer._broadcast_op.run()
 
@@ -433,18 +432,17 @@ class HorovodTrainer(SingleCostTrainer):
         # broadcast_op should be the last setup_graph: it needs to be created
         # "right before" the graph is finalized,
         # because it needs to capture all the variables (which may be created by callbacks).
-        with tf.name_scope('horovod_broadcast'):
-            self._broadcast_op = hvd.broadcast_global_variables(0)
+        self._broadcast_op = self.hvd.broadcast_global_variables(0)
 
         # it's important that our NewSessionCreator does not finalize the graph
         if not isinstance(session_creator, NewSessionCreator):
             raise ValueError(
-                "session_creator has to be `NewSessionCreator` for horovod training! ")
+                "session_creator has to be `NewSessionCreator` for horovod/byteps training! ")
         # NOTE It will fail if GPU was already detected before initializing the session
         # https://github.com/tensorflow/tensorflow/issues/8136
         session_creator.config.gpu_options.visible_device_list = str(self._local_rank)
         try:
-            session_creator.config.inter_op_parallelism_threads = mp.cpu_count() // hvd.local_size()
+            session_creator.config.inter_op_parallelism_threads = mp.cpu_count() // self.hvd.local_size()
         except AttributeError:  # old horovod does not have local_size
             pass
         super(HorovodTrainer, self).initialize(session_creator, session_init)
@@ -461,5 +459,30 @@ class HorovodTrainer(SingleCostTrainer):
         self.sess.run(self._broadcast_op)
 
 
-# for lazy import
-hvd = None
+class BytePSTrainer(HorovodTrainer):
+    """
+    BytePS trainer. Supports both multi-GPU and distributed training.
+
+    To use it, switch the trainer, and fefer to BytePS documentation on how to
+    launch server/scheduler/workers.
+    """
+    def __init__(self, average=True):
+        """
+        Args:
+            average (bool): whether to average or sum the gradients across processes.
+        """
+        import byteps.tensorflow as bps
+        self.hvd = bps  # BytePS has the same interface as Horovod
+        self.hvd.allreduce = bps.push_pull  # https://github.com/bytedance/byteps/issues/8
+        # TODO bootstrap env vars
+        bps.init()
+        self.is_chief = bps.rank() == 0
+
+        self._local_rank = bps.local_rank()
+        self._rank = bps.rank()
+        self._average = average
+
+        self._compression = None
+        self._has_compression = False
+        logger.info("[BytePSTrainer] local rank={}".format(self._local_rank))
+        SingleCostTrainer.__init__(self)

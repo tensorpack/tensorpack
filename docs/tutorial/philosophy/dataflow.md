@@ -143,7 +143,7 @@ But how do you make sure you'll not run into one of the unsupported situations l
 
 In the design, `torch.utils.data.Dataset` is simply a Python container/iterator, similar to DataFlow.
 However it has made some **bad assumptions**:
-it assumes your dataset has a `__len__` and supports `__getitem__`,
+it assumes your dataset supports `__getitem__`,
 which does not work when you have a dynamic/unreliable data source,
 or when you need to filter your data on the fly.
 
@@ -152,7 +152,7 @@ or when you need to filter your data on the fly.
 
 1. It assumes you always do batch training, has a constant batch size, and
    the batch grouping can be purely determined by indices.
-   All of these are not necessarily true.
+   None of these are necessarily true.
 
 2. Its multiprocessing implementation is efficient on `torch.Tensor`,
    but inefficient for generic data type or numpy arrays.
@@ -160,7 +160,22 @@ or when you need to filter your data on the fly.
 
 On the other hand, DataFlow:
 
-1. Is a pure iterator, not necessarily has a length. This is more generic.
+1. Is a pure iterator, not necessarily has a length or can be indexed. This is more generic.
 2. Parallelization and batching are disentangled concepts.
    You do not need to use batches, and can implement different batching logic easily.
 3. Is optimized for generic data type and numpy arrays.
+
+
+```eval_rst
+.. note:: **Why is an iterator more general than ``__getitem__``? **
+
+	DataFlow's iterator interface can perfectly simulate the behavior of ``__getitem__`` interface like this:
+
+.. code-block:: python
+
+	df = SomeIndexGenerator()
+	# A dataflow which produces indices, like [0], [1], [2], ...
+	# The indices can be either sequential, or more fancy, akin to `torch.utils.data.Sampler`.
+	df = MapData(df, lambda idx: dataset[idx[0]])
+  # Map the indices to datapoints by ``__getitem__``.
+```

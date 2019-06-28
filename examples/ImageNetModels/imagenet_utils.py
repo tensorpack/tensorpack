@@ -423,7 +423,6 @@ class ImageNetModel(ModelDesc):
         add_moving_summary(tf.reduce_mean(wrong, name='train-error-top5'))
         return loss
 
-
     def create_predict_config(self, session_init):
         """
         Returns:
