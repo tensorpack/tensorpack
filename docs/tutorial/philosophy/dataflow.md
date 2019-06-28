@@ -150,8 +150,11 @@ or when you need to filter your data on the fly.
 `torch.utils.data.DataLoader` is quite good, despite that it also makes some
 **bad assumptions on batching** and is not always efficient:
 
-1. It assumes you always do batch training, has a constant batch size, and
-   the batch grouping can be purely determined by indices.
+1. `torch.utils.data.DataLoader` assumes that:
+   1. You do batch training
+   1. You use a constant batch size
+   1. Indices are sufficient to determine the samples to batch together
+
    None of these are necessarily true.
 
 2. Its multiprocessing implementation is efficient on `torch.Tensor`,
@@ -161,21 +164,20 @@ or when you need to filter your data on the fly.
 On the other hand, DataFlow:
 
 1. Is a pure iterator, not necessarily has a length or can be indexed. This is more generic.
-2. Parallelization and batching are disentangled concepts.
-   You do not need to use batches, and can implement different batching logic easily.
+2. Does not assume batches, and allow you to implement different batching logic easily.
 3. Is optimized for generic data type and numpy arrays.
 
 
 ```eval_rst
-.. note:: **Why is an iterator more general than ``__getitem__``? **
+.. note:: Why is an iterator interface more generic than ``__getitem__``?
 
-	DataFlow's iterator interface can perfectly simulate the behavior of ``__getitem__`` interface like this:
+	DataFlow's iterator interface can perfectly simulate the behavior of indexing interface like this:
 
-.. code-block:: python
+    .. code-block:: python
 
-	df = SomeIndexGenerator()
-	# A dataflow which produces indices, like [0], [1], [2], ...
-	# The indices can be either sequential, or more fancy, akin to `torch.utils.data.Sampler`.
-	df = MapData(df, lambda idx: dataset[idx[0]])
-  # Map the indices to datapoints by ``__getitem__``.
+        # A dataflow which produces indices, like [0], [1], [2], ...
+        # The indices can be either sequential, or more fancy, akin to torch.utils.data.Sampler.
+        df = SomeIndexGenerator()
+        # Map the indices to datapoints by ``__getitem__``.
+        df = MapData(df, lambda idx: dataset[idx[0]])
 ```

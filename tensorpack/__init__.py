@@ -8,7 +8,6 @@ from tensorpack.utils import *
 from tensorpack.dataflow import *
 
 # dataflow can be used alone without installing tensorflow
-# TODO maybe separate dataflow to a new project if it's good enough
 
 # https://github.com/celery/kombu/blob/7d13f9b95d0b50c94393b962e6def928511bfda6/kombu/__init__.py#L34-L36
 STATICA_HACK = True
