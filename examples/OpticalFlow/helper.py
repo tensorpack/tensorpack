@@ -83,7 +83,10 @@ class Flow(object):
 
         rad = np.sqrt(fx * fx + fy * fy)
 
-        max_rad = rad.max()
+        normalizer = max(rad.max(), 1)
+        # This parameter controls how sensitive the visualization is to small displacement
+        # The smaller it is, the more sensitive the visualization is.
+        # We don't let it be smaller than 1 since we don't want to be sensitive to noise.
 
         a = np.arctan2(-fy, -fx) / np.pi
         fk = (a + 1.0) / 2.0 * (NCOLS - 1)
@@ -97,7 +100,7 @@ class Flow(object):
         f = np.stack([f, f, f], axis=-1)
         color = (1 - f) * color0 + f * color1
 
-        color = 1 - (np.expand_dims(rad, axis=-1) / max_rad) * (1 - color)
+        color = 1 - (np.expand_dims(rad, axis=-1) / normalizer) * (1 - color)
 
         return color.reshape(h, w, 3)[:, :, ::-1]
 
