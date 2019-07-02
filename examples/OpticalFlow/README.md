@@ -37,9 +37,12 @@ wget http://models.tensorpack.com/OpticalFlow/flownet2-c.npz
 
 ```bash
 python flownet2.py \
-	--left left.png --right right.png \
+	--images frame0.png frame1.png frame2.png
 	--load flownet2.npz --model flownet2
 ```
+
+This command will show predictions for all the consecutive pairs one by one.
+Press any key to visualize the next prediction.
 
 3. Evaluate AEE (Average Endpoing Error) on Sintel dataset:
 

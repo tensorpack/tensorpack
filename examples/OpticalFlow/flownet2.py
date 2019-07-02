@@ -14,15 +14,13 @@ import flownet_models as models
 from helper import Flow
 
 
-def apply(model, model_path, left, right, ground_truth=None):
-    left = cv2.imread(left)
-    right = cv2.imread(right)
-
+def apply(model, model_path, images, ground_truth=None):
+    left = cv2.imread(images[0])
     h, w = left.shape[:2]
     newh = (h // 64) * 64
     neww = (w // 64) * 64
     aug = imgaug.CenterCrop((newh, neww))
-    left, right = aug.augment(left), aug.augment(right)
+    left = aug.augment(left)
 
     predict_func = OfflinePredictor(PredictConfig(
         model=model(height=newh, width=neww),
@@ -30,20 +28,25 @@ def apply(model, model_path, left, right, ground_truth=None):
         input_names=['left', 'right'],
         output_names=['prediction']))
 
-    left_input, right_input = [x.astype('float32').transpose(2, 0, 1)[None, ...]
-                               for x in [left, right]]
-    output = predict_func(left_input, right_input)[0].transpose(0, 2, 3, 1)
-    flow = Flow()
+    for right in images[1:]:
+        right = aug.augment(cv2.imread(right))
 
-    img = flow.visualize(output[0])
-    patches = [left, right, img * 255.]
-    if ground_truth is not None:
-        patches.append(flow.visualize(Flow.read(ground_truth)) * 255.)
-    img = viz.stack_patches(patches, 2, 2)
+        left_input, right_input = [x.astype('float32').transpose(2, 0, 1)[None, ...]
+                                   for x in [left, right]]
+        output = predict_func(left_input, right_input)[0].transpose(0, 2, 3, 1)
+        flow = Flow()
 
-    cv2.imshow('flow output', img)
-    cv2.imwrite('flow_prediction.png', img)
-    cv2.waitKey(0)
+        img = flow.visualize(output[0])
+        patches = [left, right, img * 255.]
+        if ground_truth is not None:
+            patches.append(flow.visualize(Flow.read(ground_truth)) * 255.)
+        img = viz.stack_patches(patches, 2, 2)
+
+        cv2.imshow('flow output', img)
+        cv2.imwrite('flow_prediction.png', img)
+        cv2.waitKey(0)
+
+        left = right
 
 
 class SintelData(DataFlow):
@@ -118,8 +121,8 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='path to the model', required=True)
     parser.add_argument('--model', help='model',
                         choices=['flownet2', 'flownet2-s', 'flownet2-c'], required=True)
-    parser.add_argument('--left', help='input')
-    parser.add_argument('--right', help='input')
+    parser.add_argument('--images', nargs="+",
+                        help='a list of equally-sized images. FlowNet will be applied to all consecutive pairs')
     parser.add_argument('--gt', help='path to ground truth flow')
     parser.add_argument('--sintel_path', help='path to sintel dataset')
     args = parser.parse_args()
@@ -131,4 +134,5 @@ if __name__ == '__main__':
     if args.sintel_path:
         inference(model, args.load, args.sintel_path)
     else:
-        apply(model, args.load, args.left, args.right, args.gt)
+        assert len(args.images) >= 2
+        apply(model, args.load, args.images, args.gt)
