@@ -49,7 +49,8 @@ def argscope(layers, **kwargs):
         assert hasattr(l, 'symbolic_function'), "{} is not a registered layer".format(l.__name__)
         # _check_args_exist(l.symbolic_function)
 
-    new_scope = copy.copy(get_arg_scope())
+    # need to deepcopy so that changes to new_scope does not affect outer scope
+    new_scope = copy.deepcopy(get_arg_scope())
     for l in layers:
         new_scope[l.__name__].update(kwargs)
     _ArgScopeStack.append(new_scope)
