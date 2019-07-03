@@ -28,7 +28,7 @@ def apply(model, model_path, images, ground_truth=None):
         input_names=['left', 'right'],
         output_names=['prediction']))
 
-    for right in images[1:]:
+    for idx, right in enumerate(images[1:]):
         right = aug.augment(cv2.imread(right))
 
         left_input, right_input = [x.astype('float32').transpose(2, 0, 1)[None, ...]
@@ -43,7 +43,7 @@ def apply(model, model_path, images, ground_truth=None):
         img = viz.stack_patches(patches, 2, 2)
 
         cv2.imshow('flow output', img)
-        cv2.imwrite('flow_prediction.png', img)
+        cv2.imwrite('flow_output{:03d}.png'.format(idx), img)
         cv2.waitKey(0)
 
         left = right

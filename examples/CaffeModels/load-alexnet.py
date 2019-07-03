@@ -13,7 +13,6 @@ import tensorflow as tf
 from tensorpack import *
 from tensorpack.dataflow.dataset import ILSVRCMeta
 from tensorpack.tfutils.summary import *
-from tensorpack.tfutils.symbolic_functions import *
 
 
 def tower_func(image):

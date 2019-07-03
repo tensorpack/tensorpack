@@ -14,7 +14,6 @@ from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import gradproc, optimizer
 from tensorpack.tfutils.summary import *
-from tensorpack.tfutils.symbolic_functions import *
 from tensorpack.utils import viz
 from tensorpack.utils.gpu import get_num_gpu
 
