@@ -462,9 +462,19 @@ class HorovodTrainer(SingleCostTrainer):
 class BytePSTrainer(HorovodTrainer):
     """
     BytePS trainer. Supports both multi-GPU and distributed training.
+    It achieves better scalability than horovod in distributed training, if the model is communication
+    intensive and you have properly set up the machines following its
+    `best practices <https://github.com/bytedance/byteps/blob/master/docs/best-practice.md>`_
+    which requires a few extra bandwidth servers than horovod.
 
-    To use it, switch the trainer, and fefer to BytePS documentation on how to
+    To use it, switch the trainer, and refer to BytePS documentation on how to
     launch server/scheduler/workers.
+
+    Attributes:
+        hvd (module): the byteps module that contains horovod-compatible APIs
+            like `rank(),size()`.
+            This attribute exists so that downstream code that uses these APIs
+            does not need to worry about which library is being used under the hood.
     """
     def __init__(self, average=True):
         """
@@ -474,7 +484,8 @@ class BytePSTrainer(HorovodTrainer):
         import byteps.tensorflow as bps
         self.hvd = bps  # BytePS has the same interface as Horovod
         self.hvd.allreduce = bps.push_pull  # https://github.com/bytedance/byteps/issues/8
-        # TODO bootstrap env vars
+        assert os.environ.get("DMLC_ROLE", None) == "worker"
+        assert "DMLC_WORKER_ID" in os.environ and "DMLC_NUM_WORKER" in os.environ
         bps.init()
         self.is_chief = bps.rank() == 0
 
