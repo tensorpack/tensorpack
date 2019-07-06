@@ -66,15 +66,17 @@ Efficiency:
 
 1. After warmup, the training speed will slowly decrease due to more accurate proposals.
 
-1. The code should have around 80~90% GPU utilization on V100s, and 85%~90% scaling
-   efficiency from 1 V100 to 8 V100s.
+1. The code should have around 85~90% GPU utilization on one V100.
+	Scalability isn't very meaningful since the amount of computation each GPU perform is data-dependent.
+	If all images have the same spatial size (in which case the per-GPU computation is *still different*),
+	then a 85%~90% scaling efficiency is observed when using 8 V100s and `HorovodTrainer`.
 
 1. This implementation does not use specialized CUDA ops (e.g. AffineChannel, ROIAlign).
    Therefore it might be slower than other highly-optimized implementations.
 
 1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
    set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
-   (which may negatively impact your throughput). The training needs <10G RAM if `NUM_WORKERS=0`.
+   (which may negatively impact your throughput). The training only needs <10G RAM if `NUM_WORKERS=0`.
 
 1. Inference is unoptimized. Tensorpack is a training interface, therefore it
    does not help you on optimized inference. In fact, the current implementation

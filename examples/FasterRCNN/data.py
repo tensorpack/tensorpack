@@ -121,9 +121,10 @@ class TrainingDataPreprocessor:
 
     def __init__(self, cfg):
         self.cfg = cfg
-        self.aug = imgaug.AugmentorList(
-            [CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE), imgaug.Flip(horiz=True)]
-        )
+        self.aug = imgaug.AugmentorList([
+            CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
+            imgaug.Flip(horiz=True)
+        ])
 
     def __call__(self, roidb):
         fname, boxes, klass, is_crowd = roidb["file_name"], roidb["boxes"], roidb["class"], roidb["is_crowd"]
