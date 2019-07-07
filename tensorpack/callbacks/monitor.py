@@ -265,7 +265,8 @@ class TFEventWriter(MonitorBase):
         # Writing the graph is expensive (takes ~2min) when the graph is large.
         # Therefore use a separate thread. It will then run in the
         # background while TF is warming up in the first several iterations.
-        self._write_graph_thread = threading.Thread(target=self._write_graph, daemon=True)
+        self._write_graph_thread = threading.Thread(target=self._write_graph)
+        self._write_graph_thread.daemon = True
         self._write_graph_thread.start()
 
     @HIDE_DOC
