@@ -51,7 +51,9 @@ class CallbackTimeLogger(object):
 class Callbacks(Callback):
     """
     A container to hold all callbacks, and trigger them iteratively.
-    Note that it does nothing to before_run/after_run.
+
+    This is only used by the base trainer to run all the callbacks.
+    Users do not need to use this class.
     """
 
     def __init__(self, cbs):
