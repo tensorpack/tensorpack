@@ -7,6 +7,7 @@ from contextlib import contextmanager
 
 from ..compat import tfv1 as tf
 from ..utils.argtools import graph_memoized
+from ..utils import logger
 from .common import get_tf_version_tuple
 
 __all__ = ['auto_reuse_variable_scope', 'cached_name_scope', 'under_name_scope']
@@ -66,6 +67,9 @@ def under_name_scope(name_scope=None):
         2. The 'name_scope' argument of the decorator.
         3. (default) The name of the decorated function itself.
 
+        If the name is taken and cannot be used, a warning will be
+        printed in the first case.
+
     Example:
 
     .. code-block:: python
@@ -86,12 +90,24 @@ def under_name_scope(name_scope=None):
     def _impl(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            warn_incorrect_scope = 'name_scope' in kwargs
             scopename = kwargs.pop('name_scope', name_scope)
             if scopename is None:
                 scopename = func.__name__
 
-            with tf.name_scope(scopename):
-                return func(*args, **kwargs)
+            if warn_incorrect_scope:
+                # cached_name_scope will try to reenter the existing scope
+                with cached_name_scope(scopename, top_level=False) as scope:
+                    scope = scope.strip('/')
+                    # but it can still conflict with an existing tensor
+                    if not scope.endswith(scopename):
+                        logger.warn(""" \
+Calling function {} with name_scope='{}', but actual name scope becomes '{}'.  \
+The name '{}' might be taken.""".format(func.__name__, scopename, scope.split('/')[-1], scopename))
+                    return func(*args, **kwargs)
+            else:
+                with tf.name_scope(scopename):
+                    return func(*args, **kwargs)
         return wrapper
     return _impl
 

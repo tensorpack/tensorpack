@@ -15,6 +15,7 @@ python -c "import tensorflow as tf; tf.Operation._add_control_input"
 
 # run tests
 python -m tensorpack.callbacks.param_test
+python -m tensorpack.tfutils.unit_tests
 TENSORPACK_SERIALIZE=pyarrow python test_serializer.py
 TENSORPACK_SERIALIZE=msgpack python test_serializer.py
 

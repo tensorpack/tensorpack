@@ -19,7 +19,7 @@ This is a minimal implementation that simply contains these files:
 Data:
 
 1. It's easy to train on your own data, by calling `DatasetRegistry.register(name, lambda: YourDatasetSplit())`,
-	 and modify `cfg.DATA.*` accordingly.
+	 and modify `cfg.DATA.*` accordingly. Afterwards, "name" can be used in `cfg.DATA.TRAIN`.
 
 	`YourDatasetSplit` can be:
 

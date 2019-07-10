@@ -82,6 +82,16 @@ class GeneralizedRCNN(ModelDesc):
                 rpn_losses + head_losses + [wd_cost], 'total_cost')
             add_moving_summary(total_cost, wd_cost)
             return total_cost
+        else:
+            # Check that the model defines the tensors it declares for inference
+            # For existing models, they are defined in "fastrcnn_predictions(name_scope='output')"
+            G = tf.get_default_graph()
+            ns = G.get_name_scope()
+            for name in self.get_inference_tensor_names()[1]:
+                try:
+                    G.get_tensor_by_name('/'.join([ns, name + ':0']))
+                except KeyError:
+                    raise KeyError("Your model does not define the tensor '{}' in inference context.".format(name))
 
 
 class ResNetC4Model(GeneralizedRCNN):
