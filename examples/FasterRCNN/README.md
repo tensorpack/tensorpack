@@ -18,7 +18,7 @@ This is likely the best-performing open source TensorFlow reimplementation of th
 ## Dependencies
 + Python 3.3+; OpenCV
 + TensorFlow ≥ 1.6
-+ pycocotools: `pip install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'`
++ pycocotools: `for i in cython 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'; do pip install $i; done`
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/FasterRCNN/)
   from tensorpack model zoo
 + [COCO data](http://cocodataset.org/#download). It needs to have the following directory structure:

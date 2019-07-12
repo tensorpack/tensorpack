@@ -84,6 +84,8 @@ class ModelDescBase(object):
         """
         with tf.Graph().as_default() as G:   # create these placeholder in a temporary graph
             inputs = self.inputs()
+            assert isinstance(inputs, (list, tuple)), \
+                "ModelDesc.inputs() should return a list of tf.TensorSpec objects! Got {} instead.".format(str(inputs))
             if isinstance(inputs[0], tf.Tensor):
                 for p in inputs:
                     assert "Placeholder" in p.op.type, \
@@ -157,7 +159,10 @@ class ModelDesc(ModelDescBase):
         Returns:
             a :class:`tf.train.Optimizer` instance.
         """
-        return self.optimizer()
+        ret = self.optimizer()
+        assert isinstance(ret, tfv1.train.Optimizer), \
+            "ModelDesc.optimizer() must return a tf.train.Optimizer! Got {} instead.".format(str(ret))
+        return ret
 
     def optimizer(self):
         """

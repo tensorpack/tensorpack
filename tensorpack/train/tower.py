@@ -253,7 +253,8 @@ class SingleCostTrainer(TowerTrainer):
 
             def compute_grad_from_inputs(*inputs):
                 cost = get_cost_fn(*inputs)
-                assert isinstance(cost, tf.Tensor), cost
+                assert isinstance(cost, tf.Tensor), \
+                    "Expect the given function to return a cost, but got {} instead".format(str(cost))
                 assert cost.shape.ndims == 0, "Cost must be a scalar, but found {}!".format(cost)
 
                 if not ctx.is_training:

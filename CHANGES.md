@@ -18,12 +18,6 @@ TensorFlow itself also changes API and those are not listed here.
         return [tf.TensorSpec((None, 28, 28, 1), tf.float32, 'image'),
                 tf.TensorSpec((None,), tf.int32, 'label')]
 ```
-+ [2018/08/27] msgpack is used for "serialization to disk", because pyarrow
-  has no compatibility between versions. To use pyarrow instead, `export TENSORPACK_COMPATIBLE_SERIALIZE=pyarrow`.
-+ [2018/04/05] <del>msgpack is replaced by pyarrow in favor of its speed. If you want old behavior,
-	`export TENSORPACK_SERIALIZE=msgpack`.</del>
-	It's later found that pyarrow is unstable and may lead to crash.
-	So the default serialization is changed back to msgpack.
 + [2018/03/20] `ModelDesc` starts to use simplified interfaces:
 	+ `_get_inputs()` renamed to `inputs()` and returns `tf.TensorSpec`.
 	+ `build_graph(self, tensor1, tensor2)` returns the cost tensor directly.

@@ -47,6 +47,7 @@ def remap_variables(fn):
     Example:
         .. code-block:: python
 
+            from tensorpack.tfutils import varreplace
             with varreplace.remap_variables(lambda var: quantize(var)):
                 x = FullyConnected('fc', x, 1000)   # fc/{W,b} will be quantized
     """
@@ -67,6 +68,7 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
     Example:
         .. code-block:: python
 
+            from tensorpack.tfutils import varreplace
             with varreplace.freeze_variable(stop_gradient=False, skip_collection=True):
                 x = FullyConnected('fc', x, 1000)   # fc/* will not be trained
 
