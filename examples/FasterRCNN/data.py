@@ -46,11 +46,15 @@ def print_class_histogram(roidbs):
         gt_inds = np.where((entry["class"] > 0) & (entry["is_crowd"] == 0))[0]
         gt_classes = entry["class"][gt_inds]
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
-    data = [[cfg.DATA.CLASS_NAMES[i], v] for i, v in enumerate(gt_hist)]
-    data.append(["total", sum(x[1] for x in data)])
+    COL = 6
+    data = list(itertools.chain(*[[cfg.DATA.CLASS_NAMES[i], v] for i, v in enumerate(gt_hist[1:])]))
+    total_instances = sum(data[1::2])
+    data.extend([None] * (COL - len(data) % COL))
+    data.extend(["total", total_instances])
+    data = itertools.zip_longest(*[data[i::COL] for i in range(COL)])
     # the first line is BG
-    table = tabulate(data[1:], headers=["class", "#box"], tablefmt="pipe")
-    logger.info("Ground-Truth Boxes:\n" + colored(table, "cyan"))
+    table = tabulate(data, headers=["class", "#box"] * (COL // 2), tablefmt="pipe", stralign="center", numalign="left")
+    logger.info("Ground-Truth category distribution:\n" + colored(table, "cyan"))
 
 
 @memoized
