@@ -51,11 +51,11 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         gt_labels: m, int32
 
     Returns:
-        A BoxProposals instance.
-        sampled_boxes: tx4 floatbox, the rois
-        sampled_labels: t int64 labels, in [0, #class). Positive means foreground.
-        fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
-            It contains the matching GT of each foreground roi.
+        A BoxProposals instance, with:
+            sampled_boxes: tx4 floatbox, the rois
+            sampled_labels: t int64 labels, in [0, #class). Positive means foreground.
+            fg_inds_wrt_gt: #fg indices, each in range [0, m-1].
+                It contains the matching GT of each foreground roi.
     """
     iou = pairwise_iou(boxes, gt_boxes)     # nxm
     proposal_metrics(iou)
@@ -66,7 +66,9 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     # #proposal=n+m from now on
 
     def sample_fg_bg(iou):
-        fg_mask = tf.reduce_max(iou, axis=1) >= cfg.FRCNN.FG_THRESH
+        fg_mask = tf.cond(tf.shape(iou)[1] > 0,
+                          lambda: tf.reduce_max(iou, axis=1) >= cfg.FRCNN.FG_THRESH,
+                          lambda: tf.zeros([tf.shape(iou)[0]], dtype=tf.bool))
 
         fg_inds = tf.reshape(tf.where(fg_mask), [-1])
         num_fg = tf.minimum(int(
@@ -86,7 +88,9 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     fg_inds, bg_inds = sample_fg_bg(iou)
     # fg,bg indices w.r.t proposals
 
-    best_iou_ind = tf.argmax(iou, axis=1)   # #proposal, each in 0~m-1
+    best_iou_ind = tf.cond(tf.shape(iou)[1] > 0,
+                           lambda: tf.argmax(iou, axis=1),   # #proposal, each in 0~m-1
+                           lambda: tf.zeros([tf.shape(iou)[0]], dtype=tf.int64))
     fg_inds_wrt_gt = tf.gather(best_iou_ind, fg_inds)   # num_fg
 
     all_indices = tf.concat([fg_inds, bg_inds], axis=0)   # indices w.r.t all n+m proposal boxes

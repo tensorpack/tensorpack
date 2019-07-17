@@ -183,7 +183,10 @@ class COCODetection(DatasetSplit):
                         all_segm.append(valid_segs)
 
         # all geometrically-valid boxes are returned
-        img['boxes'] = np.asarray(all_boxes, dtype='float32')  # (n, 4)
+        if len(all_boxes):
+            img['boxes'] = np.asarray(all_boxes, dtype='float32')  # (n, 4)
+        else:
+            img['boxes'] = np.zeros((0, 4), dtype='float32')
         cls = np.asarray(all_cls, dtype='int32')  # (n,)
         if len(cls):
             assert cls.min() > 0, "Category id in COCO format must > 0!"

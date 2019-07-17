@@ -102,5 +102,5 @@ def unpackbits_masks(masks):
     unpacked = tf.bitwise.bitwise_and(tf.expand_dims(masks, -1), bits) > 0
     unpacked = tf.reshape(
         unpacked,
-        tf.concat([tf.shape(masks)[:-1], [-1]], axis=0))
+        tf.concat([tf.shape(masks)[:-1], [8 * tf.shape(masks)[-1]]], axis=0))
     return unpacked

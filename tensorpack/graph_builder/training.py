@@ -300,8 +300,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
                             grad_and_vars, name='apply_grad_{}'.format(idx)))
         train_op = tf.group(*train_ops, name='train_op')
 
-        with tf.name_scope('sync_variables'):
-            post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
+        if len(self.towers) > 1:
+            with tf.name_scope('sync_variables'):
+                post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
+        else:
+            post_init_op = tf.no_op(name='empty_sync_variables')
         return train_op, post_init_op
 
 # Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py

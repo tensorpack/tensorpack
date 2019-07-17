@@ -132,6 +132,7 @@ class TrainingDataPreprocessor:
 
     def __call__(self, roidb):
         fname, boxes, klass, is_crowd = roidb["file_name"], roidb["boxes"], roidb["class"], roidb["is_crowd"]
+        assert boxes.ndim == 2 and boxes.shape[1] == 4, boxes.shape
         boxes = np.copy(boxes)
         im = cv2.imread(fname, cv2.IMREAD_COLOR)
         assert im is not None, fname
@@ -149,7 +150,8 @@ class TrainingDataPreprocessor:
         points = box_to_point8(boxes)
         points = self.aug.augment_coords(points, params)
         boxes = point8_to_box(points)
-        assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
+        if len(boxes):
+            assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
         ret = {"image": im}
         # Add rpn data to dataflow:
@@ -166,8 +168,6 @@ class TrainingDataPreprocessor:
             klass = klass[is_crowd == 0]
             ret["gt_boxes"] = boxes
             ret["gt_labels"] = klass
-            if not len(boxes):
-                raise MalformedData("No valid gt_boxes!")
         except MalformedData as e:
             log_once("Input {} is filtered for training: {}".format(fname, str(e)), "warn")
             return None
@@ -183,13 +183,19 @@ class TrainingDataPreprocessor:
             masks = []
             width_height = np.asarray([width, height], dtype=np.float32)
             gt_mask_width = int(np.ceil(im.shape[1] / 8.0) * 8)   # pad to 8 in order to pack mask into bits
+
             for polys in segmentation:
                 if not self.cfg.DATA.ABSOLUTE_COORD:
                     polys = [p * width_height for p in polys]
                 polys = [self.aug.augment_coords(p, params) for p in polys]
                 masks.append(segmentation_to_mask(polys, im.shape[0], gt_mask_width))
-            masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
-            masks = np.packbits(masks, axis=-1)
+
+            if len(masks):
+                masks = np.asarray(masks, dtype='uint8')    # values in {0, 1}
+                masks = np.packbits(masks, axis=-1)
+            else:  # no gt on the image
+                masks = np.zeros((0, im.shape[0], gt_mask_width // 8), dtype='uint8')
+
             ret['gt_masks_packed'] = masks
 
             # from viz import draw_annotation, draw_mask
@@ -314,7 +320,12 @@ class TrainingDataPreprocessor:
             return curr_inds
 
         NA, NB = len(anchors), len(gt_boxes)
-        assert NB > 0  # empty images should have been filtered already
+        if NB == 0:
+            # No groundtruth. All anchors are either background or ignored.
+            anchor_labels = np.zeros((NA,), dtype="int32")
+            filter_box_label(anchor_labels, 0, self.cfg.RPN.BATCH_PER_IM)
+            return anchor_labels, np.zeros((NA, 4), dtype="float32")
+
         box_ious = np_iou(anchors, gt_boxes)  # NA x NB
         ious_argmax_per_anchor = box_ious.argmax(axis=1)  # NA,
         ious_max_per_anchor = box_ious.max(axis=1)
@@ -380,8 +391,8 @@ def get_train_dataflow():
     roidbs = list(itertools.chain.from_iterable(DatasetRegistry.get(x).training_roidbs() for x in cfg.DATA.TRAIN))
     print_class_histogram(roidbs)
 
-    # Valid training images should have at least one fg box.
-    # But this filter shall not be applied for testing.
+    # Filter out images that have no gt boxes, but this filter shall not be applied for testing.
+    # The model does support training with empty images, but it is not useful for COCO.
     num = len(roidbs)
     roidbs = list(filter(lambda img: len(img["boxes"][img["is_crowd"] == 0]) > 0, roidbs))
     logger.info(
