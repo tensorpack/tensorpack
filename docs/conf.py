@@ -359,7 +359,7 @@ def process_signature(app, what, name, obj, options, signature,
         signature = re.sub('tensorflow', 'tf', signature)
 
         # add scope name to layer signatures:
-        if hasattr(obj, 'use_scope') and hasattr(obj, 'symbolic_function'):
+        if hasattr(obj, 'use_scope'):
             if obj.use_scope:
                 signature = signature[0] + 'variable_scope_name, ' + signature[1:]
             elif obj.use_scope is None:

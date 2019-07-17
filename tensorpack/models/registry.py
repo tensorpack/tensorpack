@@ -103,8 +103,8 @@ def layer_register(
                     if use_scope is False:
                         logger.warn(
                             "Please call layer {} without the first scope name argument, "
-                            "or register the layer with use_scope=None to allow "
-                            "two calling methods.".format(func.__name__))
+                            "or register the layer with use_scope=None to allow calling it "
+                            "with scope names.".format(func.__name__))
                     name, inputs = args[0], args[1]
                     args = args[1:]  # actual positional args used to call func
                 else:
@@ -147,8 +147,8 @@ def layer_register(
                 outputs = func(*args, **actual_args)
             return outputs
 
-        wrapped_func.symbolic_function = func   # attribute to access the underlying function object
         wrapped_func.use_scope = use_scope
+        wrapped_func.__argscope_enabled__ = True
         _register(func.__name__, wrapped_func)
         return wrapped_func
 

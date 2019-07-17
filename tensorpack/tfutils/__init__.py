@@ -42,8 +42,8 @@ so that these names will be invisible under `tensorpack.` namespace.
 
 To use these utilities, users are expected to import them explicitly, e.g.:
 
-import tensorpack.tfutils.symbolic_functions as symbf
+import tensorpack.tfutils.sessinit as sessinit
 """
 __all__.extend(['sessinit', 'summary', 'optimizer',
-                'sesscreate', 'gradproc', 'varreplace', 'symbolic_functions',
-                'distributed', 'tower'])
+                'sesscreate', 'gradproc', 'varreplace',
+                'tower'])

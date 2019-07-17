@@ -6,12 +6,12 @@ from ..compat import tfv1 as tf
 from tabulate import tabulate
 from termcolor import colored
 
+from .common import get_op_tensor_name
 from ..utils import logger
 
 __all__ = []
 
 
-# TODO should also describe model_variables
 def describe_trainable_vars():
     """
     Print a description of the current model parameters.
@@ -39,7 +39,7 @@ def describe_trainable_vars():
 
         total += ele
         total_bytes += ele * v.dtype.size
-        data.append([v.name, shape, ele, v.device, v.dtype.base_dtype.name])
+        data.append([get_op_tensor_name(v.name)[0], shape, ele, v.device, v.dtype.base_dtype.name])
     headers = ['name', 'shape', '#elements', 'device', 'dtype']
 
     dtypes = list(set([x[4] for x in data]))

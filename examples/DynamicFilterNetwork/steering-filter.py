@@ -88,7 +88,7 @@ class OnlineTensorboardExport(Callback):
         canvas = cv2.resize(canvas[..., None] * 255, (0, 0), fx=10, fy=10)
 
         self.trainer.monitors.put_image('filter_export', canvas)
-        # # you might also want to write these images to disk (as in the casestudy from the docs)
+        # # you might also want to write these images to disk
         # cv2.imwrite("export/out%04i.jpg" % self.cc, canvas)
         # self.cc += 1
 
