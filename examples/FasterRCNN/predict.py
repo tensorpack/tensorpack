@@ -111,6 +111,7 @@ if __name__ == '__main__':
                                            "This argument is the path to the output json evaluation file")
     parser.add_argument('--predict', help="Run prediction on a given image. "
                                           "This argument is the path to the input image file", nargs='+')
+    parser.add_argument('--benchmark', action='store_true', help="Benchmark the speed of the model + postprocessing")
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
 
@@ -145,3 +146,11 @@ if __name__ == '__main__':
         elif args.evaluate:
             assert args.evaluate.endswith('.json'), args.evaluate
             do_evaluate(predcfg, args.evaluate)
+        elif args.benchmark:
+            df = get_eval_dataflow(cfg.DATA.VAL[0])
+            df.reset_state()
+            predictor = OfflinePredictor(predcfg)
+            for img in tqdm.tqdm(df, total=len(df)):
+                # This include post-processing time, which is done on CPU and not optimized
+                # To exclude it, modify `predict_image`.
+                predict_image(img[0], predictor)

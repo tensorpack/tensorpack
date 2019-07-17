@@ -89,7 +89,8 @@ class GeneralizedRCNN(ModelDesc):
             ns = G.get_name_scope()
             for name in self.get_inference_tensor_names()[1]:
                 try:
-                    G.get_tensor_by_name('/'.join([ns, name + ':0']))
+                    name = '/'.join([ns, name]) if ns else name
+                    G.get_tensor_by_name(name + ':0')
                 except KeyError:
                     raise KeyError("Your model does not define the tensor '{}' in inference context.".format(name))
 
