@@ -10,6 +10,7 @@ import tensorflow as tf
 
 from ..compat import is_tfv2
 from ..utils import logger
+from .model_utils import get_shape_str
 from .tower import get_current_tower_context
 
 __all__ = ['argscope', 'get_arg_scope', 'enable_argscope_for_module',
@@ -108,9 +109,10 @@ def enable_argscope_for_function(func, log_shape=True):
                     out_tensor_descr = out_tensor[0]
                 else:
                     out_tensor_descr = out_tensor
-                logger.info('%20s: %20s -> %20s' %
-                            (name, in_tensor.shape.as_list(),
-                             out_tensor_descr.shape.as_list()))
+                logger.info("{:<12}: {} --> {}".format(
+                    "'" + name + "'",
+                    get_shape_str(in_tensor),
+                    get_shape_str(out_tensor_descr)))
 
         return out_tensor
     wrapped_func.__argscope_enabled__ = True
