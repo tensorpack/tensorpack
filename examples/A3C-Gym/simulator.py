@@ -18,7 +18,6 @@ from tensorpack.utils.concurrency import LoopThread, enable_death_signal, ensure
 from tensorpack.utils.serialize import dumps, loads
 
 __all__ = ['SimulatorProcess', 'SimulatorMaster',
-           'SimulatorProcessStateExchange',
            'TransitionExperience']
 
 
@@ -35,19 +34,7 @@ class TransitionExperience(object):
 
 
 @six.add_metaclass(ABCMeta)
-class SimulatorProcessBase(mp.Process):
-    def __init__(self, idx):
-        super(SimulatorProcessBase, self).__init__()
-        self.idx = int(idx)
-        self.name = u'simulator-{}'.format(self.idx)
-        self.identity = self.name.encode('utf-8')
-
-    @abstractmethod
-    def _build_player(self):
-        pass
-
-
-class SimulatorProcessStateExchange(SimulatorProcessBase):
+class SimulatorProcess(mp.Process):
     """
     A process that simulates a player and communicates to master to
     send states and receive the next action
@@ -59,7 +46,11 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
             idx: idx of this process
             pipe_c2s, pipe_s2c (str): name of the pipe
         """
-        super(SimulatorProcessStateExchange, self).__init__(idx)
+        super(SimulatorProcess, self).__init__()
+        self.idx = int(idx)
+        self.name = u'simulator-{}'.format(self.idx)
+        self.identity = self.name.encode('utf-8')
+
         self.c2s = pipe_c2s
         self.s2c = pipe_s2c
 
@@ -90,13 +81,14 @@ class SimulatorProcessStateExchange(SimulatorProcessBase):
             if isOver:
                 state = player.reset()
 
+    @abstractmethod
+    def _build_player(self):
+        pass
 
-# compatibility
-SimulatorProcess = SimulatorProcessStateExchange
 
-
+@six.add_metaclass(ABCMeta)
 class SimulatorMaster(threading.Thread):
-    """ A base thread to communicate with all StateExchangeSimulatorProcess.
+    """ A base thread to communicate with all SimulatorProcess.
         It should produce action for each simulator, as well as
         defining callbacks when a transition or an episode is finished.
     """
@@ -106,6 +98,10 @@ class SimulatorMaster(threading.Thread):
             self.ident = None
 
     def __init__(self, pipe_c2s, pipe_s2c):
+        """
+        Args:
+            pipe_c2s, pipe_s2c (str): names of pipe to be used for communication
+        """
         super(SimulatorMaster, self).__init__()
         assert os.name != 'nt', "Doesn't support windows!"
         self.daemon = True
@@ -151,6 +147,10 @@ class SimulatorMaster(threading.Thread):
                 self._process_msg(client, state, reward, isOver)
         except zmq.ContextTerminated:
             logger.info("[Simulator] Context was terminated.")
+
+    @abstractmethod
+    def _process_msg(self, client, state, reward, isOver):
+        pass
 
     def __del__(self):
         self.context.destroy(linger=0)
