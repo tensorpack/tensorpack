@@ -221,6 +221,8 @@ def finalize_configs(is_training):
     _C.freeze(False)  # populate new keys now
     if isinstance(_C.DATA.VAL, six.string_types):  # support single string (the typical case) as well
         _C.DATA.VAL = (_C.DATA.VAL, )
+    if isinstance(_C.DATA.TRAIN, six.string_types):  # support single string
+        _C.DATA.TRAIN = (_C.DATA.TRAIN, )
 
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN', 'None'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
