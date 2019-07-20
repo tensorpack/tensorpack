@@ -135,15 +135,15 @@ class CollectionGuard(object):
             if k in self._whitelist or k in self._freeze_keys:
                 continue
             if k not in self.original:
-                newly_created.append(self._key_name(k))
+                newly_created.append((self._key_name(k), len(v)))
             else:
                 old_v = self.original[k]
                 if len(old_v) != len(v):
                     size_change.append((self._key_name(k), len(old_v), len(v)))
         if newly_created:
             logger.info(
-                "New collections created in tower {}: {}".format(
-                    self._name, ', '.join(newly_created)))
+                "New collections created in tower {}: ".format(self._name) +
+                ', '.join(["{} of size {}".format(key, size) for key, size in newly_created]))
         if size_change:
             logger.info(
                 "Size of these collections were changed in {}: {}".format(

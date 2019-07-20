@@ -13,8 +13,10 @@ from tensorpack.dataflow import (
     MultiProcessMapData, MultiThreadMapData, TestDataSpeed, imgaug,
 )
 from tensorpack.utils import logger
-from tensorpack.utils.argtools import log_once, memoized
+from tensorpack.utils.argtools import log_once
 
+from modeling.model_rpn import get_all_anchors
+from modeling.model_fpn import get_all_anchors_fpn
 from common import (
     CustomResize, DataFromListOfDict, box_to_point8,
     filter_boxes_inside_shape, np_iou, point8_to_box, segmentation_to_mask,
@@ -55,64 +57,6 @@ def print_class_histogram(roidbs):
     # the first line is BG
     table = tabulate(data, headers=["class", "#box"] * (COL // 2), tablefmt="pipe", stralign="center", numalign="left")
     logger.info("Ground-Truth category distribution:\n" + colored(table, "cyan"))
-
-
-@memoized
-def get_all_anchors(*, stride, sizes, ratios, max_size):
-    """
-    Get all anchors in the largest possible image, shifted, floatbox
-    Args:
-        stride (int): the stride of anchors.
-        sizes (tuple[int]): the sizes (sqrt area) of anchors
-        ratios (tuple[int]): the aspect ratios of anchors
-        max_size (int): maximum size of input image
-
-    Returns:
-        anchors: SxSxNUM_ANCHORx4, where S == ceil(MAX_SIZE/STRIDE), floatbox
-        The layout in the NUM_ANCHOR dim is NUM_RATIO x NUM_SIZE.
-
-    """
-    # Generates a NAx4 matrix of anchor boxes in (x1, y1, x2, y2) format. Anchors
-    # are centered on 0, have sqrt areas equal to the specified sizes, and aspect ratios as given.
-    anchors = []
-    for sz in sizes:
-        for ratio in ratios:
-            w = np.sqrt(sz * sz / ratio)
-            h = ratio * w
-            anchors.append([-w, -h, w, h])
-    cell_anchors = np.asarray(anchors) * 0.5
-
-    field_size = int(np.ceil(max_size / stride))
-    shifts = (np.arange(0, field_size) * stride).astype("float32")
-    shift_x, shift_y = np.meshgrid(shifts, shifts)
-    shift_x = shift_x.flatten()
-    shift_y = shift_y.flatten()
-    shifts = np.vstack((shift_x, shift_y, shift_x, shift_y)).transpose()
-    # Kx4, K = field_size * field_size
-    K = shifts.shape[0]
-
-    A = cell_anchors.shape[0]
-    field_of_anchors = cell_anchors.reshape((1, A, 4)) + shifts.reshape((1, K, 4)).transpose((1, 0, 2))
-    field_of_anchors = field_of_anchors.reshape((field_size, field_size, A, 4))
-    # FSxFSxAx4
-    # Many rounding happens inside the anchor code anyway
-    # assert np.all(field_of_anchors == field_of_anchors.astype('int32'))
-    field_of_anchors = field_of_anchors.astype("float32")
-    return field_of_anchors
-
-
-@memoized
-def get_all_anchors_fpn(*, strides, sizes, ratios, max_size):
-    """
-    Returns:
-        [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
-    """
-    assert len(strides) == len(sizes)
-    foas = []
-    for stride, size in zip(strides, sizes):
-        foa = get_all_anchors(stride=stride, sizes=(size,), ratios=ratios, max_size=max_size)
-        foas.append(foa)
-    return foas
 
 
 class TrainingDataPreprocessor:
@@ -248,6 +192,7 @@ class TrainingDataPreprocessor:
         featuremap_boxes = featuremap_boxes.reshape((anchorH, anchorW, num_anchor, 4))
         return featuremap_labels, featuremap_boxes
 
+    # TODO: can probably merge single-level logic with FPN logic to simplify code
     def get_multilevel_rpn_anchor_input(self, im, boxes, is_crowd):
         """
         Args:

@@ -9,12 +9,13 @@ from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.tfutils.tower import get_current_tower_context
+from tensorpack.utils.argtools import memoized
 
 from config import config as cfg
 from utils.box_ops import area as tf_area
 from .backbone import GroupNorm
 from .model_box import roi_align
-from .model_rpn import generate_rpn_proposals, rpn_losses
+from .model_rpn import generate_rpn_proposals, rpn_losses, get_all_anchors
 
 
 @layer_register(log_shape=True)
@@ -217,3 +218,17 @@ def generate_fpn_proposals(
     tf.sigmoid(proposal_scores, name='probs')  # for visualization
     return tf.stop_gradient(proposal_boxes, name='boxes'), \
         tf.stop_gradient(proposal_scores, name='scores')
+
+
+@memoized
+def get_all_anchors_fpn(*, strides, sizes, ratios, max_size):
+    """
+    Returns:
+        [anchors]: each anchors is a SxSx NUM_ANCHOR_RATIOS x4 array.
+    """
+    assert len(strides) == len(sizes)
+    foas = []
+    for stride, size in zip(strides, sizes):
+        foa = get_all_anchors(stride=stride, sizes=(size,), ratios=ratios, max_size=max_size)
+        foas.append(foa)
+    return foas

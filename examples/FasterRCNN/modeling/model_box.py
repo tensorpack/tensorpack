@@ -201,7 +201,8 @@ class RPNAnchors(namedtuple('_RPNAnchors', ['boxes', 'gt_labels', 'gt_boxes'])):
 
 if __name__ == '__main__':
     """
-    Demonstrate what's wrong with tf.image.crop_and_resize:
+    Demonstrate what's wrong with tf.image.crop_and_resize.
+    Also reported at https://github.com/tensorflow/tensorflow/issues/26278
     """
     import tensorflow.contrib.eager as tfe
     tfe.enable_eager_execution()
