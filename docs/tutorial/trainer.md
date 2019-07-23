@@ -55,7 +55,7 @@ The tower function needs to follow some rules:
 
 	 Tensorpack layers create variables based on the name given to the layer:
 	 e.g., `Conv2D('test', x)` will open a variable scope named "test".
-     In order to respect the above rules, 
+     In order to respect the above rules,
 	 the name of the layer must not depend on name_scope's name or any tensor's name.
 4. It must __respect variable scope reuse__:
    * The creation of any trainable variables must __respect reuse__ variable scope.

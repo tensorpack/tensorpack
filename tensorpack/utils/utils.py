@@ -69,17 +69,30 @@ def humanize_time_delta(sec):
 def change_env(name, val):
     """
     Args:
-        name(str), val(str):
+        name(str): name of the env var
+        val(str or None): the value, or set to None to clear the env var.
 
     Returns:
         a context where the environment variable ``name`` being set to
         ``val``. It will be set back after the context exits.
     """
     oldval = os.environ.get(name, None)
-    os.environ[name] = val
+
+    if val is None:
+        try:
+            del os.environ[name]
+        except KeyError:
+            pass
+    else:
+        os.environ[name] = val
+
     yield
+
     if oldval is None:
-        del os.environ[name]
+        try:
+            del os.environ[name]
+        except KeyError:
+            pass
     else:
         os.environ[name] = oldval
 

@@ -15,7 +15,8 @@ The Tensorpack API brings speed and flexibility together.
 
 
 Is TensorFlow Slow?
-~~~~~~~~~~~~~~~~~~~~~
+*******************
+
 
 There is a common misconception,
 but no, it's not slow. But it's not easy to write it in an efficient way.
