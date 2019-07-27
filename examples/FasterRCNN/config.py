@@ -79,7 +79,7 @@ _C = config     # short alias to avoid coding
 
 # mode flags ---------------------
 _C.TRAINER = 'replicated'  # options: 'horovod', 'replicated'
-_C.MODE_MASK = True        # FasterRCNN or MaskRCNN
+_C.MODE_MASK = True        # Faster R-CNN or Mask R-CNN
 _C.MODE_FPN = False
 
 # dataset -----------------------
@@ -100,7 +100,7 @@ _C.DATA.NUM_WORKERS = 10
 
 # backbone ----------------------
 _C.BACKBONE.WEIGHTS = ''
-# To train from scratch, set it to empty
+# To train from scratch, set it to empty, and set FREEZE_AT to 0
 # To train from ImageNet pre-trained models, use the one that matches your
 #   architecture from http://models.tensorpack.com under the 'FasterRCNN' section.
 # To train from an existing COCO model, use the path to that file, and change
@@ -110,7 +110,7 @@ _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
 _C.BACKBONE.NORM = 'FreezeBN'  # options: FreezeBN, SyncBN, GN, None
-_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2
+_C.BACKBONE.FREEZE_AT = 2  # options: 0, 1, 2. How many stages in backbone to freeze (not training)
 
 # Use a base model with TF-preferred padding mode,
 # which may pad more pixels on right/bottom than top/left.
@@ -136,11 +136,7 @@ _C.TRAIN.STARTING_EPOCH = 1  # the first epoch to start with, useful to continue
 # the base learning rate are computed from BASE_LR and LR_SCHEDULE.
 # Therefore, there is *no need* to modify the config if you only change the number of GPUs.
 
-_C.TRAIN.LR_SCHEDULE = [120000, 160000, 180000]      # "1x" schedule in detectron
-# _C.TRAIN.LR_SCHEDULE = [240000, 320000, 360000]      # "2x" schedule in detectron
-# Longer schedules for from-scratch training (https://arxiv.org/abs/1811.08883):
-# _C.TRAIN.LR_SCHEDULE = [960000, 1040000, 1080000]    # "6x" schedule in detectron
-# _C.TRAIN.LR_SCHEDULE = [1500000, 1580000, 1620000]   # "9x" schedule in detectron
+_C.TRAIN.LR_SCHEDULE = "1x"      # "1x" schedule in detectron
 _C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run evaluation
 
 # preprocessing --------------------
@@ -200,10 +196,10 @@ _C.FPN.FRCNN_CONV_HEAD_DIM = 256
 _C.FPN.FRCNN_FC_HEAD_DIM = 1024
 _C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'   # choices: maskrcnn_up4conv_{,gn_}head
 
-# Mask-RCNN
+# Mask R-CNN
 _C.MRCNN.HEAD_DIM = 256
 
-# Cascade-RCNN, only available in FPN mode
+# Cascade R-CNN, only available in FPN mode
 _C.FPN.CASCADE = False
 _C.CASCADE.IOUS = [0.5, 0.6, 0.7]
 _C.CASCADE.BBOX_REG_WEIGHTS = [[10., 10., 5., 5.], [20., 20., 10., 10.], [30., 30., 15., 15.]]
@@ -260,6 +256,18 @@ def finalize_configs(is_training):
             os.environ['TF_CUDNN_USE_AUTOTUNE'] = '0'
         os.environ['TF_AUTOTUNE_THRESHOLD'] = '1'
         assert _C.TRAINER in ['horovod', 'replicated'], _C.TRAINER
+
+        lr = _C.TRAIN.LR_SCHEDULE
+        if isinstance(lr, six.string_types):
+            if lr.endswith("x"):
+                LR_SCHEDULE_KITER = {
+                    "{}x".format(k):
+                    [180 * k - 120, 180 * k - 40, 180 * k]
+                    for k in range(2, 10)}
+                LR_SCHEDULE_KITER["1x"] = [120, 160, 180]
+                _C.TRAIN.LR_SCHEDULE = [x * 1000 for x in LR_SCHEDULE_KITER[lr]]
+            else:
+                _C.TRAIN.LR_SCHEDULE = eval(lr)
 
         # setup NUM_GPUS
         if _C.TRAINER == 'horovod':
