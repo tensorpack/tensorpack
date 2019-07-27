@@ -6,14 +6,14 @@ import cv2
 
 from ...utils.argtools import shape2d
 from ...utils.develop import log_deprecated
-from .base import ImageAugmentor
-from .transform import CropTransform, TransformAugmentorBase
+from .base import ImageAugmentor, ImagePlaceholder
+from .transform import CropTransform, TransformList, ResizeTransform
 from .misc import ResizeShortestEdge
 
 __all__ = ['RandomCrop', 'CenterCrop', 'RandomCropRandomShape', 'GoogleNetRandomCropAndResize']
 
 
-class RandomCrop(TransformAugmentorBase):
+class RandomCrop(ImageAugmentor):
     """ Randomly crop the image into a smaller one """
 
     def __init__(self, crop_shape):
@@ -25,7 +25,7 @@ class RandomCrop(TransformAugmentorBase):
         super(RandomCrop, self).__init__()
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         orig_shape = img.shape
         assert orig_shape[0] >= self.crop_shape[0] \
             and orig_shape[1] >= self.crop_shape[1], orig_shape
@@ -36,7 +36,7 @@ class RandomCrop(TransformAugmentorBase):
         return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])
 
 
-class CenterCrop(TransformAugmentorBase):
+class CenterCrop(ImageAugmentor):
     """ Crop the image at the center"""
 
     def __init__(self, crop_shape):
@@ -47,7 +47,7 @@ class CenterCrop(TransformAugmentorBase):
         crop_shape = shape2d(crop_shape)
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         orig_shape = img.shape
         assert orig_shape[0] >= self.crop_shape[0] \
             and orig_shape[1] >= self.crop_shape[1], orig_shape
@@ -56,7 +56,7 @@ class CenterCrop(TransformAugmentorBase):
         return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])
 
 
-class RandomCropRandomShape(TransformAugmentorBase):
+class RandomCropRandomShape(ImageAugmentor):
     """ Random crop with a random shape"""
 
     def __init__(self, wmin, hmin,
@@ -74,7 +74,7 @@ class RandomCropRandomShape(TransformAugmentorBase):
             log_deprecated("RandomCropRandomShape(max_aspect_ratio)", "It is never implemented!", "2020-06-06")
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         hmax = self.hmax or img.shape[0]
         wmax = self.wmax or img.shape[1]
         h = self.rng.randint(self.hmin, hmax + 1)
@@ -108,7 +108,7 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
         """
         self._init(locals())
 
-    def _augment(self, img, _):
+    def get_transform(self, img):
         h, w = img.shape[:2]
         area = h * w
         for _ in range(10):
@@ -121,12 +121,11 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
             if hh <= h and ww <= w:
                 x1 = 0 if w == ww else self.rng.randint(0, w - ww)
                 y1 = 0 if h == hh else self.rng.randint(0, h - hh)
-                out = img[y1:y1 + hh, x1:x1 + ww]
-                out = cv2.resize(out, (self.target_shape, self.target_shape), interpolation=self.interp)
-                return out
-        out = ResizeShortestEdge(self.target_shape, interp=self.interp).augment(img)
-        out = CenterCrop(self.target_shape).augment(out)
-        return out
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+                return TransformList([
+                    CropTransform(y1, x1, hh, ww),
+                    ResizeTransform(hh, ww, self.target_shape, self.target_shape, interp=self.interp)
+                ])
+        tfm1 = ResizeShortestEdge(self.target_shape, interp=self.interp).get_transform(img)
+        out_shape = (tfm1.new_h, tfm1.new_w)
+        tfm2 = CenterCrop(self.target_shape).get_transform(ImagePlaceholder(shape=out_shape))
+        return TransformList([tfm1, tfm2])

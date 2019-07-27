@@ -4,16 +4,15 @@
 import os
 import inspect
 import pprint
-from abc import ABCMeta, abstractmethod
-import six
-from six.moves import zip
+from collections import namedtuple
 import weakref
 
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
 from ..image import check_dtype
+from .transform import TransformList, PhotometricTransform
 
-__all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList']
+__all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList', 'PhotometricAugmentor']
 
 
 def _reset_augmentor_after_fork(aug_ref):
@@ -22,9 +21,15 @@ def _reset_augmentor_after_fork(aug_ref):
         aug.reset_state()
 
 
-@six.add_metaclass(ABCMeta)
-class Augmentor(object):
-    """ Base class for an augmentor"""
+ImagePlaceholder = namedtuple("ImagePlaceholder", ["shape"])
+
+
+class ImageAugmentor(object):
+    """ Base class for an augmentor
+
+    ImageAugmentor should take images of type uint8 in range [0, 255], or
+    floating point images in range [0, 1] or [0, 255].
+    """
 
     def __init__(self):
         self.reset_state()
@@ -55,65 +60,6 @@ class Augmentor(object):
         and you do not need to bother calling it.
         """
         self.rng = get_rng(self)
-
-    def augment(self, d):
-        """
-        Perform augmentation on the data.
-
-        Args:
-            d: input data
-
-        Returns:
-            augmented data
-        """
-        d, params = self._augment_return_params(d)
-        return d
-
-    def augment_return_params(self, d):
-        """
-        Augment the data and return the augmentation parameters.
-        If the augmentation is non-deterministic (random),
-        the returned parameters can be used to augment another data with the identical transformation.
-        This can be used for, e.g. augmenting image, masks, keypoints altogether with the
-        same transformation.
-
-        Returns:
-            (augmented data, augmentation params)
-        """
-        return self._augment_return_params(d)
-
-    def _augment_return_params(self, d):
-        """
-        Augment the image and return both image and params
-        """
-        prms = self._get_augment_params(d)
-        return (self._augment(d, prms), prms)
-
-    def augment_with_params(self, d, param):
-        """
-        Augment the data with the given param.
-
-        Args:
-            d: input data
-            param: augmentation params returned by :meth:`augment_return_params`
-
-        Returns:
-            augmented data
-        """
-        return self._augment(d, param)
-
-    @abstractmethod
-    def _augment(self, d, param):
-        """
-        Augment with the given param and return the new data.
-        The augmentor is allowed to modify data in-place.
-        """
-
-    def _get_augment_params(self, d):
-        """
-        Get the augmentor parameters.
-        """
-        return None
 
     def _rand_range(self, low=1.0, high=None, size=None):
         """
@@ -152,33 +98,10 @@ class Augmentor(object):
             log_once(e.args[0], 'warn')
             return super(Augmentor, self).__repr__()
 
+    def get_transform(self, d):
+        pass
+
     __str__ = __repr__
-
-
-class ImageAugmentor(Augmentor):
-    """
-    ImageAugmentor should take images of type uint8 in range [0, 255], or
-    floating point images in range [0, 1] or [0, 255].
-    """
-    def augment_coords(self, coords, param):
-        """
-        Augment the coordinates given the param.
-
-        By default, an augmentor keeps coordinates unchanged.
-        If a subclass of :class:`ImageAugmentor` changes coordinates but couldn't implement this method,
-        it should ``raise NotImplementedError()``.
-
-        Args:
-            coords: Nx2 floating point numpy array where each row is (x, y)
-            param: augmentation params returned by :meth:`augment_return_params`
-
-        Returns:
-            new coords
-        """
-        return self._augment_coords(coords, param)
-
-    def _augment_coords(self, coords, param):
-        return coords
 
 
 class AugmentorList(ImageAugmentor):
@@ -195,34 +118,36 @@ class AugmentorList(ImageAugmentor):
         self.augmentors = augmentors
         super(AugmentorList, self).__init__()
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         # the next augmentor requires the previous one to finish
-        raise RuntimeError("Cannot simply get all parameters of a AugmentorList without running the augmentation!")
+        raise RuntimeError("Cannot simply get transform of a AugmentorList without running the augmentation!")
 
-    def _augment_return_params(self, img):
+    def apply(self, img):
         check_dtype(img)
         assert img.ndim in [2, 3], img.ndim
 
-        prms = []
+        tfms = []
         for a in self.augmentors:
-            img, prm = a._augment_return_params(img)
-            prms.append(prm)
-        return img, prms
-
-    def _augment(self, img, param):
-        check_dtype(img)
-        assert img.ndim in [2, 3], img.ndim
-        for aug, prm in zip(self.augmentors, param):
-            img = aug._augment(img, prm)
-        return img
-
-    def _augment_coords(self, coords, param):
-        for aug, prm in zip(self.augmentors, param):
-            coords = aug._augment_coords(coords, prm)
-        return coords
+            t = a.get_transform(img)
+            img = t.apply_image(img)
+            tfms.append(t)
+        return img, TransformList(tfms)
 
     def reset_state(self):
         """ Will reset state of each augmentor """
         super(AugmentorList, self).reset_state()
         for a in self.augmentors:
             a.reset_state()
+
+
+Augmentor = ImageAugmentor
+
+
+class PhotometricAugmentor(ImageAugmentor):
+    def get_transform(self, img):
+        p = self._get_params(img)
+        return PhotometricTransform(func=lambda img: self._impl(img, p),
+                                    name=str(self))
+
+    def _get_params(self, _):
+        return None

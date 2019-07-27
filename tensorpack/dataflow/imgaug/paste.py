@@ -6,6 +6,7 @@ import numpy as np
 from abc import abstractmethod
 
 from .base import ImageAugmentor
+from .transform import TransformFactory
 
 __all__ = ['CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller',
            'RandomPaste']
@@ -87,15 +88,16 @@ class RandomPaste(CenterPaste):
     Randomly paste the image onto a background canvas.
     """
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         img_shape = img.shape[:2]
         assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
 
         y0 = self._rand_range(self.background_shape[0] - img_shape[0])
         x0 = self._rand_range(self.background_shape[1] - img_shape[1])
-        return int(x0), int(y0)
+        l = int(x0), int(y0)
+        return TransformFactory(name=str(self), apply_image=lambda img: self._impl(img, l))
 
-    def _augment(self, img, loc):
+    def _impl(self, img, loc):
         x0, y0 = loc
         img_shape = img.shape[:2]
         background = self.background_filler.fill(

@@ -7,12 +7,12 @@ import numpy as np
 import cv2
 
 from .base import ImageAugmentor
-from .transform import TransformAugmentorBase, WarpAffineTransform
+from .transform import WarpAffineTransform, CropTransform, TransformList
 
 __all__ = ['Shift', 'Rotation', 'RotationAndCropValid', 'Affine']
 
 
-class Shift(TransformAugmentorBase):
+class Shift(ImageAugmentor):
     """ Random horizontal and vertical shifts """
 
     def __init__(self, horiz_frac=0, vert_frac=0,
@@ -28,7 +28,7 @@ class Shift(TransformAugmentorBase):
         super(Shift, self).__init__()
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         max_dx = self.horiz_frac * img.shape[1]
         max_dy = self.vert_frac * img.shape[0]
         dx = np.round(self._rand_range(-max_dx, max_dx))
@@ -40,7 +40,7 @@ class Shift(TransformAugmentorBase):
             borderMode=self.border, borderValue=self.border_value)
 
 
-class Rotation(TransformAugmentorBase):
+class Rotation(ImageAugmentor):
     """ Random rotate the image w.r.t a random center"""
 
     def __init__(self, max_deg, center_range=(0, 1),
@@ -61,7 +61,7 @@ class Rotation(TransformAugmentorBase):
         super(Rotation, self).__init__()
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         center = img.shape[1::-1] * self._rand_range(
             self.center_range[0], self.center_range[1], (2,))
         deg = self._rand_range(-self.max_deg, self.max_deg)
@@ -100,29 +100,27 @@ class RotationAndCropValid(ImageAugmentor):
         super(RotationAndCropValid, self).__init__()
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def _get_deg(self, img):
         deg = self._rand_range(-self.max_deg, self.max_deg)
         if self.step_deg:
             deg = deg // self.step_deg * self.step_deg
         return deg
 
-    def _augment(self, img, deg):
+    def get_transform(self, img):
+        deg = self._get_deg(img)
+
+        h, w = img.shape[:2]
         center = (img.shape[1] * 0.5, img.shape[0] * 0.5)
         rot_m = cv2.getRotationMatrix2D((center[0] - 0.5, center[1] - 0.5), deg, 1)
-        ret = cv2.warpAffine(img, rot_m, img.shape[1::-1],
-                             flags=self.interp, borderMode=cv2.BORDER_CONSTANT)
-        if img.ndim == 3 and ret.ndim == 2:
-            ret = ret[:, :, np.newaxis]
-        neww, newh = RotationAndCropValid.largest_rotated_rect(ret.shape[1], ret.shape[0], deg)
-        neww = min(neww, ret.shape[1])
-        newh = min(newh, ret.shape[0])
+        tfm = WarpAffineTransform(rot_m, (w, h), interp=self.interp)
+
+        neww, newh = RotationAndCropValid.largest_rotated_rect(w, h, deg)
+        neww = min(neww, w)
+        newh = min(newh, h)
         newx = int(center[0] - neww * 0.5)
         newy = int(center[1] - newh * 0.5)
-        # print(ret.shape, deg, newx, newy, neww, newh)
-        return ret[newy:newy + newh, newx:newx + neww]
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+        tfm2 = CropTransform(newy, newx, newh, neww)
+        return TransformList([tfm, tfm2])
 
     @staticmethod
     def largest_rotated_rect(w, h, angle):
@@ -152,7 +150,7 @@ class RotationAndCropValid(ImageAugmentor):
         return int(np.round(wr)), int(np.round(hr))
 
 
-class Affine(TransformAugmentorBase):
+class Affine(ImageAugmentor):
     """
     Random affine transform of the image w.r.t to the image center.
     Transformations involve:
@@ -193,7 +191,7 @@ class Affine(TransformAugmentorBase):
         super(Affine, self).__init__()
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         if self.scale is not None:
             scale = self._rand_range(self.scale[0], self.scale[1])
         else:
