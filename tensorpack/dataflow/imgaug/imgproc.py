@@ -264,6 +264,7 @@ class Lighting(PhotometricAugmentor):
             eigval: a vector of (3,). The eigenvalues of 3 channels.
             eigvec: a 3x3 matrix. Each column is one eigen vector.
         """
+        super(Lighting, self).__init__()
         eigval = np.asarray(eigval)
         eigvec = np.asarray(eigvec)
         assert eigval.shape == (3,)

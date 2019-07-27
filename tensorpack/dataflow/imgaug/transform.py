@@ -2,35 +2,39 @@
 # File: transform.py
 
 import numpy as np
+import pprint
+import inspect
 import cv2
+
+from ...utils.argtools import log_once
 
 __all__ = []
 
 
-class WrappedImgFunc(object):
-    def __init__(self, func, need_float=False, cast_back=True, fix_ndim=True):
-        self.func = func
-        self.need_float = need_float
-        self.cast_back = cast_back
+# class WrappedImgFunc(object):
+#     def __init__(self, func, need_float=False, cast_back=True, fix_ndim=True):
+#         self.func = func
+#         self.need_float = need_float
+#         self.cast_back = cast_back
 
-    def __call__(self, img):
-        old_dtype = img.dtype
-        old_ndim = img.ndim
+#     def __call__(self, img):
+#         old_dtype = img.dtype
+#         old_ndim = img.ndim
 
-        if self.need_float:
-            img = img.astype("float32")
+#         if self.need_float:
+#             img = img.astype("float32")
 
-        img = self.func(img)
+#         img = self.func(img)
 
-        if self.cast_back and old_dtype == np.uint8 and img.dtype != np.uint8:
-            img = np.clip(img, 0, 255.)
+#         if self.cast_back and old_dtype == np.uint8 and img.dtype != np.uint8:
+#             img = np.clip(img, 0, 255.)
 
-        if self.cast_back:
-            img = img.astype(old_dtype)
+#         if self.cast_back:
+#             img = img.astype(old_dtype)
 
-        if self.fix_ndim and old_ndim == 3 and img.ndim == 2:
-            img = img[:, :, np.newaxis]
-        return img
+#         if self.fix_ndim and old_ndim == 3 and img.ndim == 2:
+#             img = img[:, :, np.newaxis]
+#         return img
 
 
 class Transform(object):
@@ -46,6 +50,8 @@ class Transform(object):
     The implementation of each method may choose to modify its input data
     in-place for efficient transformation.
     """
+    def __init__(self):
+        pass
 
     def _init(self, params=None):
         if params:
@@ -59,15 +65,45 @@ class Transform(object):
     def apply_coords(self, coords):
         raise NotImplementedError()
 
+    def __repr__(self):
+        """
+        Produce something like:
+        "imgaug.MyTransform(field1={self.field1}, field2={self.field2})"
+        """
+        try:
+            argspec = inspect.getargspec(self.__init__)
+            assert argspec.varargs is None, "The default __repr__ doesn't work for varargs!"
+            assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
+            fields = argspec.args[1:]
+            index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
+
+            classname = type(self).__name__
+            argstr = []
+            for idx, f in enumerate(fields):
+                assert hasattr(self, f), \
+                    "Attribute {} in {} not found! Default __repr__ only works if " \
+                    "attributes match the constructor.".format(f, classname)
+                attr = getattr(self, f)
+                if idx >= index_field_has_default:
+                    if attr is argspec.defaults[idx - index_field_has_default]:
+                        continue
+                argstr.append("{}={}".format(f, pprint.pformat(attr)))
+            return "imgaug.{}({})".format(classname, ', '.join(argstr))
+        except AssertionError as e:
+            log_once(e.args[0], 'warn')
+            return super(Transform, self).__repr__()
+
+    __str__ = __repr__
+
 
 class TransformList(Transform):
     def __init__(self, tfms):
         for t in tfms:
             assert isinstance(t, Transform), t
-        self._tfms = tfms
+        self.tfms = tfms
 
     def _apply(self, x, meth):
-        for t in self._tfms:
+        for t in self.tfms:
             x = getattr(t, meth)(x)
         return x
 
@@ -87,7 +123,7 @@ class NoOpTransform(Transform):
     def __getattr__(self, name):
         if name.startswith("apply_"):
             return lambda x: x
-        raise AttributeError("TransformList object has no attribute {}".format(name))
+        raise AttributeError("NoOpTransform object has no attribute {}".format(name))
 
     def apply_image(self, img):
         return img
@@ -188,8 +224,8 @@ class PhotometricTransform(NoOpTransform):
     def apply_image(self, img):
         return self._func(img)
 
-    def __str__(self):
-        return "PureImageTransform({})".format(self._name if self._name else "")
+    def __repr__(self):
+        return "imgaug.PhotometricTransform({})".format(self._name if self._name else "")
 
 
 class TransformFactory(Transform):
@@ -204,10 +240,7 @@ class TransformFactory(Transform):
         self._name = name
 
     def __str__(self):
-        if self._name:
-            return "TransformFactory({})".format(self._name)
-        else:
-            return "TransformFactory()"
+        return "imgaug.TransformFactory({})".format(self._name if self._name else "")
 
 
 if __name__ == '__main__':

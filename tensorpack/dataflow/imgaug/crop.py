@@ -70,6 +70,7 @@ class RandomCropRandomShape(ImageAugmentor):
             wmin, hmin, wmax, hmax: range to sample shape.
             max_aspect_ratio (float): this argument has no effect and is deprecated.
         """
+        super(RandomCropRandomShape, self).__init__()
         if max_aspect_ratio is not None:
             log_deprecated("RandomCropRandomShape(max_aspect_ratio)", "It is never implemented!", "2020-06-06")
         self._init(locals())
@@ -106,6 +107,7 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
             aspect_ratio_range (tuple(float)): Defaults to make aspect ratio in 3/4-4/3.
             target_shape (int): Defaults to 224, the standard ImageNet image shape.
         """
+        super(GoogleNetRandomCropAndResize, self).__init__()
         self._init(locals())
 
     def get_transform(self, img):

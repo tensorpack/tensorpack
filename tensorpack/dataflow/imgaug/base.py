@@ -87,7 +87,8 @@ class ImageAugmentor(object):
             argstr = []
             for idx, f in enumerate(fields):
                 assert hasattr(self, f), \
-                    "Attribute {} not found! Default __repr__ only works if attributes match the constructor.".format(f)
+                    "Attribute {} in {} not found! Default __repr__ only works if " \
+                    "attributes match the constructor.".format(f, classname)
                 attr = getattr(self, f)
                 if idx >= index_field_has_default:
                     if attr is argspec.defaults[idx - index_field_has_default]:
@@ -98,7 +99,16 @@ class ImageAugmentor(object):
             log_once(e.args[0], 'warn')
             return super(Augmentor, self).__repr__()
 
-    def get_transform(self, d):
+    def get_transform(self, img):
+        """
+        Instantiate a :class:`Transform` object from the given image.
+
+        Args:
+            img (ndarray):
+
+        Returns:
+            Transform
+        """
         pass
 
     __str__ = __repr__

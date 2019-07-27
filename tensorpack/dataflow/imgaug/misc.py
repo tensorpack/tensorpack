@@ -163,7 +163,6 @@ class Transpose(ImageAugmentor):
         """
         super(Transpose, self).__init__()
         self.prob = prob
-        self._init()
 
     def get_transform(self, _):
         if self._rand_range() < self.prob:
