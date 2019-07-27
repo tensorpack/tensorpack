@@ -49,15 +49,16 @@ to `annotations/` as well.
 To train on a single machine:
 ```
 ./train.py --config \
-    MODE_MASK=True MODE_FPN=True \
+    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz \
     DATA.BASEDIR=/path/to/COCO/DIR \
-    BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz
+    [OTHER-ARCHITECTURE-SETTINGS]
 ```
 
 To run distributed training, set `TRAINER=horovod` and refer to [HorovodTrainer docs](http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.HorovodTrainer).
 
 Options can be changed by either the command line or the `config.py` file (recommended).
 Some reasonable configurations are listed in the table below.
+See [config.py](config.py) for details about each config.
 
 ### Inference:
 
@@ -77,10 +78,10 @@ prediction will need to be run with the corresponding configs used in training.
 
 ## Results
 
-These models are trained on trainval35k and evaluated on minival2014 using mAP@IoU=0.50:0.95.
-All models are fine-tuned from ImageNet pre-trained R50/R101 models in
-[tensorpack model zoo](http://models.tensorpack.com/FasterRCNN/), unless otherwise noted.
-All models are trained with 8 NVIDIA V100s, unless otherwise noted.
+These models are trained on train2017 and evaluated on val2017 using mAP@IoU=0.50:0.95.
+Unless otherwise noted, all models are fine-tuned from ImageNet pre-trained R50/R101 models in
+[tensorpack model zoo](http://models.tensorpack.com/FasterRCNN/),
+using 8 NVIDIA V100s.
 
 Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can be reproduced.
 
@@ -89,7 +90,7 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
  | R50-C4                         | 34.1                                                                    |                                                    | 7.5h                   | <details><summary>super quick</summary>`MODE_MASK=False FRCNN.BATCH_PER_IM=64`<br/>`PREPROC.TRAIN_SHORT_EDGE_SIZE=600 PREPROC.MAX_SIZE=1024`<br/>`TRAIN.LR_SCHEDULE=[140000,180000,200000]` </details>                                                                                                                                                                                                        |
  | R50-C4                         | 35.6                                                                    | 34.8                                               | 23h                    | <details><summary>standard</summary>`MODE_MASK=False` </details>                                                                                                                                                                                                                                                                                                                                              |
  | R50-FPN                        | 37.5                                                                    | 36.7                                               | 11h                    | <details><summary>standard</summary>`MODE_MASK=False MODE_FPN=True` </details>                                                                                                                                                                                                                                                                                                                                |
- | R50-C4                         | 36.2;31.8 [:arrow_down:][R50C41x]                                       | 35.8;31.4                                          | 23.5h                  | <details><summary>standard</summary>this is the default </details>                                                                                                                                                                                                                                                                                                                                            |
+ | R50-C4                         | 36.2;31.8 [:arrow_down:][R50C41x]                                       | 35.8;31.4                                          | 23.5h                  | <details><summary>standard</summary>this is the default, no changes in config needed </details>                                                                                                                                                                                                                                                                                                               |
  | R50-FPN                        | 38.2;34.8                                                               | 37.7;33.9                                          | 13.5h                  | <details><summary>standard</summary>`MODE_FPN=True` </details>                                                                                                                                                                                                                                                                                                                                                |
  | R50-FPN                        | 38.9;35.4 [:arrow_down:][R50FPN2x]                                      | 38.6;34.5                                          | 25h                    | <details><summary>2x</summary>`MODE_FPN=True`<br/>`TRAIN.LR_SCHEDULE=[240000,320000,360000]` </details>                                                                                                                                                                                                                                                                                                       |
  | R50-FPN-GN                     | 40.4;36.3 [:arrow_down:][R50FPN2xGN]                                    | 40.3;35.7                                          | 31h                    | <details><summary>2x+GN</summary>`MODE_FPN=True`<br/>`FPN.NORM=GN BACKBONE.NORM=GN`<br/>`FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head`<br/>`FPN.MRCNN_HEAD_FUNC=maskrcnn_up4conv_gn_head` <br/>`TRAIN.LR_SCHEDULE=[240000,320000,360000]`                                                                                                                                                                    |

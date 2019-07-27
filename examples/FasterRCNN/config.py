@@ -99,7 +99,13 @@ _C.DATA.ABSOLUTE_COORD = True
 _C.DATA.NUM_WORKERS = 10
 
 # backbone ----------------------
-_C.BACKBONE.WEIGHTS = ''   # /path/to/weights.npz
+_C.BACKBONE.WEIGHTS = ''
+# To train from scratch, set it to empty
+# To train from ImageNet pre-trained models, use the one that matches your
+#   architecture from http://models.tensorpack.com under the 'FasterRCNN' section.
+# To train from an existing COCO model, use the path to that file, and change
+#   the other configurations according to that model.
+
 _C.BACKBONE.RESNET_NUM_BLOCKS = [3, 4, 6, 3]     # for resnet50
 # RESNET_NUM_BLOCKS = [3, 4, 23, 3]    # for resnet101
 _C.BACKBONE.FREEZE_AFFINE = False   # do not train affine parameters inside norm layers
