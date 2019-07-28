@@ -6,6 +6,7 @@ import numpy as np
 
 from ...utils import logger
 from .base import ImageAugmentor
+from .transform import TransformFactory
 
 __all__ = []
 
@@ -97,14 +98,11 @@ class GaussianDeform(ImageAugmentor):
             self.randrange = randrange
         self.sigma = sigma
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         v = self.rng.rand(self.K, 2).astype('float32') - 0.5
         v = v * 2 * self.randrange
-        return v
+        return TransformFactory(name=str(self), apply_image=lambda img: self._augment(img, v))
 
     def _augment(self, img, v):
         grid = self.grid + np.dot(self.gws, v)
         return np_sample(img, grid)
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()

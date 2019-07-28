@@ -10,6 +10,7 @@ import functools
 import importlib
 import os
 import types
+from collections import defaultdict
 from datetime import datetime
 import six
 
@@ -75,7 +76,10 @@ def building_rtfd():
         or os.environ.get('DOC_BUILDING')
 
 
-def log_deprecated(name="", text="", eos=""):
+_DEPRECATED_LOG_NUM = defaultdict(int)
+
+
+def log_deprecated(name="", text="", eos="", max_num_warnings=None):
     """
     Log deprecation warning.
 
@@ -83,6 +87,7 @@ def log_deprecated(name="", text="", eos=""):
         name (str): name of the deprecated item.
         text (str, optional): information about the deprecation.
         eos (str, optional): end of service date such as "YYYY-MM-DD".
+        max_num_warnings (int, optional): the maximum number of times to print this warning
     """
     assert name or text
     if eos:
@@ -96,13 +101,18 @@ def log_deprecated(name="", text="", eos=""):
         warn_msg = text
         if eos:
             warn_msg += " Legacy period ends %s" % eos
+
+    if max_num_warnings is not None:
+        if _DEPRECATED_LOG_NUM[warn_msg] >= max_num_warnings:
+            return
+        _DEPRECATED_LOG_NUM[warn_msg] += 1
     logger.warn("[Deprecated] " + warn_msg)
 
 
-def deprecated(text="", eos=""):
+def deprecated(text="", eos="", max_num_warnings=None):
     """
     Args:
-        text, eos: same as :func:`log_deprecated`.
+        text, eos, max_num_warnings: same as :func:`log_deprecated`.
 
     Returns:
         a decorator which deprecates the function.
@@ -130,7 +140,7 @@ def deprecated(text="", eos=""):
         @functools.wraps(func)
         def new_func(*args, **kwargs):
             name = "{} [{}]".format(func.__name__, get_location())
-            log_deprecated(name, text, eos)
+            log_deprecated(name, text, eos, max_num_warnings=max_num_warnings)
             return func(*args, **kwargs)
         return new_func
     return deprecated_inner

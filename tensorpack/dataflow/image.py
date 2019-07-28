@@ -161,10 +161,9 @@ class AugmentImageCoordinates(MapData):
             validate_coords(coords)
             if self._copy:
                 img, coords = copy_mod.deepcopy((img, coords))
-            img, prms = self.augs.augment_return_params(img)
-            dp[self._img_index] = img
-            coords = self.augs.augment_coords(coords, prms)
-            dp[self._coords_index] = coords
+            tfms = self.augs.get_transform(img)
+            dp[self._img_index] = tfms.apply_image(img)
+            dp[self._coords_index] = tfms.apply_coords(coords)
             return dp
 
 
@@ -207,15 +206,15 @@ class AugmentImageComponents(MapData):
                 major_image = index[0]  # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 check_dtype(im)
-                im, prms = self.augs.augment_return_params(im)
-                dp[major_image] = im
+                tfms = self.augs.get_transform(im)
+                dp[major_image] = tfms.apply_image(im)
                 for idx in index[1:]:
                     check_dtype(dp[idx])
-                    dp[idx] = self.augs.augment_with_params(copy_func(dp[idx]), prms)
+                    dp[idx] = tfms.apply_image(copy_func(dp[idx]))
                 for idx in coords_index:
                     coords = copy_func(dp[idx])
                     validate_coords(coords)
-                    dp[idx] = self.augs.augment_coords(coords, prms)
+                    dp[idx] = tfms.apply_coords(coords)
                 return dp
 
         super(AugmentImageComponents, self).__init__(ds, func)

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 # File: misc.py
 
-
-import numpy as np
 import cv2
 
 from ...utils import logger
 from ...utils.argtools import shape2d
 from .base import ImageAugmentor
-from .transform import ResizeTransform, TransformAugmentorBase
+from .transform import ResizeTransform, NoOpTransform, FlipTransform, TransposeTransform
 
 __all__ = ['Flip', 'Resize', 'RandomResize', 'ResizeShortestEdge', 'Transpose']
 
@@ -27,40 +25,20 @@ class Flip(ImageAugmentor):
         super(Flip, self).__init__()
         if horiz and vert:
             raise ValueError("Cannot do both horiz and vert. Please use two Flip instead.")
-        elif horiz:
-            self.code = 1
-        elif vert:
-            self.code = 0
-        else:
+        if not horiz and not vert:
             raise ValueError("At least one of horiz or vert has to be True!")
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         h, w = img.shape[:2]
         do = self._rand_range() < self.prob
-        return (do, h, w)
-
-    def _augment(self, img, param):
-        do, _, _ = param
-        if do:
-            ret = cv2.flip(img, self.code)
-            if img.ndim == 3 and ret.ndim == 2:
-                ret = ret[:, :, np.newaxis]
+        if not do:
+            return NoOpTransform()
         else:
-            ret = img
-        return ret
-
-    def _augment_coords(self, coords, param):
-        do, h, w = param
-        if do:
-            if self.code == 0:
-                coords[:, 1] = h - coords[:, 1]
-            elif self.code == 1:
-                coords[:, 0] = w - coords[:, 0]
-        return coords
+            return FlipTransform(h, w, self.horiz)
 
 
-class Resize(TransformAugmentorBase):
+class Resize(ImageAugmentor):
     """ Resize image to a target size"""
 
     def __init__(self, shape, interp=cv2.INTER_LINEAR):
@@ -72,13 +50,13 @@ class Resize(TransformAugmentorBase):
         shape = tuple(shape2d(shape))
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         return ResizeTransform(
             img.shape[0], img.shape[1],
             self.shape[0], self.shape[1], self.interp)
 
 
-class ResizeShortestEdge(TransformAugmentorBase):
+class ResizeShortestEdge(ImageAugmentor):
     """
     Resize the shortest edge to a certain number while
     keeping the aspect ratio.
@@ -92,18 +70,17 @@ class ResizeShortestEdge(TransformAugmentorBase):
         size = int(size)
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         h, w = img.shape[:2]
         scale = self.size * 1.0 / min(h, w)
         if h < w:
             newh, neww = self.size, int(scale * w + 0.5)
         else:
             newh, neww = int(scale * h + 0.5), self.size
-        return ResizeTransform(
-            h, w, newh, neww, self.interp)
+        return ResizeTransform(h, w, newh, neww, self.interp)
 
 
-class RandomResize(TransformAugmentorBase):
+class RandomResize(ImageAugmentor):
     """ Randomly rescale width and height of the image."""
 
     def __init__(self, xrange, yrange=None, minimum=(0, 0), aspect_ratio_thres=0.15,
@@ -137,7 +114,7 @@ class RandomResize(TransformAugmentorBase):
                 if yrange is not None:
                     logger.warn("aspect_ratio_thres==0, yrange is not used!")
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         cnt = 0
         h, w = img.shape[:2]
 
@@ -186,20 +163,9 @@ class Transpose(ImageAugmentor):
         """
         super(Transpose, self).__init__()
         self.prob = prob
-        self._init()
 
-    def _get_augment_params(self, img):
-        return self._rand_range() < self.prob
-
-    def _augment(self, img, do):
-        ret = img
-        if do:
-            ret = cv2.transpose(img)
-            if img.ndim == 3 and ret.ndim == 2:
-                ret = ret[:, :, np.newaxis]
-        return ret
-
-    def _augment_coords(self, coords, do):
-        if do:
-            coords = coords[:, ::-1]
-        return coords
+    def get_transform(self, _):
+        if self.rng.rand() < self.prob:
+            return TransposeTransform()
+        else:
+            return NoOpTransform()

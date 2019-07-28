@@ -6,6 +6,7 @@ import numpy as np
 from abc import abstractmethod
 
 from .base import ImageAugmentor
+from .transform import TransformFactory
 
 __all__ = ['CenterPaste', 'BackgroundFiller', 'ConstantBackgroundFiller',
            'RandomPaste']
@@ -51,6 +52,10 @@ class ConstantBackgroundFiller(BackgroundFiller):
         return np.zeros(return_shape, dtype=img.dtype) + self.value
 
 
+# NOTE:
+# apply_coords should be implemeted in paste transform, but not yet done
+
+
 class CenterPaste(ImageAugmentor):
     """
     Paste the image onto the center of a background canvas.
@@ -67,7 +72,10 @@ class CenterPaste(ImageAugmentor):
 
         self._init(locals())
 
-    def _augment(self, img, _):
+    def get_transform(self, _):
+        return TransformFactory(name=str(self), apply_image=lambda img: self._impl(img))
+
+    def _impl(self, img):
         img_shape = img.shape[:2]
         assert self.background_shape[0] >= img_shape[0] and self.background_shape[1] >= img_shape[1]
 
@@ -78,24 +86,22 @@ class CenterPaste(ImageAugmentor):
         background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background
 
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
-
 
 class RandomPaste(CenterPaste):
     """
     Randomly paste the image onto a background canvas.
     """
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         img_shape = img.shape[:2]
         assert self.background_shape[0] > img_shape[0] and self.background_shape[1] > img_shape[1]
 
         y0 = self._rand_range(self.background_shape[0] - img_shape[0])
         x0 = self._rand_range(self.background_shape[1] - img_shape[1])
-        return int(x0), int(y0)
+        l = int(x0), int(y0)
+        return TransformFactory(name=str(self), apply_image=lambda img: self._impl(img, l))
 
-    def _augment(self, img, loc):
+    def _impl(self, img, loc):
         x0, y0 = loc
         img_shape = img.shape[:2]
         background = self.background_filler.fill(

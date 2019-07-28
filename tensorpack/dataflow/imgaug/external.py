@@ -3,8 +3,24 @@
 import numpy as np
 
 from .base import ImageAugmentor
+from .transform import Transform
 
 __all__ = ['IAAugmentor', 'Albumentations']
+
+
+class IAATransform(Transform):
+    def __init__(self, aug, img_shape):
+        self._init(locals())
+
+    def apply_image(self, img):
+        return self.aug.augment_image(img)
+
+    def apply_coords(self, coords):
+        import imgaug as IA
+        points = [IA.Keypoint(x=x, y=y) for x, y in coords]
+        points = IA.KeypointsOnImage(points, shape=self.img_shape)
+        augmented = self.aug.augment_keypoints([points])[0].keypoints
+        return np.asarray([[p.x, p.y] for p in augmented])
 
 
 class IAAugmentor(ImageAugmentor):
@@ -43,20 +59,16 @@ class IAAugmentor(ImageAugmentor):
         super(IAAugmentor, self).__init__()
         self._aug = augmentor
 
-    def _get_augment_params(self, img):
-        return (self._aug.to_deterministic(), img.shape)
+    def get_transform(self, img):
+        return IAATransform(self._aug.to_deterministic(), img.shape)
 
-    def _augment(self, img, param):
-        aug, _ = param
-        return aug.augment_image(img)
 
-    def _augment_coords(self, coords, param):
-        import imgaug as IA
-        aug, shape = param
-        points = [IA.Keypoint(x=x, y=y) for x, y in coords]
-        points = IA.KeypointsOnImage(points, shape=shape)
-        augmented = aug.augment_keypoints([points])[0].keypoints
-        return np.asarray([[p.x, p.y] for p in augmented])
+class AlbumentationsTransform(Transform):
+    def __init__(self, aug, param):
+        self._init(locals())
+
+    def apply_image(self, img):
+        return self.aug.apply(img, **self.param)
 
 
 class Albumentations(ImageAugmentor):
@@ -81,11 +93,5 @@ class Albumentations(ImageAugmentor):
         super(Albumentations, self).__init__()
         self._aug = augmentor
 
-    def _get_augment_params(self, img):
-        return self._aug.get_params()
-
-    def _augment(self, img, param):
-        return self._aug.apply(img, **param)
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
+    def get_transform(self, img):
+        return AlbumentationsTransform(self._aug, self._aug.get_params())

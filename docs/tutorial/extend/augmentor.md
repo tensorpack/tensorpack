@@ -23,22 +23,7 @@ as the DataFlow.
 In other words, for simple mapping you do not need to write an augmentor.
 
 An augmentor may do something more than just applying a mapping.
-To do complicated augmentation, the interface you will need to implement is:
-
-```python
-class MyAug(imgaug.ImageAugmentor):
-  def _get_augment_params(self, img):
-    # Generated random params with self.rng
-    return params
-
-  def _augment(self, img, params):
-    return augmented_img
-
-  # optional method
-  def _augment_coords(self, coords, param):
-    # coords is a Nx2 floating point array, each row is (x, y)
-    return augmented_coords
-```
+To do custom augmentation, you can implement one yourself.
 
 
 #### The Design of imgaug Module
@@ -46,29 +31,59 @@ class MyAug(imgaug.ImageAugmentor):
 The [imgaug module](../../modules/dataflow.imgaug.html) is designed to allow the following usage:
 
 * Factor out randomness and determinism.
-  An augmentor may be randomized, but you can call
-  [augment_return_params](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.Augmentor.augment_return_params)
-  to obtain the randomized parameters and then call
-  [augment_with_params](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.Augmentor.augment_with_params)
-  on other data with the same randomized parameters.
+  An augmentor often contains randomized policy, e.g., it randomly perturbs each image differently.
+  However, its "deterministic" part needs to be factored out, so that
+  the same transformation can be re-applied to other data
+  assocaited with the image. This is achieved like this:
 
-* Because of the above reason, tensorpack's augmentor can augment multiple images together
-  easily. This is commonly used for augmenting an image together with its masks.
+```python
+tfm = augmentor.get_transform(img)  # a deterministic transformation
+new_img = tfm.apply_image(img)
+new_img2 = tfm.apply_image(img2)
+new_coords = tfm.apply_coords(coords)
+```
 
-* An image augmentor (e.g. flip) may also augment a coordinate, with
-  [augment_coords](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.ImageAugmentor.augment_coords).
-  In this way, images can be augmented together with
-  boxes, polygons, keypoints, etc.
-  Coordinate augmentation enforces floating points coordinates
+  Due to this design, it can augment images together with its annotations 
+  (e.g., segmentation masks, bounding boxes, keypoints).
+  Our coordinate augmentation enforces floating points coordinates
   to avoid quantization error.
+  
+  When you don't need to re-apply the same transformation, you can also just call
+  
+```python
+new_img = augmentor.augment(img)
+```
 
 * Reset random seed. Random seed can be reset by
-  [reset_state](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.Augmentor.reset_state).
+  [reset_state](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.ImageAugmentor.reset_state).
   This is important for multi-process data loading, to make sure different
   processes get different seeds. 
   The reset method is called automatically if you use tensorpack's 
-  [image augmentation dataflow](../../modules/dataflow.html#tensorpack.dataflow.AugmentImageComponent).
+  [image augmentation dataflow](../../modules/dataflow.html#tensorpack.dataflow.AugmentImageComponent)
+  or if you use Python 3.7+.
   Otherwise, **you are responsible** for calling it by yourself in subprocesses.
   See the
-  [API documentation](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.Augmentor.reset_state)
+  [API documentation](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.ImageAugmentor.reset_state)
   of this method for more details.
+
+
+### Write an Augmentor
+
+The interface you will need to implement is:
+
+```python
+class MyAug(imgaug.ImageAugmentor):
+  def get_transform(self, img):
+    # Randomly generate a deterministic transformation, to be applied on img
+    x = random_parameters()
+    return MyTransform(x)
+    
+class MyTransform(imgaug.Transform):
+  def apply_image(self, img):
+    return new_img
+
+  def apply_coords(self, coords):
+    return new_coords
+```
+
+Check out the zoo of builtin augmentors to have a better sense.

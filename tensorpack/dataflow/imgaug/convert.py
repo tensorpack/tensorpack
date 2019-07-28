@@ -4,13 +4,12 @@
 import numpy as np
 import cv2
 
-from .base import ImageAugmentor
-from .meta import MapImage
+from .base import PhotometricAugmentor
 
 __all__ = ['ColorSpace', 'Grayscale', 'ToUint8', 'ToFloat32']
 
 
-class ColorSpace(ImageAugmentor):
+class ColorSpace(PhotometricAugmentor):
     """ Convert into another color space.  """
 
     def __init__(self, mode, keepdims=True):
@@ -20,6 +19,7 @@ class ColorSpace(ImageAugmentor):
             keepdims (bool): keep the dimension of image unchanged if OpenCV
                 changes it.
         """
+        super(ColorSpace, self).__init__()
         self._init(locals())
 
     def _augment(self, img, _):
@@ -43,13 +43,13 @@ class Grayscale(ColorSpace):
         super(Grayscale, self).__init__(mode, keepdims)
 
 
-class ToUint8(MapImage):
+class ToUint8(PhotometricAugmentor):
     """ Convert image to uint8. Useful to reduce communication overhead. """
-    def __init__(self):
-        super(ToUint8, self).__init__(lambda x: np.clip(x, 0, 255).astype(np.uint8), lambda x: x)
+    def _augment(self, img, _):
+        return np.clip(img, 0, 255).astype(np.uint8)
 
 
-class ToFloat32(MapImage):
+class ToFloat32(PhotometricAugmentor):
     """ Convert image to float32, may increase quality of the augmentor. """
-    def __init__(self):
-        super(ToFloat32, self).__init__(lambda x: x.astype(np.float32), lambda x: x)
+    def _augment(self, img, _):
+        return img.astype(np.float32)
