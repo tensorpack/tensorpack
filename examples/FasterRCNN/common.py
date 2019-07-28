@@ -5,7 +5,7 @@ import numpy as np
 import cv2
 
 from tensorpack.dataflow import RNGDataFlow
-from tensorpack.dataflow.imgaug import transform
+from tensorpack.dataflow.imgaug import ImageAugmentor, ResizeTransform
 
 
 class DataFromListOfDict(RNGDataFlow):
@@ -26,7 +26,7 @@ class DataFromListOfDict(RNGDataFlow):
             yield dp
 
 
-class CustomResize(transform.TransformAugmentorBase):
+class CustomResize(ImageAugmentor):
     """
     Try resizing the shortest edge to a certain number
     while avoiding the longest edge to exceed max_size.
@@ -44,7 +44,7 @@ class CustomResize(transform.TransformAugmentorBase):
             short_edge_length = (short_edge_length, short_edge_length)
         self._init(locals())
 
-    def _get_augment_params(self, img):
+    def get_transform(self, img):
         h, w = img.shape[:2]
         size = self.rng.randint(
             self.short_edge_length[0], self.short_edge_length[1] + 1)
@@ -59,7 +59,7 @@ class CustomResize(transform.TransformAugmentorBase):
             neww = neww * scale
         neww = int(neww + 0.5)
         newh = int(newh + 0.5)
-        return transform.ResizeTransform(h, w, newh, neww, self.interp)
+        return ResizeTransform(h, w, newh, neww, self.interp)
 
 
 def box_to_point8(boxes):

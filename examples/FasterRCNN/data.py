@@ -90,9 +90,10 @@ class TrainingDataPreprocessor:
             boxes[:, 1::2] *= height
 
         # augmentation:
-        im, params = self.aug.augment_return_params(im)
+        tfms = self.aug.get_transform(im)
+        im = tfms.apply_image(im)
         points = box_to_point8(boxes)
-        points = self.aug.augment_coords(points, params)
+        points = tfms.apply_coords(points)
         boxes = point8_to_box(points)
         if len(boxes):
             assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
@@ -131,7 +132,7 @@ class TrainingDataPreprocessor:
             for polys in segmentation:
                 if not self.cfg.DATA.ABSOLUTE_COORD:
                     polys = [p * width_height for p in polys]
-                polys = [self.aug.augment_coords(p, params) for p in polys]
+                polys = [tfms.apply_coords(p) for p in polys]
                 masks.append(segmentation_to_mask(polys, im.shape[0], gt_mask_width))
 
             if len(masks):

@@ -15,7 +15,7 @@ Legacy alias. Please don't use.
 # This legacy augmentor requires us to import base from here, causing circular dependency.
 # Should remove this in the future.
 
-__all__ = ["Transform"]
+__all__ = ["Transform", "ResizeTransform", "CropTransform", "FlipTransform", "TransformList", "TransformFactory"]
 
 
 # class WrappedImgFunc(object):
@@ -101,7 +101,16 @@ class Transform(BaseTransform):
 
 
 class ResizeTransform(Transform):
+    """
+    Resize the image.
+    """
     def __init__(self, h, w, new_h, new_w, interp):
+        """
+        Args:
+            h, w (int):
+            new_h, new_w (int):
+            interp (int): cv2 interpolation method
+        """
         super(ResizeTransform, self).__init__()
         self._init(locals())
 
@@ -121,6 +130,9 @@ class ResizeTransform(Transform):
 
 
 class CropTransform(Transform):
+    """
+    Crop a subimage from an image.
+    """
     def __init__(self, y0, x0, h, w):
         super(CropTransform, self).__init__()
         self._init(locals())
@@ -231,6 +243,9 @@ class PhotometricTransform(Transform):
 
 
 class TransformFactory(Transform):
+    """
+    Create a :class:`Transform` from user-provided functions.
+    """
     def __init__(self, name=None, **kwargs):
         """
         Args:
@@ -257,7 +272,14 @@ they do not perform actual transformation, but delegate to another Transform.
 
 
 class TransformList(BaseTransform):
+    """
+    Apply a list of transforms sequentially.
+    """
     def __init__(self, tfms):
+        """
+        Args:
+            tfms (list[Transform]):
+        """
         for t in tfms:
             assert isinstance(t, BaseTransform), t
         self.tfms = tfms

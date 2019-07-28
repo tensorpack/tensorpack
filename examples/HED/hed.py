@@ -191,7 +191,7 @@ def get_data(name):
     ds = dataset.BSDS500(name, shuffle=True)
 
     class CropMultiple16(imgaug.ImageAugmentor):
-        def _get_augment_params(self, img):
+        def get_transform(self, img):
             newh = img.shape[0] // 16 * 16
             neww = img.shape[1] // 16 * 16
             assert newh > 0 and neww > 0
@@ -199,11 +199,7 @@ def get_data(name):
             h0 = 0 if diffh == 0 else self.rng.randint(diffh)
             diffw = img.shape[1] - neww
             w0 = 0 if diffw == 0 else self.rng.randint(diffw)
-            return (h0, w0, newh, neww)
-
-        def _augment(self, img, param):
-            h0, w0, newh, neww = param
-            return img[h0:h0 + newh, w0:w0 + neww]
+            return imgaug.CropTransform(h0, w0, newh, neww)
 
     if isTrain:
         shape_aug = [
