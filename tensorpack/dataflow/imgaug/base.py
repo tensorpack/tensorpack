@@ -10,7 +10,10 @@ import weakref
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
 from ..image import check_dtype
-from .transform import TransformList, PhotometricTransform
+
+# Cannot import here if we want to keep backward compatibility.
+# Because this causes circular dependency
+# from .transform import TransformList, PhotometricTransform, TransformFactory
 
 __all__ = ['Augmentor', 'ImageAugmentor', 'AugmentorList', 'PhotometricAugmentor']
 
@@ -109,9 +112,62 @@ class ImageAugmentor(object):
         Returns:
             Transform
         """
-        pass
+        # This should be an abstract method
+        # But we provide an implementation that uses the old interface,
+        # for backward compatibility
+
+        def legacy_augment_coords(self, coords, p):
+            try:
+                return self._augment_coords(coords, p)
+            except AttributeError:
+                pass
+            try:
+                return self.augment_coords(coords, p)
+            except AttributeError:
+                pass
+            return coords  # this is the old default
+
+        p = None  # the default return value for this method
+        try:
+            p = self._get_augment_params(img)
+        except AttributeError:
+            pass
+        try:
+            p = self.get_augment_params(img)
+        except AttributeError:
+            pass
+
+        from .transform import Transform
+        if isinstance(p, Transform):  # some old augs return Transform already
+            return p
+
+        from .transform import TransformFactory
+        return TransformFactory(name="LegacyConversion -- " + str(self),
+                                apply_image=lambda img: self._augment(img, p),
+                                apply_coords=lambda coords: legacy_augment_coords(self, coords, p))
+
+    def augment(self, img):
+        t = self.get_transform(img)
+        return t.apply_image(img)
+
+    def augment_return_tfm(self, img):
+        t = self.get_transform(img)
+        return t.apply_image(img), t
 
     __str__ = __repr__
+
+    # ###########################
+    # Legacy interfaces:
+    # ###########################
+    def augment_return_params(self, d):
+        t = self.get_transform(d)
+        return t.apply_image(d), t
+
+    def augment_with_params(self, d, param):
+        return param.apply_image(d)
+
+    def augment_coords(self, coords, param):
+        return param.apply_coords(coords)
 
 
 class AugmentorList(ImageAugmentor):
@@ -128,11 +184,17 @@ class AugmentorList(ImageAugmentor):
         self.augmentors = augmentors
         super(AugmentorList, self).__init__()
 
+    def reset_state(self):
+        """ Will reset state of each augmentor """
+        super(AugmentorList, self).reset_state()
+        for a in self.augmentors:
+            a.reset_state()
+
     def get_transform(self, img):
         # the next augmentor requires the previous one to finish
         raise RuntimeError("Cannot simply get transform of a AugmentorList without running the augmentation!")
 
-    def apply(self, img):
+    def augment_return_tfm(self, img):
         check_dtype(img)
         assert img.ndim in [2, 3], img.ndim
 
@@ -141,21 +203,30 @@ class AugmentorList(ImageAugmentor):
             t = a.get_transform(img)
             img = t.apply_image(img)
             tfms.append(t)
+        from .transform import TransformList
         return img, TransformList(tfms)
 
-    def reset_state(self):
-        """ Will reset state of each augmentor """
-        super(AugmentorList, self).reset_state()
-        for a in self.augmentors:
-            a.reset_state()
+    def augment(self, d):
+        return self.augment_return_tfm(d)[0]
+
+    # ###########################
+    # Legacy interfaces:
+    # ###########################
+
+    def augment_return_params(self, d):
+        return self.augment_return_tfm(d)
 
 
 Augmentor = ImageAugmentor
+"""
+Legacy name. Augmentor and ImageAugmentor are now the same thing.
+"""
 
 
 class PhotometricAugmentor(ImageAugmentor):
     def get_transform(self, img):
         p = self._get_params(img)
+        from .transform import PhotometricTransform
         return PhotometricTransform(func=lambda img: self._impl(img, p),
                                     name=str(self))
 

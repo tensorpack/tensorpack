@@ -119,7 +119,7 @@ class AugmentImageComponent(MapDataComponent):
         with self._exception_handler.catch():
             if self._copy:
                 x = copy_mod.deepcopy(x)
-            return self.augs.apply(x)[0]
+            return self.augs.augment(x)
 
 
 class AugmentImageCoordinates(MapData):
@@ -161,7 +161,7 @@ class AugmentImageCoordinates(MapData):
             validate_coords(coords)
             if self._copy:
                 img, coords = copy_mod.deepcopy((img, coords))
-            img, tfms = self.augs.apply(img)
+            img, tfms = self.augs.augment_return_tfm(img)
             dp[self._img_index] = img
             coords = tfms.apply_coords(coords)
             dp[self._coords_index] = coords
@@ -207,7 +207,7 @@ class AugmentImageComponents(MapData):
                 major_image = index[0]  # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 check_dtype(im)
-                im, tfms = self.augs.apply(im)
+                im, tfms = self.augs.augment_return_tfm(im)
                 dp[major_image] = im
                 for idx in index[1:]:
                     check_dtype(dp[idx])

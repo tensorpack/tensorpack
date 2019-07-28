@@ -8,6 +8,13 @@ import cv2
 
 from ...utils.argtools import log_once
 
+from .base import ImageAugmentor
+
+TransformAugmentorBase = ImageAugmentor
+"""
+Legacy alias. Please don't use TransformAugmentorBase.
+"""
+
 __all__ = []
 
 
