@@ -376,6 +376,7 @@ _DEPRECATED_NAMES = set([
     'DistributedTrainerParameterServer',
     'InputDesc',
     'inputs_desc',
+    'Augmentor',
 
     # renamed items that should not appear in docs
     'DumpTensor',

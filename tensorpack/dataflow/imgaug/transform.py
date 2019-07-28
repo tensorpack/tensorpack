@@ -2,18 +2,18 @@
 # File: transform.py
 
 import numpy as np
-import pprint
-import inspect
 import cv2
 
 from ...utils.argtools import log_once
 
-from .base import ImageAugmentor
+from .base import ImageAugmentor, _default_repr
 
 TransformAugmentorBase = ImageAugmentor
 """
-Legacy alias. Please don't use TransformAugmentorBase.
+Legacy alias. Please don't use.
 """
+# This legacy augmentor requires us to import base from here, causing circular dependency.
+# Should remove this in the future.
 
 __all__ = []
 
@@ -44,7 +44,20 @@ __all__ = []
 #         return img
 
 
-class Transform(object):
+class BaseTransform(object):
+    """
+    Base class for all transforms, for type-check only.
+
+    Users should never interact with this class.
+    """
+    def _init(self, params=None):
+        if params:
+            for k, v in params.items():
+                if k != 'self' and not k.startswith('_'):
+                    setattr(self, k, v)
+
+
+class Transform(BaseTransform):
     """
     A deterministic image transformation, used to implement
     the (probably random) augmentors.
@@ -56,87 +69,32 @@ class Transform(object):
 
     The implementation of each method may choose to modify its input data
     in-place for efficient transformation.
+
+    This class is also the place to provide a default implementation to any
+    :meth:`apply_xxx` method.
+    The current default is to raise NotImplementedError in any such methods.
     """
     def __init__(self):
+        # provide an empty __init__, so that __repr__ will work nicely
         pass
 
-    def _init(self, params=None):
-        if params:
-            for k, v in params.items():
-                if k != 'self' and not k.startswith('_'):
-                    setattr(self, k, v)
+    def __getattr__(self, name):
+        if name.startswith("apply_"):
 
-    def apply_image(self, img):
-        raise NotImplementedError(self.__class__)
+            def f(x):
+                raise NotImplementedError("{} does not implement method {}".format(self.__class__.__name__, name))
 
-    def apply_coords(self, coords):
-        raise NotImplementedError(self.__class__)
+            return f
+        raise AttributeError("Transform object has no attribute {}".format(name))
 
     def __repr__(self):
-        """
-        Produce something like:
-        "imgaug.MyTransform(field1={self.field1}, field2={self.field2})"
-        """
         try:
-            argspec = inspect.getargspec(self.__init__)
-            assert argspec.varargs is None, "The default __repr__ doesn't work for varargs!"
-            assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
-            fields = argspec.args[1:]
-            index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
-
-            classname = type(self).__name__
-            argstr = []
-            for idx, f in enumerate(fields):
-                assert hasattr(self, f), \
-                    "Attribute {} in {} not found! Default __repr__ only works if " \
-                    "attributes match the constructor.".format(f, classname)
-                attr = getattr(self, f)
-                if idx >= index_field_has_default:
-                    if attr is argspec.defaults[idx - index_field_has_default]:
-                        continue
-                argstr.append("{}={}".format(f, pprint.pformat(attr)))
-            return "imgaug.{}({})".format(classname, ', '.join(argstr))
+            return _default_repr(self)
         except AssertionError as e:
             log_once(e.args[0], 'warn')
             return super(Transform, self).__repr__()
 
     __str__ = __repr__
-
-
-class TransformList(Transform):
-    def __init__(self, tfms):
-        for t in tfms:
-            assert isinstance(t, Transform), t
-        self.tfms = tfms
-
-    def _apply(self, x, meth):
-        for t in self.tfms:
-            x = getattr(t, meth)(x)
-        return x
-
-    def __getattr__(self, name):
-        if name.startswith("apply_"):
-            return lambda x: self._apply(x, name)
-        raise AttributeError("TransformList object has no attribute {}".format(name))
-
-    def apply_image(self, img):
-        return self._apply(img, 'apply_image')
-
-    def apply_coords(self, coords):
-        return self._apply(coords, 'apply_coords')
-
-
-class NoOpTransform(Transform):
-    def __getattr__(self, name):
-        if name.startswith("apply_"):
-            return lambda x: x
-        raise AttributeError("NoOpTransform object has no attribute {}".format(name))
-
-    def apply_image(self, img):
-        return img
-
-    def apply_coords(self, coords):
-        return coords
 
 
 class ResizeTransform(Transform):
@@ -195,7 +153,15 @@ class WarpAffineTransform(Transform):
 
 
 class FlipTransform(Transform):
+    """
+    Flip the image.
+    """
     def __init__(self, h, w, horiz=True):
+        """
+        Args:
+            h, w (int):
+            horiz (bool): whether to flip horizontally or vertically.
+        """
         self._init(locals())
 
     def apply_image(self, img):
@@ -213,6 +179,9 @@ class FlipTransform(Transform):
 
 
 class TransposeTransform(Transform):
+    """
+    Transpose the image.
+    """
     def apply_image(self, img):
         ret = cv2.transpose(img)
         if img.ndim == 3 and ret.ndim == 2:
@@ -223,13 +192,34 @@ class TransposeTransform(Transform):
         return coords[:, ::-1]
 
 
-class PhotometricTransform(NoOpTransform):
+class NoOpTransform(Transform):
+    """
+    A Transform that does nothing.
+    """
+    def __getattr__(self, name):
+        if name.startswith("apply_"):
+            return lambda x: x
+        raise AttributeError("NoOpTransform object has no attribute {}".format(name))
+
+
+class PhotometricTransform(Transform):
+    """
+    A transform which only has `apply_image` but does nothing in `apply_coords`.
+    """
     def __init__(self, func, name=None):
+        """
+        Args:
+            func (img -> img): a function to be used for :meth:`apply_image`
+            name (str, optional): the name of this transform
+        """
         self._func = func
         self._name = name
 
     def apply_image(self, img):
         return self._func(img)
+
+    def apply_coords(self, coords):
+        return coords
 
     def __repr__(self):
         return "imgaug.PhotometricTransform({})".format(self._name if self._name else "")
@@ -239,19 +229,58 @@ class TransformFactory(Transform):
     def __init__(self, name=None, **kwargs):
         """
         Args:
-            func (img -> img):
+            name (str, optional): the name of this transform
+            **kwargs: mapping from `'apply_xxx'` to implementation of such functions.
         """
         for k, v in kwargs.items():
             if k.startswith('apply_'):
                 setattr(self, k, v)
+            else:
+                raise KeyError("Unknown argument '{}' in TransformFactory!".format(k))
         self._name = name
 
     def __str__(self):
         return "imgaug.TransformFactory({})".format(self._name if self._name else "")
 
 
-class LazyTransform(Transform):
+"""
+Some meta-transforms:
+they do not perform actual transformation, but delegate to another Transform.
+"""
+
+
+class TransformList(BaseTransform):
+    def __init__(self, tfms):
+        for t in tfms:
+            assert isinstance(t, BaseTransform), t
+        self.tfms = tfms
+
+    def _apply(self, x, meth):
+        for t in self.tfms:
+            x = getattr(t, meth)(x)
+        return x
+
+    def __getattr__(self, name):
+        if name.startswith("apply_"):
+            return lambda x: self._apply(x, name)
+        raise AttributeError("TransformList object has no attribute {}".format(name))
+
+    def __str__(self):
+        repr_each_tfm = ",\n".join(["  " + repr(x) for x in self.tfms])
+        return "imgaug.TransformList([\n{}])".format(repr_each_tfm)
+
+    __repr__ = __str__
+
+
+class LazyTransform(BaseTransform):
+    """
+    A transform that's instantiated at the first call to `apply_image`.
+    """
     def __init__(self, get_transform):
+        """
+        Args:
+            get_transform (img -> Transform): a function which will be used to instantiate a Transform.
+        """
         self.get_transform = get_transform
         self._transform = None
 
@@ -262,7 +291,7 @@ class LazyTransform(Transform):
 
     def _apply(self, x, meth):
         assert self._transform is not None, \
-            "LazyTransform.{} can only be called after the transform has been initialized by an image!"
+            "LazyTransform.{} can only be called after the transform has been applied on an image!"
         return getattr(self._transform, meth)(x)
 
     def __getattr__(self, name):
@@ -275,6 +304,8 @@ class LazyTransform(Transform):
             return "LazyTransform(get_transform={})".format(str(self.get_transform))
         else:
             return repr(self._transform)
+
+    __str__ = __repr__
 
     def apply_coords(self, coords):
         return self._apply(coords, "apply_coords")

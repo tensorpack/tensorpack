@@ -23,14 +23,6 @@ class IAATransform(Transform):
         return np.asarray([[p.x, p.y] for p in augmented])
 
 
-class AlbumentationsTransform(Transform):
-    def __init__(self, aug, param):
-        self._init(locals())
-
-    def apply_image(self, img):
-        return self.aug.apply(img, **self.param)
-
-
 class IAAugmentor(ImageAugmentor):
     """
     Wrap an augmentor form the IAA library: https://github.com/aleju/imgaug.
@@ -69,6 +61,14 @@ class IAAugmentor(ImageAugmentor):
 
     def get_transform(self, img):
         return IAATransform(self._aug.to_deterministic(), img.shape)
+
+
+class AlbumentationsTransform(Transform):
+    def __init__(self, aug, param):
+        self._init(locals())
+
+    def apply_image(self, img):
+        return self.aug.apply(img, **self.param)
 
 
 class Albumentations(ImageAugmentor):

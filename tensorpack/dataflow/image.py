@@ -206,7 +206,7 @@ class AugmentImageComponents(MapData):
                 major_image = index[0]  # image to be used to get params. TODO better design?
                 im = copy_func(dp[major_image])
                 check_dtype(im)
-                tfms = self.augs.augment_get_transform(im)
+                tfms = self.augs.get_transform(im)
                 dp[major_image] = tfms.apply_image(im)
                 for idx in index[1:]:
                     check_dtype(dp[idx])

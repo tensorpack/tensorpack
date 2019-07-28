@@ -52,6 +52,10 @@ class ConstantBackgroundFiller(BackgroundFiller):
         return np.zeros(return_shape, dtype=img.dtype) + self.value
 
 
+# NOTE:
+# apply_coords should be implemeted in paste transform, but not yet done
+
+
 class CenterPaste(ImageAugmentor):
     """
     Paste the image onto the center of a background canvas.
@@ -68,7 +72,10 @@ class CenterPaste(ImageAugmentor):
 
         self._init(locals())
 
-    def _augment(self, img, _):
+    def get_transform(self, _):
+        return TransformFactory(name=str(self), apply_image=lambda img: self._impl(img))
+
+    def _impl(self, img):
         img_shape = img.shape[:2]
         assert self.background_shape[0] >= img_shape[0] and self.background_shape[1] >= img_shape[1]
 
@@ -78,9 +85,6 @@ class CenterPaste(ImageAugmentor):
         x0 = int((self.background_shape[1] - img_shape[1]) * 0.5)
         background[y0:y0 + img_shape[0], x0:x0 + img_shape[1]] = img
         return background
-
-    def _augment_coords(self, coords, param):
-        raise NotImplementedError()
 
 
 class RandomPaste(CenterPaste):

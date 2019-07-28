@@ -6,6 +6,7 @@ import inspect
 import pprint
 from collections import namedtuple
 import weakref
+import six
 
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
@@ -23,6 +24,53 @@ def _reset_augmentor_after_fork(aug_ref):
     aug = aug_ref()
     if aug:
         aug.reset_state()
+
+
+def _default_repr(self):
+    """
+    Produce something like:
+    "imgaug.MyAugmentor(field1={self.field1}, field2={self.field2})"
+
+    It assumes that the instance `self` contains attributes that match its constructor.
+    """
+    classname = type(self).__name__
+    if six.PY2:
+        argspec = inspect.getargspec(self.__init__)
+        assert argspec.varargs is None, "The default __repr__ in {} doesn't work for varargs!".format(classname)
+        assert argspec.keywords is None, "The default __repr__ in {} doesn't work for kwargs!".format(classname)
+        fields = argspec.args[1:]
+        defaults = {}
+        defaults_list = argspec.defaults
+        if defaults_list is not None:
+            for f, d in zip(fields[::-1], defaults_list[::-1]):
+                defaults[f] = d
+    else:
+        argspec = inspect.getfullargspec(self.__init__)
+        assert argspec.varargs is None, "The default __repr__ in {} doesn't work for varargs!".format(classname)
+        assert argspec.varkw is None, "The default __repr__ in {} doesn't work for kwargs!".format(classname)
+        defaults = {}
+
+        fields = argspec.args[1:]
+        defaults_pos = argspec.defaults
+        if defaults_pos is not None:
+            for f, d in zip(fields[::-1], defaults_pos[::-1]):
+                defaults[f] = d
+
+        for k in argspec.kwonlyargs:
+            fields.append(k)
+            if k in argspec.kwonlydefaults:
+                defaults[k] = argspec.kwonlydefaults[k]
+
+    argstr = []
+    for idx, f in enumerate(fields):
+        assert hasattr(self, f), \
+            "Attribute {} in {} not found! Default __repr__ only works if " \
+            "the instance has attributes that match the constructor.".format(f, classname)
+        attr = getattr(self, f)
+        if f in defaults and attr is defaults[f]:
+            continue
+        argstr.append("{}={}".format(f, pprint.pformat(attr)))
+    return "imgaug.{}({})".format(classname, ', '.join(argstr))
 
 
 ImagePlaceholder = namedtuple("ImagePlaceholder", ["shape"])
@@ -79,35 +127,14 @@ class ImageAugmentor(object):
             size = []
         return self.rng.uniform(low, high, size)
 
-    def __repr__(self):
-        """
-        Produce something like:
-        "imgaug.MyAugmentor(field1={self.field1}, field2={self.field2})"
-        """
+    def __str__(self):
         try:
-            argspec = inspect.getargspec(self.__init__)
-            assert argspec.varargs is None, "The default __repr__ doesn't work for varargs!"
-            assert argspec.keywords is None, "The default __repr__ doesn't work for kwargs!"
-            fields = argspec.args[1:]
-            index_field_has_default = len(fields) - (0 if argspec.defaults is None else len(argspec.defaults))
-
-            classname = type(self).__name__
-            argstr = []
-            for idx, f in enumerate(fields):
-                assert hasattr(self, f), \
-                    "Attribute {} in {} not found! Default __repr__ only works if " \
-                    "attributes match the constructor.".format(f, classname)
-                attr = getattr(self, f)
-                if idx >= index_field_has_default:
-                    if attr is argspec.defaults[idx - index_field_has_default]:
-                        continue
-                argstr.append("{}={}".format(f, pprint.pformat(attr)))
-            return "imgaug.{}({})".format(classname, ', '.join(argstr))
+            return _default_repr(self)
         except AssertionError as e:
             log_once(e.args[0], 'warn')
             return super(Augmentor, self).__repr__()
 
-    __str__ = __repr__
+    __repr__ = __str__
 
     def get_transform(self, img):
         """
@@ -157,11 +184,10 @@ class ImageAugmentor(object):
         except AttributeError:
             pass
 
-        from .transform import Transform
-        if isinstance(p, Transform):  # some old augs return Transform already
+        from .transform import BaseTransform, TransformFactory
+        if isinstance(p, BaseTransform):  # some old augs return Transform already
             return p
 
-        from .transform import TransformFactory
         return TransformFactory(name="LegacyConversion -- " + str(self),
                                 apply_image=lambda img: self._augment(img, p),
                                 apply_coords=lambda coords: legacy_augment_coords(self, coords, p))
@@ -235,8 +261,18 @@ class AugmentorList(ImageAugmentor):
                 t = a.get_transform(img)
             else:
                 t = LazyTransform(a.get_transform)
-            tfms.append(t)
+
+            if isinstance(t, TransformList):
+                tfms.extend(t.tfms)
+            else:
+                tfms.append(t)
         return TransformList(tfms)
+
+    def __str__(self):
+        repr_each_aug = ",\n".join(["  " + repr(x) for x in self.augmentors])
+        return "imgaug.AugmentorList([\n{}])".format(repr_each_aug)
+
+    __repr__ = __str__
 
 
 Augmentor = ImageAugmentor
@@ -246,11 +282,16 @@ Legacy name. Augmentor and ImageAugmentor are now the same thing.
 
 
 class PhotometricAugmentor(ImageAugmentor):
+    """
+    A base class for ImageAugmentor which only affects pixels.
+
+    Subclass should implement `_get_params(img)` and `_impl(img, params)`.
+    """
     def get_transform(self, img):
         p = self._get_params(img)
         from .transform import PhotometricTransform
         return PhotometricTransform(func=lambda img: self._impl(img, p),
-                                    name=str(self))
+                                    name="from " + str(self))
 
     def _get_params(self, _):
         return None

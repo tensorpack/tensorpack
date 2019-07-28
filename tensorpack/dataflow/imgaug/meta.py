@@ -23,8 +23,8 @@ class RandomApplyAug(ImageAugmentor):
     def __init__(self, aug, prob):
         """
         Args:
-            aug (ImageAugmentor): an augmentor
-            prob (float): the probability
+            aug (ImageAugmentor): an augmentor.
+            prob (float): the probability to apply the augmentor.
         """
         self._init(locals())
         super(RandomApplyAug, self).__init__()
@@ -87,8 +87,9 @@ class RandomOrderAug(ImageAugmentor):
             a.reset_state()
 
     def get_transform(self, img):
-        # Note: If augmentors change the shape of image, get_augment_param might not work
-        # All augmentors should only rely on the shape of image
+        # Note: this makes assumption that the augmentors do not make changes
+        # to the image that will affect how the transforms will be instantiated
+        # in the subsequent augmentors.
         idxs = self.rng.permutation(len(self.aug_lists))
         tfms = [self.aug_lists[k].get_transform(img)
                 for k in range(len(self.aug_lists))]

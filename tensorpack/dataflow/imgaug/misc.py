@@ -165,7 +165,7 @@ class Transpose(ImageAugmentor):
         self.prob = prob
 
     def get_transform(self, _):
-        if self._rand_range() < self.prob:
+        if self.rng.rand() < self.prob:
             return TransposeTransform()
         else:
             return NoOpTransform()

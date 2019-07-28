@@ -97,9 +97,14 @@ class ImgAugTest(unittest.TestCase):
         img = _rand_image()
         orig = img.copy()
         tfms = augmentors.get_transform(img)
-        print(augmentors, tfms)  # TODO better print
+
+        # test printing
+        print(augmentors)
+        print(tfms)
 
         newimg = tfms.apply_image(img)
+        print(tfms)  # lazy ones will instantiate after the first apply
+
         newimg2 = tfms.apply_image(orig)
         self.assertTrue(np.allclose(newimg, newimg2))
         self.assertEqual(newimg2.shape[0], 30)
