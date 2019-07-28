@@ -9,6 +9,7 @@ import weakref
 
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
+from ...utils.develop import deprecated
 from ..image import check_dtype
 
 # Cannot import here if we want to keep backward compatibility.
@@ -28,10 +29,14 @@ ImagePlaceholder = namedtuple("ImagePlaceholder", ["shape"])
 
 
 class ImageAugmentor(object):
-    """ Base class for an augmentor
+    """
+    Base class for an augmentor
 
     ImageAugmentor should take images of type uint8 in range [0, 255], or
     floating point images in range [0, 1] or [0, 255].
+
+    Attributes:
+        rng: a numpy :class:`RandomState`
     """
 
     def __init__(self):
@@ -66,7 +71,7 @@ class ImageAugmentor(object):
 
     def _rand_range(self, low=1.0, high=None, size=None):
         """
-        Uniform float random number between low and high.
+        Generate uniform float random number between low and high using `self.rng`.
         """
         if high is None:
             low, high = 0, low
@@ -102,12 +107,24 @@ class ImageAugmentor(object):
             log_once(e.args[0], 'warn')
             return super(Augmentor, self).__repr__()
 
+    __str__ = __repr__
+
     def get_transform(self, img):
         """
-        Instantiate a :class:`Transform` object from the given image.
+        Instantiate a :class:`Transform` object to be used given the input image.
+        Subclasses should implement this method.
+
+        The :class:`ImageAugmentor` often has random policies which generate deterministic transform.
+        Any of those random policies should happen inside this method and instantiate
+        an actual deterministic transform to be performed.
+        The returned :class:`Transform` object should perform deterministic transforms
+        through its :meth:`apply_*` method.
+
+        In this way, the returned :class:`Transform` object can be used to transform not only the
+        input image, but other images or coordinates associated with the image.
 
         Args:
-            img (ndarray):
+            img (ndarray): see notes of this class on the requirements.
 
         Returns:
             Transform
@@ -115,6 +132,9 @@ class ImageAugmentor(object):
         # This should be an abstract method
         # But we provide an implementation that uses the old interface,
         # for backward compatibility
+        log_once("The old augmentor interface was deprecated. "
+                 "Please implement {} with `get_transform` instead!".format(self.__class__.__name__),
+                 "warning")
 
         def legacy_augment_coords(self, coords, p):
             try:
@@ -147,25 +167,37 @@ class ImageAugmentor(object):
                                 apply_coords=lambda coords: legacy_augment_coords(self, coords, p))
 
     def augment(self, img):
+        """
+        Create a transform, and apply it to augment the input image.
+
+        This can save you one line of code, when you only care the augmentation of "one image".
+        It will not return the :class:`Transform` object to you
+        so you won't be able to apply the same transformation on
+        other data associated with the image.
+
+        Args:
+            img (ndarray): see notes of this class on the requirements.
+
+        Returns:
+            img: augmented image.
+        """
+        check_dtype(img)
         t = self.get_transform(img)
         return t.apply_image(img)
-
-    def augment_return_tfm(self, img):
-        t = self.get_transform(img)
-        return t.apply_image(img), t
-
-    __str__ = __repr__
 
     # ###########################
     # Legacy interfaces:
     # ###########################
+    @deprecated("Please use `get_transform` instead!", "2020-06-06")
     def augment_return_params(self, d):
         t = self.get_transform(d)
         return t.apply_image(d), t
 
+    @deprecated("Please use `transform.apply_image` instead!", "2020-06-06")
     def augment_with_params(self, d, param):
         return param.apply_image(d)
 
+    @deprecated("Please use `transform.apply_coords` instead!", "2020-06-06")
     def augment_coords(self, coords, param):
         return param.apply_coords(coords)
 
@@ -191,30 +223,20 @@ class AugmentorList(ImageAugmentor):
             a.reset_state()
 
     def get_transform(self, img):
-        # the next augmentor requires the previous one to finish
-        raise RuntimeError("Cannot simply get transform of a AugmentorList without running the augmentation!")
-
-    def augment_return_tfm(self, img):
         check_dtype(img)
         assert img.ndim in [2, 3], img.ndim
 
+        from .transform import LazyTransform, TransformList
+        # The next augmentor requires the previous one to finish.
+        # So we have to use LazyTransform
         tfms = []
-        for a in self.augmentors:
-            t = a.get_transform(img)
-            img = t.apply_image(img)
+        for idx, a in enumerate(self.augmentors):
+            if idx == 0:
+                t = a.get_transform(img)
+            else:
+                t = LazyTransform(a.get_transform)
             tfms.append(t)
-        from .transform import TransformList
-        return img, TransformList(tfms)
-
-    def augment(self, d):
-        return self.augment_return_tfm(d)[0]
-
-    # ###########################
-    # Legacy interfaces:
-    # ###########################
-
-    def augment_return_params(self, d):
-        return self.augment_return_tfm(d)
+        return TransformList(tfms)
 
 
 Augmentor = ImageAugmentor

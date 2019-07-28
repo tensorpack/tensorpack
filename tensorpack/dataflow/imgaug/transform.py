@@ -70,7 +70,7 @@ class Transform(object):
         raise NotImplementedError(self.__class__)
 
     def apply_coords(self, coords):
-        raise NotImplementedError()
+        raise NotImplementedError(self.__class__)
 
     def __repr__(self):
         """
@@ -248,6 +248,36 @@ class TransformFactory(Transform):
 
     def __str__(self):
         return "imgaug.TransformFactory({})".format(self._name if self._name else "")
+
+
+class LazyTransform(Transform):
+    def __init__(self, get_transform):
+        self.get_transform = get_transform
+        self._transform = None
+
+    def apply_image(self, img):
+        if not self._transform:
+            self._transform = self.get_transform(img)
+        return self._transform.apply_image(img)
+
+    def _apply(self, x, meth):
+        assert self._transform is not None, \
+            "LazyTransform.{} can only be called after the transform has been initialized by an image!"
+        return getattr(self._transform, meth)(x)
+
+    def __getattr__(self, name):
+        if name.startswith("apply_"):
+            return lambda x: self._apply(x, name)
+        raise AttributeError("TransformList object has no attribute {}".format(name))
+
+    def __repr__(self):
+        if self._transform is None:
+            return "LazyTransform(get_transform={})".format(str(self.get_transform))
+        else:
+            return repr(self._transform)
+
+    def apply_coords(self, coords):
+        return self._apply(coords, "apply_coords")
 
 
 if __name__ == '__main__':

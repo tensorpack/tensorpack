@@ -96,8 +96,10 @@ class ImgAugTest(unittest.TestCase):
 
         img = _rand_image()
         orig = img.copy()
-        newimg, tfms = augmentors.augment_return_tfm(img)
+        tfms = augmentors.get_transform(img)
         print(augmentors, tfms)  # TODO better print
+
+        newimg = tfms.apply_image(img)
         newimg2 = tfms.apply_image(orig)
         self.assertTrue(np.allclose(newimg, newimg2))
         self.assertEqual(newimg2.shape[0], 30)
@@ -123,7 +125,8 @@ class ImgAugTest(unittest.TestCase):
 
         img = _rand_image()
         orig = img.copy()
-        newimg, tfms = augmentors.augment_return_tfm(img)
+        tfms = augmentors.get_transform(img)
+        newimg = tfms.apply_image(img)
         newimg2 = tfms.apply_image(orig)
         self.assertTrue(np.allclose(newimg, newimg2))
         self.assertEqual(newimg2.shape[0], 30)
