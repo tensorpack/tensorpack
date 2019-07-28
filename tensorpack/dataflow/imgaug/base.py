@@ -214,16 +214,16 @@ class ImageAugmentor(object):
     # ###########################
     # Legacy interfaces:
     # ###########################
-    @deprecated("Please use `get_transform` instead!", "2020-06-06")
+    @deprecated("Please use `get_transform` instead!", "2020-06-06", max_num_warnings=3)
     def augment_return_params(self, d):
         t = self.get_transform(d)
         return t.apply_image(d), t
 
-    @deprecated("Please use `transform.apply_image` instead!", "2020-06-06")
+    @deprecated("Please use `transform.apply_image` instead!", "2020-06-06", max_num_warnings=3)
     def augment_with_params(self, d, param):
         return param.apply_image(d)
 
-    @deprecated("Please use `transform.apply_coords` instead!", "2020-06-06")
+    @deprecated("Please use `transform.apply_coords` instead!", "2020-06-06", max_num_warnings=3)
     def augment_coords(self, coords, param):
         return param.apply_coords(coords)
 
