@@ -53,13 +53,16 @@ We do not answer machine learning questions and it is your responsibility to
 figure out how to make your models more accurate.
 
 ### 4. Your environment:
-  + Paste the output of this command: `python -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
-    If this command failed, tell us your version of Python/TF/tensorpack.
+
+Paste the output of this command: `python -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
+If this command failed, tell us your version of Python/TF/tensorpack.
+
+Note that:
+
   + You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`
     and see if your issue is already solved.
   + If you're not using tensorpack under a normal command line shell (e.g.,
     using an IDE or jupyter notebook), please retry under a normal command line shell.
-  + Include relevant hardware information, e.g. number of GPUs used for training, amount of RAM.
 
 You may often want to provide extra information related to your issue, but
 at the minimum please try to provide the above information __accurately__ to save effort in the investigation.

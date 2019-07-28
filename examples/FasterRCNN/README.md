@@ -44,9 +44,13 @@ to `annotations/` as well.
 
 
 ## Usage
+
+It is recommended to get familiar the relevant papers listed above before using this code.
+Otherwise you may end up doing something unreasonable.
+
 ### Train:
 
-To train on a single machine:
+To train on a single machine (with 1 or more GPUs):
 ```
 ./train.py --config \
     BACKBONE.WEIGHTS=/path/to/ImageNet-R50-AlignPadding.npz \
@@ -54,7 +58,8 @@ To train on a single machine:
     [OTHER-ARCHITECTURE-SETTINGS]
 ```
 
-To run distributed training, set `TRAINER=horovod` and refer to [HorovodTrainer docs](http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.HorovodTrainer).
+Alternatively, use `TRAINER=horovod` which supports distributed training as well, but less straightforward to run.
+Refer to [HorovodTrainer docs](http://tensorpack.readthedocs.io/modules/train.html#tensorpack.train.HorovodTrainer) for details.
 
 All options can be changed by either the command line or the `config.py` file (recommended).
 Some reasonable configurations are listed in the table below.
@@ -74,7 +79,7 @@ To evaluate the performance of a model on COCO:
 ```
 
 Several trained models can be downloaded in the table below. Evaluation and
-prediction will need to be run with the corresponding configs used in training.
+prediction have to be run with the corresponding configs used in training.
 
 ## Results
 

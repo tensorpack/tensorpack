@@ -19,9 +19,10 @@ class RandomCrop(ImageAugmentor):
     def __init__(self, crop_shape):
         """
         Args:
-            crop_shape: (h, w) tuple or a int
+            crop_shape: (h, w), int or a tuple of int
         """
         crop_shape = shape2d(crop_shape)
+        crop_shape = (int(crop_shape[0]), int(crop_shape[1]))
         super(RandomCrop, self).__init__()
         self._init(locals())
 
@@ -30,9 +31,9 @@ class RandomCrop(ImageAugmentor):
         assert orig_shape[0] >= self.crop_shape[0] \
             and orig_shape[1] >= self.crop_shape[1], orig_shape
         diffh = orig_shape[0] - self.crop_shape[0]
-        h0 = 0 if diffh == 0 else self.rng.randint(diffh)
+        h0 = self.rng.randint(diffh + 1)
         diffw = orig_shape[1] - self.crop_shape[1]
-        w0 = 0 if diffw == 0 else self.rng.randint(diffw)
+        w0 = self.rng.randint(diffw + 1)
         return CropTransform(h0, w0, self.crop_shape[0], self.crop_shape[1])
 
 

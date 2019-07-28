@@ -26,7 +26,7 @@ baseline and they actually cannot beat this standard ResNet recipe.
 | ResNeXt101-32x4d | 5.73%       | 21.05%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNeXt101-32x4d.npz) |
 | ResNet152        | 5.78%       | 21.51%      | [:arrow_down:](http://models.tensorpack.com/ResNet/ImageNet-ResNet152.npz)        |
 
-To reproduce training or evaluation,
+To reproduce training or evaluation in the above table,
 first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
 ./imagenet-resnet.py --data /directory/of/ILSVRC -d 50 --batch 512

@@ -78,9 +78,9 @@ Efficiency:
    set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
    (which may negatively impact your throughput). The training only needs <10G RAM if `NUM_WORKERS=0`.
 
-1. Inference is unoptimized. Tensorpack is a training interface, therefore it
-   does not help you on optimized inference. In fact, the current implementation
-   uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
+1. Inference is unoptimized. Tensorpack is a training interface: it produces the trained weights
+	 in standard format but it does not help you on optimized inference.
+	 In fact, the current implementation uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
 
 Possible Future Enhancements:
 
