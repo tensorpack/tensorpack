@@ -25,10 +25,10 @@ class Hue(PhotometricAugmentor):
         rgb = bool(rgb)
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return self._rand_range(*self.range)
 
-    def _impl(self, img, hue):
+    def _augment(self, img, hue):
         m = cv2.COLOR_BGR2HSV if not self.rgb else cv2.COLOR_RGB2HSV
         hsv = cv2.cvtColor(img, m)
         # https://docs.opencv.org/3.2.0/de/d25/imgproc_color_conversions.html#color_convert_rgb_hsv
@@ -57,10 +57,10 @@ class Brightness(PhotometricAugmentor):
         assert delta > 0
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return self._rand_range(-self.delta, self.delta)
 
-    def _impl(self, img, v):
+    def _augment(self, img, v):
         old_dtype = img.dtype
         img = img.astype('float32')
         img += v
@@ -82,10 +82,10 @@ class BrightnessScale(PhotometricAugmentor):
         super(BrightnessScale, self).__init__()
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return self._rand_range(*self.range)
 
-    def _impl(self, img, v):
+    def _augment(self, img, v):
         old_dtype = img.dtype
         img = img.astype('float32')
         img *= v
@@ -109,10 +109,10 @@ class Contrast(PhotometricAugmentor):
         super(Contrast, self).__init__()
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return self._rand_range(*self.factor_range)
 
-    def _impl(self, img, r):
+    def _augment(self, img, r):
         old_dtype = img.dtype
 
         if img.ndim == 3:
@@ -147,7 +147,7 @@ class MeanVarianceNormalize(PhotometricAugmentor):
         """
         self._init(locals())
 
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         img = img.astype('float32')
         if self.all_channel:
             mean = np.mean(img)
@@ -171,13 +171,13 @@ class GaussianBlur(PhotometricAugmentor):
         super(GaussianBlur, self).__init__()
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         sx, sy = self.rng.randint(self.max_size, size=(2,))
         sx = sx * 2 + 1
         sy = sy * 2 + 1
         return sx, sy
 
-    def _impl(self, img, s):
+    def _augment(self, img, s):
         return np.reshape(cv2.GaussianBlur(img, s, sigmaX=0, sigmaY=0,
                                            borderType=cv2.BORDER_REPLICATE), img.shape)
 
@@ -192,10 +192,10 @@ class Gamma(PhotometricAugmentor):
         super(Gamma, self).__init__()
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return self._rand_range(*self.range)
 
-    def _impl(self, img, gamma):
+    def _augment(self, img, gamma):
         old_dtype = img.dtype
         lut = ((np.arange(256, dtype='float32') / 255) ** (1. / (1. + gamma)) * 255).astype('uint8')
         img = np.clip(img, 0, 255).astype('uint8')
@@ -215,7 +215,7 @@ class Clip(PhotometricAugmentor):
         """
         self._init(locals())
 
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         return np.clip(img, self.min, self.max)
 
 
@@ -236,10 +236,10 @@ class Saturation(PhotometricAugmentor):
         assert alpha < 1
         self._init(locals())
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return 1 + self._rand_range(-self.alpha, self.alpha)
 
-    def _impl(self, img, v):
+    def _augment(self, img, v):
         old_dtype = img.dtype
         m = cv2.COLOR_RGB2GRAY if self.rgb else cv2.COLOR_BGR2GRAY
         grey = cv2.cvtColor(img, m)
@@ -271,11 +271,11 @@ class Lighting(PhotometricAugmentor):
         assert eigvec.shape == (3, 3)
         self._init(locals())
 
-    def _get_params(self, img):
+    def _get_augment_params(self, img):
         assert img.shape[2] == 3
         return (self.rng.randn(3) * self.std).astype("float32")
 
-    def _impl(self, img, v):
+    def _augment(self, img, v):
         old_dtype = img.dtype
         v = v * self.eigval
         v = v.reshape((3, 1))
@@ -301,7 +301,7 @@ class MinMaxNormalize(PhotometricAugmentor):
         """
         self._init(locals())
 
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         img = img.astype('float32')
         if self.all_channel:
             minimum = np.min(img)

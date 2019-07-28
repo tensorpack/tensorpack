@@ -288,10 +288,10 @@ class PhotometricAugmentor(ImageAugmentor):
     Subclass should implement `_get_params(img)` and `_impl(img, params)`.
     """
     def get_transform(self, img):
-        p = self._get_params(img)
+        p = self._get_augment_params(img)
         from .transform import PhotometricTransform
-        return PhotometricTransform(func=lambda img: self._impl(img, p),
+        return PhotometricTransform(func=lambda img: self._augment(img, p),
                                     name="from " + str(self))
 
-    def _get_params(self, _):
+    def _get_augment_params(self, _):
         return None

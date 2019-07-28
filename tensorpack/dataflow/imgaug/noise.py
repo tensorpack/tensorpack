@@ -21,10 +21,10 @@ class JpegNoise(PhotometricAugmentor):
         super(JpegNoise, self).__init__()
         self._init(locals())
 
-    def _get_params(self, img):
+    def _get_augment_params(self, img):
         return self.rng.randint(*self.quality_range)
 
-    def _impl(self, img, q):
+    def _augment(self, img, q):
         enc = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, q])[1]
         return cv2.imdecode(enc, 1).astype(img.dtype)
 
@@ -42,10 +42,10 @@ class GaussianNoise(PhotometricAugmentor):
         super(GaussianNoise, self).__init__()
         self._init(locals())
 
-    def _get_params(self, img):
+    def _get_augment_params(self, img):
         return self.rng.randn(*img.shape)
 
-    def _impl(self, img, noise):
+    def _augment(self, img, noise):
         old_dtype = img.dtype
         ret = img + noise * self.sigma
         if self.clip or old_dtype == np.uint8:
@@ -67,10 +67,10 @@ class SaltPepperNoise(PhotometricAugmentor):
         super(SaltPepperNoise, self).__init__()
         self._init(locals())
 
-    def _get_params(self, img):
+    def _get_augment_params(self, img):
         return self.rng.uniform(low=0, high=1, size=img.shape)
 
-    def _impl(self, img, param):
+    def _augment(self, img, param):
         img[param > (1 - self.white_prob)] = 255
         img[param < self.black_prob] = 0
         return img

@@ -224,6 +224,8 @@ class PhotometricTransform(Transform):
     def __repr__(self):
         return "imgaug.PhotometricTransform({})".format(self._name if self._name else "")
 
+    __str__ = __repr__
+
 
 class TransformFactory(Transform):
     def __init__(self, name=None, **kwargs):
@@ -241,6 +243,8 @@ class TransformFactory(Transform):
 
     def __str__(self):
         return "imgaug.TransformFactory({})".format(self._name if self._name else "")
+
+    __repr__ = __str__
 
 
 """

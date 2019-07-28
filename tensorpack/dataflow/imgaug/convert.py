@@ -19,10 +19,10 @@ class ColorSpace(PhotometricAugmentor):
             keepdims (bool): keep the dimension of image unchanged if OpenCV
                 changes it.
         """
-        super(ColorSpace, self).__init__(func=self._func)
+        super(ColorSpace, self).__init__()
         self._init(locals())
 
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         transf = cv2.cvtColor(img, self.mode)
         if self.keepdims:
             if len(transf.shape) is not len(img.shape):
@@ -45,11 +45,11 @@ class Grayscale(ColorSpace):
 
 class ToUint8(PhotometricAugmentor):
     """ Convert image to uint8. Useful to reduce communication overhead. """
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         return np.clip(img, 0, 255).astype(np.uint8)
 
 
 class ToFloat32(PhotometricAugmentor):
     """ Convert image to float32, may increase quality of the augmentor. """
-    def _impl(self, img, _):
+    def _augment(self, img, _):
         return img.astype(np.float32)
