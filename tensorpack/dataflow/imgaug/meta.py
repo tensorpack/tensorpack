@@ -106,7 +106,7 @@ class MapImage(ImageAugmentor):
         Args:
             func: a function which takes an image array and return an augmented one
             coord_func: optional. A function which takes coordinates and return augmented ones.
-                Coordinates have the same format as :func:`ImageAugmentor.augment_coords`.
+                Coordinates should be Nx2 array of (x, y)s.
         """
         super(MapImage, self).__init__()
         self.func = func

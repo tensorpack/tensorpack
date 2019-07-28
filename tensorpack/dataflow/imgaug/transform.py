@@ -15,7 +15,7 @@ Legacy alias. Please don't use.
 # This legacy augmentor requires us to import base from here, causing circular dependency.
 # Should remove this in the future.
 
-__all__ = []
+__all__ = ["Transform"]
 
 
 # class WrappedImgFunc(object):
@@ -62,18 +62,21 @@ class Transform(BaseTransform):
     A deterministic image transformation, used to implement
     the (probably random) augmentors.
 
-    This way the deterministic part
-    (the actual transformation which may be common between augmentors)
-    can be separated from the random part
-    (the random policy which is different between augmentors).
-
-    The implementation of each method may choose to modify its input data
-    in-place for efficient transformation.
-
     This class is also the place to provide a default implementation to any
     :meth:`apply_xxx` method.
     The current default is to raise NotImplementedError in any such methods.
+
+    All subclasses should implement `apply_image`.
+    The image should be of type uint8 in range [0, 255], or
+    floating point images in range [0, 1] or [0, 255]
+
+    Some subclasses may implement `apply_coords`, when applicable.
+    It should take and return a numpy array of Nx2, where each row is the (x, y) coordinate.
+
+    The implementation of each method may choose to modify its input data
+    in-place for efficient transformation.
     """
+
     def __init__(self):
         # provide an empty __init__, so that __repr__ will work nicely
         pass
