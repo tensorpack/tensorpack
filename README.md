@@ -1,6 +1,16 @@
 ![Tensorpack](.github/tensorpack.png)
 
-Tensorpack is a neural network training interface based on TensorFlow.
+Tensorpack is a neural network training interface based on TensorFlow. 
+This specifc branch is for 
+1. Inference in CPU 
+2. NHWC format support
+3. Save forzen graph protobuf format support.
+4. Run Inference from frozen graph support.
+5. Run Inference on single image support
+6. Run Inference on dataset support
+7. Run Inference on dummy data support
+
+Please scroll to the end of this page for CPU related directions.
 
 [![Build Status](https://travis-ci.org/tensorpack/tensorpack.svg?branch=master)](https://travis-ci.org/tensorpack/tensorpack)
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io)
@@ -80,4 +90,45 @@ If you use Tensorpack in your research or wish to refer to the examples, please 
   howpublished={\url{https://github.com/tensorpack/}},
   year={2016}
 }
+```
+
+## CPU NHWC FORMAT INSTRUCTIONS
+Conda Environment and Python version tested.
+```
+conda create -n fasterrcnnfpn python=3.6
+conda activate fasterrcnnfpn
+```
+
+Install Dependecies
+```
+pip install numpy
+pip install keras_preprocessing
+pip install tqdm
+pip install tensorpack
+pip install cython
+pip install pycocotools
+pip install matplotlib
+```
+
+## Load from chekpoint and save protobuf file
+```
+python train.py --evaluate ./temp/output.json --load ./temp/model.ckpt  --savepb --config MODE_MASK=False MODE_FPN=True DATA.BASEDIR=./temp/ DATA.VAL='val2017' TRAIN.NUM_GPUS=1
+```
+## Run inference 
+on single image
+```
+python train.py --predict ./temp/val2017/000000000785.jpg --load ./temp/model.ckpt --loadfrozenpb --model_name=Fasterrcnnfpn_freezed_quantized_int8_s2.pb --config MODE_MASK=False MODE_FPN=True DATA.BASEDIR=./temp/ DATA.VAL='val2017' TRAIN.NUM_GPUS=1
+```
+on dataset(Accuracy run)
+```
+python train.py --evaluate ./temp/output.json --load ./temp/model.ckpt --loadfrozenpb --model_name=/Fasterrcnnfpn_freezed_quantized_int8_final.pb --config MODE_MASK=False MODE_FPN=True DATA.BASEDIR=./temp/ DATA.VAL='val2017' TRAIN.NUM_GPUS=1
+ 
+python train.py --predict ./temp/val2017/000000000785.jpg --load ./temp/model.ckpt --loadfrozenpb --model_name=Fasterrcnnfpn_freezed_quantized_int8_final.pb --config MODE_MASK=False MODE_FPN=True DATA.BASEDIR=./temp/ DATA.VAL='val2017' TRAIN.NUM_GPUS=1
+
+```
+on dummy data(performance run)
+```
+python run_faster_rcnn_fpn_inferencegraph_dummydata.py --model_name=Fasterrcnnfpn_freezed_optimized_fp32.pb --image_count=100
+python run_faster_rcnn_fpn_inferencegraph_dummydata.py --model_name=Fasterrcnnfpn_freezed_quantized_int8_final.pb --image_count=100
+
 ```
