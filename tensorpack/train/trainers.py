@@ -226,6 +226,7 @@ class DistributedTrainerBase(SingleCostTrainer):
             get_distributed_session_creator(self.server), session_init)
 
 
+# This is slow. deprecated in favor of horovod
 class DistributedTrainerParameterServer(DistributedTrainerBase):
 
     __doc__ = DistributedParameterServerBuilder.__doc__
@@ -253,6 +254,7 @@ class DistributedTrainerParameterServer(DistributedTrainerBase):
         return []
 
 
+# This is slow. deprecated in favor of horovod
 class DistributedTrainerReplicated(DistributedTrainerBase):
 
     __doc__ = DistributedReplicatedBuilder.__doc__
@@ -275,7 +277,7 @@ class DistributedTrainerReplicated(DistributedTrainerBase):
     def _setup_input(self, input_signature, input):
         with override_to_local_variable():
             get_global_step_var()  # gs should be local
-            # input source may create variable (queue size summary)
+            # input source may create variables (queue size summary)
             # TODO This is not good because we don't know from here
             # whether something should be global or local. We now assume
             # they should be local.
