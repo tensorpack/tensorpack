@@ -121,7 +121,7 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
 
  <a id="ft3">3</a>: This entry does not use ImageNet pre-training. Detectron numbers are taken from Fig. 5 in [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883).
  Note that our training strategy is slightly different: we enable cascade throughout the entire training.
- As far as I know, this model is the __best open source model__ on COCO dataset.
+ As far as I know, this model is the __best open source TF model__ on COCO dataset.
 
 ## Notes
 
