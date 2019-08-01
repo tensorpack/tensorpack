@@ -122,13 +122,13 @@ class GoogleNetRandomCropAndResize(ImageAugmentor):
             if self.rng.uniform() < 0.5:
                 ww, hh = hh, ww
             if hh <= h and ww <= w:
-                x1 = 0 if w == ww else self.rng.randint(0, w - ww)
-                y1 = 0 if h == hh else self.rng.randint(0, h - hh)
+                x1 = self.rng.randint(0, w - ww + 1)
+                y1 = self.rng.randint(0, h - hh + 1)
                 return TransformList([
                     CropTransform(y1, x1, hh, ww),
                     ResizeTransform(hh, ww, self.target_shape, self.target_shape, interp=self.interp)
                 ])
-        tfm1 = ResizeShortestEdge(self.target_shape, interp=self.interp).get_transform(img)
-        out_shape = (tfm1.new_h, tfm1.new_w)
-        tfm2 = CenterCrop(self.target_shape).get_transform(ImagePlaceholder(shape=out_shape))
-        return TransformList([tfm1, tfm2])
+        resize = ResizeShortestEdge(self.target_shape, interp=self.interp).get_transform(img)
+        out_shape = (resize.new_h, resize.new_w)
+        crop = CenterCrop(self.target_shape).get_transform(ImagePlaceholder(shape=out_shape))
+        return TransformList([resize, crop])
