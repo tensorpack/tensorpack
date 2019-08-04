@@ -109,6 +109,7 @@ def set_logger_dir(dirname, action=None):
                 old states for you. It simply does nothing.
 
     """
+    dirname = os.path.normpath(dirname)
     global LOG_DIR, _FILE_HANDLER
     if _FILE_HANDLER:
         # unload and close the old file handler, so that we may safely delete the logger directory

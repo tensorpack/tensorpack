@@ -42,7 +42,7 @@ class ModelSaver(Callback):
         if checkpoint_dir is not None:
             if not tf.gfile.IsDirectory(checkpoint_dir):  # v2: tf.io.gfile.isdir
                 tf.gfile.MakeDirs(checkpoint_dir)  # v2: tf.io.gfile.makedirs
-        self.checkpoint_dir = checkpoint_dir
+        self.checkpoint_dir = os.path.normpath(checkpoint_dir)
 
     def _setup_graph(self):
         assert self.checkpoint_dir is not None, \
@@ -118,6 +118,7 @@ class MinSaver(Callback):
         self.checkpoint_dir = checkpoint_dir
         if self.checkpoint_dir is None:
             self.checkpoint_dir = logger.get_logger_dir()
+        self.checkpoint_dir = os.path.normpath(self.checkpoint_dir)
 
     def _get_stat(self):
         try:
