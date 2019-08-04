@@ -153,7 +153,7 @@ or when you need to filter your data on the fly.
 1. `torch.utils.data.DataLoader` assumes that:
    1. You do batch training
    1. You use a constant batch size
-   1. Indices are sufficient to determine the samples to batch together
+   1. Indices are sufficient to determine which samples to batch together
 
    None of these are necessarily true.
 
@@ -161,16 +161,16 @@ or when you need to filter your data on the fly.
    but inefficient for generic data type or numpy arrays.
    Also, its implementation [does not always clean up the subprocesses correctly](https://github.com/pytorch/pytorch/issues/16608).
 
-Pytorch starts to improve on these bad assumptions (e.g., with [IterableDataset](https://github.com/pytorch/pytorch/pull/19228)).
+PyTorch starts to improve on these bad assumptions (e.g., with [IterableDataset](https://github.com/pytorch/pytorch/pull/19228)).
 On the other hand, DataFlow:
 
-1. Is a pure iterator, not necessarily has a length or can be indexed. This is more generic.
+1. Is an iterator, not necessarily has a length or can be indexed. This is more generic.
 2. Does not assume batches, and allow you to implement different batching logic easily.
 3. Is optimized for generic data type and numpy arrays.
 
 
 ```eval_rst
-.. note:: Why is an iterator interface more generic than ``__getitem__``?
+.. note:: An iterator interface is more generic than ``__getitem__``?
 
 	DataFlow's iterator interface can perfectly simulate the behavior of indexing interface like this:
 

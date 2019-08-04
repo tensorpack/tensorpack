@@ -298,6 +298,19 @@ class TransformList(BaseTransform):
         repr_each_tfm = ",\n".join(["  " + repr(x) for x in self.tfms])
         return "imgaug.TransformList([\n{}])".format(repr_each_tfm)
 
+    def __add__(self, other):
+        other = other.tfms if isinstance(other, TransformList) else [other]
+        return TransformList(self.tfms + other)
+
+    def __iadd__(self, other):
+        other = other.tfms if isinstance(other, TransformList) else [other]
+        self.tfms.extend(other)
+        return self
+
+    def __radd__(self, other):
+        other = other.tfms if isinstance(other, TransformList) else [other]
+        return TransformList(other + self.tfms)
+
     __repr__ = __str__
 
 

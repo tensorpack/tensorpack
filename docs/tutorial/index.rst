@@ -31,6 +31,7 @@ DataFlow Tutorials
   dataflow
   philosophy/dataflow
   extend/dataflow
+  parallel-dataflow
   efficient-dataflow
 
 Advanced Tutorials

@@ -16,23 +16,21 @@ then apply complicated preprocessing to it.
 We hope to reach a speed of **1k~5k images per second**, to keep GPUs busy.
 
 Some things to know before reading:
+
+1. You are recommended to read the [Parallel DataFlow Tutorial](parallel-dataflow.html) first.
 1. You only need the data loader to be **fast enough, but not faster**.
    See [How Fast Do You Actually Need](philosophy/dataflow.html#how-fast-do-you-actually-need) for details.
    For smaller datasets (e.g. several GBs of images with lightweight preprocessing), 
    a simple reader plus some multiprocess runner is usually fast enough.
-
-   Therefore you don't have to understand this tutorial in depth, unless you really find your data loader being the bottleneck.
-   **Premature optimization is the root of evil.** Always benchmark and make sure you need optimization before optimizing.
-
-2. Having a fast Python generator **alone** may or may not improve your overall training speed.
+1. Having a fast Python generator **alone** may or may not improve your overall training speed.
 	 You need mechanisms to hide the latency of **all** preprocessing stages, as mentioned in the
 	 [InputSource tutorial](extend/input-source.html).
-3. Reading training set and validation set are different.
+1. Reading training set and validation set are different.
 	 In training it's OK to reorder, regroup, or even duplicate some datapoints, as long as the
 	 data distribution stays the same.
 	 But in validation we often need the exact set of data, to be able to compute a correct and comparable score.
 	 This will affect how we build the DataFlow.
-4. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
+1. The actual performance would depend on not only the disk, but also memory (for caching) and CPU (for data processing).
 	You may need to tune the parameters (#processes, #threads, size of buffer, etc.)
 	or change the pipeline for new tasks and new machines to achieve the best performance.
     The solutions in this tutorial may not help you.
@@ -43,7 +41,8 @@ Some things to know before reading:
 The benchmark code for this tutorial can be found in [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks/tree/master/ImageNet),
 including comparison with a similar pipeline built with `tf.data`.
 
-This tutorial could be a bit complicated for people new to system architectures, but you do need these to be able to run fast enough on ImageNet-scale dataset.
+This tutorial could be a bit complicated for people new to system architectures,
+but you do need these to be able to run fast enough on ImageNet-scale dataset.
 
 ## Random Read
 
@@ -58,18 +57,19 @@ TestDataSpeed(ds1).start()
 
 Here `ds0` reads original images from the filesystem. It is implemented simply by:
 ```python
-for filename, label in filelist:
+for filename, label in np.random.shuffle(filelist):
   yield [cv2.imread(filename), label]
 ```
 
-And `ds1` batch the datapoints from `ds0`, so that we can measure the speed of this DataFlow in terms of "batch per second".
-By default, `BatchData`
-will stack the datapoints into an `numpy.ndarray`, but since original images are of different shapes, we use
-`use_list=True` so that it just produces lists.
+And `ds1` batch the datapoints from `ds0`, so that we can measure the speed of this DataFlow in terms of "batches per second".
+By default, `BatchData` should stack the datapoints into an `numpy.ndarray`, 
+but since original ImageNet images are of different shapes, we use
+`use_list=True** so that it produces lists for now.
 
+Here we're mesuring the time to (1) read from file system speed and (2) decode the image.
 On a good filesystem you probably can already observe good speed here (e.g. 5 it/s, that is 1280 images/s), but on HDD the speed may be just 1 it/s,
 because we are doing heavy random read on the filesystem (regardless of whether `shuffle` is True).
-Image decoding in `cv2.imread` could also be a bottleneck at this early stage.
+Image decoding in `cv2.imread` may also be a bottleneck at this early stage, since it requires a fast CPU.
 
 ### Parallel Runner
 
@@ -100,7 +100,7 @@ You can also apply parallel runner after batching, of course.
 ### Parallel Map
 The above DataFlow might be fast, but since it forks the ImageNet reader (`ds0`),
 it's **not a good idea to use it for validation** (for reasons mentioned at top.
-More details at the [documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)).
+More details at the [Parallel DataFlow Tutorial](parallel-dataflow) and the [documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)).
 Alternatively, you can use parallel mapper like this:
 
 ```eval_rst
@@ -155,7 +155,7 @@ And, of course, there is also a `MultiProcessMapData` as well for you to use.
 
 ### Save and Load a Single-File DataFlow
 Random read may not be a good idea when the data is not on an SSD.
-We can also dump the dataset into one single LMDB file and read it sequentially.
+In this case, we can also dump the dataset into one single LMDB file and read it sequentially.
 
 ```python
 from tensorpack.dataflow import *
@@ -177,7 +177,7 @@ from several forks of `ds0`, then neither the content nor the order of `ds1` wil
 See [documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)
 about caveats of `MultiProcessRunnerZMQ`.
 
-It will generate a database file of 140G. We load the DataFlow back by reading this LMDB file sequentially:
+This will generate a database file of 140G. We load the DataFlow back by reading this LMDB file sequentially:
 ```
 ds = LMDBSerializer.load('/path/to/ILSVRC-train.lmdb', shuffle=False)
 ds = BatchData(ds, 256, use_list=True)
@@ -201,7 +201,7 @@ the added line above maintains a buffer of datapoints and shuffle them once a wh
 It will not affect the model very much as long as the buffer is large enough,
 but it can be memory-consuming if buffer is too large.
 
-### Augmentations & Parallel Runner
+### Augmentations & Parallelism
 
 Then we add necessary transformations:
 ```eval_rst
@@ -222,37 +222,29 @@ Then we add necessary transformations:
 Both imdecode and the augmentors can be quite slow. We can parallelize them like this:
 ```eval_rst
 .. code-block:: python
-    :emphasize-lines: 3,7
+    :emphasize-lines: 4,5,6
 
     ds = LMDBSerializer.load(db, shuffle=False)
     ds = LocallyShuffleData(ds, 50000)
-    ds = MultiProcessRunner(ds, 5000, 1)
-    ds = MapDataComponent(ds, lambda x: cv2.imdecode(x, cv2.IMREAD_COLOR), 0)
-    ds = AugmentImageComponent(ds, lots_of_augmentors)
-    ds = MultiProcessRunnerZMQ(ds, 25)
+
+    def f(jpeg_str, label):
+        return lots_of_augmentors.augment(cv2.imdecode(x, cv2.IMREAD_COLOR)), label
+    ds = MultiProcessMapDataZMQ(ds, num_proc=25, f)
     ds = BatchData(ds, 256)
 ```
 
-Since we are reading the database sequentially, having multiple forked instances of the
-base LMDB reader will result in biased data distribution. Therefore we use `MultiProcessRunner` to
-launch the base DataFlow in only **one process**, and only parallelize the transformations
-with another `MultiProcessRunnerZMQ`
-(Nesting two `MultiProcessRunnerZMQ`, however, is not allowed.
-These differences are explained in the API documentation in more details.).
-Similar to what we did earlier, you can use `MultiThreadMapData` to parallelize as well.
-
 Let me summarize what this DataFlow does:
 
-1. One process reads LMDB file, shuffle them in a buffer and put them into a `multiprocessing.Queue` (used by `MultiProcessRunner`).
+1. One process reads LMDB file, shuffle them in a buffer and put them into a ZMQ pipe (used by `MultiProcessMapDataZMQ`).
 2. 25 processes take items from the queue, decode and process them into [image, label] pairs, and
-	 send them through ZMQ IPC pipe.
+	 send them through ZMQ IPC pipe to the main process.
 3. The main process takes data from the pipe, makes batches.
 
 The two DataFlow mentioned in this tutorial (both random read and sequential read) can run at a speed of 1k ~ 5k images per second,
 depend on your hardware condition of CPUs, RAM, disks, and the amount of augmentation.
 As a reference, tensorpack can train ResNet-18 at 1.2k images/s on 4 old TitanX.
 8 V100s can train ResNet-50 at 2.8k images/s according to [tensorpack benchmark](https://github.com/tensorpack/benchmarks/tree/master/ResNet-MultiGPU).
-So DataFlow will not be a serious bottleneck if configured properly.
+So DataFlow will not be a bottleneck if configured properly.
 
 ## Distributed DataFlow
 
@@ -287,8 +279,8 @@ TestDataSpeed(df).start()
    `MultiProcessRunnerZMQ` or `MultiProcessMapData` (which is an alias of `MultiProcessMapDataZMQ`).
 2. Windows needs to pickle your dataflow to run it in multiple processes.
    As a result you cannot use lambda functions for mappings, like the examples above.
-   You need to write a new function in global scope that does the mapping.
-   This issue also exist on Linux if you do not use the 'fork' start method.
+   You need to create a function in global scope, or a function-like object to perform the mapping.
+   This issue also exist on Linux when you do not use the 'fork' start method.
 
 [1]: #ref
 

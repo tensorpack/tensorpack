@@ -16,7 +16,7 @@ feel free to delete everything in this template.
 
 (2) **If you're using examples, have you made any changes to the examples? Paste `git status; git diff` here:**
 
-(3) **If not using examples, tell us what you did:**
+(3) **If not using examples, help us reproduce your issue:**
 
   It's always better to copy-paste what you did than to describe them.
 
