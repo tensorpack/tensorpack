@@ -282,11 +282,7 @@ class EvalCallback(Callback):
                 all_results.extend(obj)
                 os.unlink(fname)
 
-        output_file = os.path.join(
-            logdir, '{}-outputs{}.json'.format(self._eval_dataset, self.global_step))
-
-        scores = DatasetRegistry.get(self._eval_dataset).eval_inference_results(
-            all_results, output_file)
+        scores = DatasetRegistry.get(self._eval_dataset).eval_inference_results(all_results)
         for k, v in scores.items():
             self.trainer.monitors.put_scalar(self._eval_dataset + '-' + k, v)
 

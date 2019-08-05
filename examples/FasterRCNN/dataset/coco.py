@@ -68,16 +68,16 @@ class COCODetection(DatasetSplit):
         logger.info("Instances loaded from {}.".format(annotation_file))
 
     # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-    def print_coco_metrics(self, json_file):
+    def print_coco_metrics(self, results):
         """
         Args:
-            json_file (str): path to the results json file in coco format
+            results(list[dict]): results in coco format
         Returns:
             dict: the evaluation metrics
         """
         from pycocotools.cocoeval import COCOeval
         ret = {}
-        cocoDt = self.coco.loadRes(json_file)
+        cocoDt = self.coco.loadRes(results)
         cocoEval = COCOeval(self.coco, cocoDt, 'bbox')
         cocoEval.evaluate()
         cocoEval.accumulate()
@@ -86,8 +86,7 @@ class COCODetection(DatasetSplit):
         for k in range(6):
             ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
-        json_obj = json.load(open(json_file))
-        if len(json_obj) > 0 and 'segmentation' in json_obj[0]:
+        if len(results) > 0 and 'segmentation' in results[0]:
             cocoEval = COCOeval(self.coco, cocoDt, 'segm')
             cocoEval.evaluate()
             cocoEval.accumulate()
@@ -202,7 +201,7 @@ class COCODetection(DatasetSplit):
     def inference_roidbs(self):
         return self.load(add_gt=False)
 
-    def eval_inference_results(self, results, output):
+    def eval_inference_results(self, results, output=None):
         continuous_id_to_COCO_id = {v: k for k, v in self.COCO_id_to_category_id.items()}
         for res in results:
             # convert to COCO's incontinuous category id
@@ -214,12 +213,12 @@ class COCODetection(DatasetSplit):
             box[3] -= box[1]
             res['bbox'] = [round(float(x), 3) for x in box]
 
-        assert output is not None, "COCO evaluation requires an output file!"
-        with open(output, 'w') as f:
-            json.dump(results, f)
+        if output is not None:
+            with open(output, 'w') as f:
+                json.dump(results, f)
         if len(results):
             # sometimes may crash if the results are empty?
-            return self.print_coco_metrics(output)
+            return self.print_coco_metrics(results)
         else:
             return {}
 
@@ -228,6 +227,8 @@ def register_coco(basedir):
     """
     Add COCO datasets like "coco_train201x" to the registry,
     so you can refer to them with names in `cfg.DATA.TRAIN/VAL`.
+
+    Note that train2017==trainval35k==train2014+val2014-minival2014, and val2017==minival2014.
     """
     for split in ["train2017", "val2017", "train2014", "val2014",
                   "valminusminival2014", "minival2014"]:

@@ -84,10 +84,12 @@ _C.MODE_FPN = False
 
 # dataset -----------------------
 _C.DATA.BASEDIR = '/path/to/your/DATA/DIR'
+# All available dataset names are defined in `dataset/coco.py:register_coco`.
 # All TRAIN dataset will be concatenated for training.
-_C.DATA.TRAIN = ('coco_train2014', 'coco_valminusminival2014')   # i.e. trainval35k, AKA train2017
+_C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
 # Each VAL dataset will be evaluated separately (instead of concatenated)
-_C.DATA.VAL = ('coco_minival2014', )  # AKA val2017
+_C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
+
 # This two config will be populated later by the dataset loader:
 _C.DATA.NUM_CATEGORY = 80  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
