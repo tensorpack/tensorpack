@@ -69,6 +69,24 @@ As a result, tensorboard will show not only summaries in the graph, but also you
 For example, a precise validation error often needs to be computed manually, outside the TensorFlow graph.
 With a uniform monitor backend, this number will show up in tensorboard as well.
 
+### Remote Logging
+
+It is also easy to send data to online logging services
+for experiment management and reproducibility.
+
+For example, to send logging data to [comet.ml](https://www.comet.ml/), you can use
+[CometMLMonitor](../modules/callbacks.html#tensorpack.callbacks.CometMLMonitor).
+
+To send logging data to [WandB](https://www.wandb.com/),
+it's even simpler -- you only need to do:
+```python
+import wandb; wandb.init(..., sync_tensorboard=True)
+```
+
+Refer to their documentation for more types of logging you can do by using
+their APIs directly: [comet.ml](https://www.comet.ml/docs/python-sdk/Experiment/),
+[WandB](https://docs.wandb.com/docs/init.html).
+
 ### Textual Logs
 
 ```python
