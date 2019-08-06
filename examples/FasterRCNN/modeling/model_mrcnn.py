@@ -75,7 +75,7 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
             if norm is not None:
                 l = GroupNorm('gn{}'.format(k), l)
         l = Conv2DTranspose('deconv', l, cfg.MRCNN.HEAD_DIM, 2, strides=2, activation=tf.nn.relu)
-        l = Conv2D('conv', l, num_category, 1)
+        l = Conv2D('conv', l, num_category, 1, kernel_initializer=tf.random_normal_initializer(stddev=0.001))
     return l
 
 
