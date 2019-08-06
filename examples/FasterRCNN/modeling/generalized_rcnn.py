@@ -11,6 +11,7 @@ from tensorpack.tfutils.tower import get_current_tower_context
 
 from config import config as cfg
 from data import get_all_anchors, get_all_anchors_fpn
+from utils.box_ops import area as tf_area
 
 from . import model_frcnn
 from . import model_mrcnn
@@ -73,6 +74,8 @@ class GeneralizedRCNN(ModelDesc):
         proposals, rpn_losses = self.rpn(image, features, anchor_inputs)  # inputs?
 
         targets = [inputs[k] for k in ['gt_boxes', 'gt_labels', 'gt_masks'] if k in inputs]
+        gt_boxes_area = tf.reduce_mean(tf_area(inputs["gt_boxes"]), name='mean_gt_box_area')
+        add_moving_summary(gt_boxes_area)
         head_losses = self.roi_heads(image, features, proposals, targets)
 
         if self.training:
