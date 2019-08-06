@@ -162,7 +162,7 @@ class COCODetection(DatasetSplit):
             y2 = min(max(y2, 0), height)
             w, h = x2 - x1, y2 - y1
             # Require non-zero seg area and more than 1x1 box size
-            if obj['area'] > 1 and w > 0 and h > 0 and w * h >= 4:
+            if obj['area'] > 1 and w > 0 and h > 0:
                 all_boxes.append([x1, y1, x2, y2])
                 all_cls.append(self.COCO_id_to_category_id.get(obj['category_id'], obj['category_id']))
                 iscrowd = obj.get("iscrowd", 0)

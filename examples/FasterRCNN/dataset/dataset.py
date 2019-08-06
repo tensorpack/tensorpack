@@ -25,6 +25,7 @@ class DatasetSplit():
             Each list of numpy arrays corresponds to the mask for one instance.
             Each numpy array in the list is a polygon of shape Nx2,
             because one mask can be represented by N polygons.
+            Each row in the Nx2 array is a (x, y) coordinate.
 
             If your segmentation annotations are originally masks rather than polygons,
             either convert it, or the augmentation will need to be changed or skipped accordingly.
