@@ -38,17 +38,20 @@ def get_savename_from_varname(
 class SessionUpdate(object):
     """ Update the variables in a session """
 
-    def __init__(self, sess, vars_to_update):
+    def __init__(self, sess, vars_to_update, ignore_mismatch=False):
         """
         Args:
             sess (tf.Session): a session object
             vars_to_update: a collection of variables to update
+            ignore_mismatch (bool): ignore failures when the value and the
+                variable does not match.
         """
         self.sess = sess
         self.name_map = {v.name: v for v in vars_to_update}
+        self.ignore_mismatch = ignore_mismatch
 
     @staticmethod
-    def relaxed_value_for_var(value, var):
+    def relaxed_value_for_var(value, var, ignore_mismatch=False):
         """
         Returns a relaxed (possibly reshaped/upcast-ed) version of value,
         to be loaded to the given variable.
@@ -56,9 +59,13 @@ class SessionUpdate(object):
         Args:
             value (ndarray): an numpy array to be loaded to var
             var (tf.Variable):
+            ignore_mismatch (bool): ignore failures when the value and the
+                variable does not match.
 
         Returns:
-            ndarray: a possibly reshaped or casted version of value
+            ndarray: a possibly reshaped or casted version of value.
+            Returns None if `ignore_mismatch==True` and the value and the variable
+            mismatch.
         """
         assert isinstance(var, tf.Variable)
         name = var.op.name
@@ -66,11 +73,17 @@ class SessionUpdate(object):
         # check incompatible shape
         varshape = tuple(var.get_shape().as_list())
         if varshape != value.shape:
-            # TODO only allow reshape when shape different by empty axis
             if np.prod(varshape) != np.prod(value.shape):
-                raise ValueError(
-                    "Trying to load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
-                        value.shape, name, varshape))
+                if ignore_mismatch:
+                    logger.warn(
+                        "Cannot load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
+                            value.shape, name, varshape))
+                    return None
+                else:
+                    raise ValueError(
+                        "Trying to load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
+                            value.shape, name, varshape))
+            # TODO only allow reshape when shape different by empty axis
             logger.warn("The tensor is reshaped from {} to {} when assigned to '{}'".format(
                 value.shape, varshape, name))
             value = value.reshape(varshape)
@@ -115,9 +128,12 @@ class SessionUpdate(object):
             for name, value in six.iteritems(prms):
                 assert name in self.name_map
                 var = self.name_map[name]
-                fetches.append(var.initializer)
+                value = SessionUpdate.relaxed_value_for_var(
+                    value, var, ignore_mismatch=self.ignore_mismatch)
                 # This is the implementation of `var.load`
-                feeds[var.initializer.inputs[1]] = SessionUpdate.relaxed_value_for_var(value, var)
+                if value is not None:
+                    fetches.append(var.initializer)
+                    feeds[var.initializer.inputs[1]] = value
             self.sess.run(fetches, feed_dict=feeds)
 
 

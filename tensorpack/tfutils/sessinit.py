@@ -174,7 +174,9 @@ class SaverRestoreRelaxed(SaverRestore):
 
         def f(reader, name, v):
             val = reader.get_tensor(name)
-            v.load(SessionUpdate.relaxed_value_for_var(val, v))
+            val = SessionUpdate.relaxed_value_for_var(val, v, ignore_mismatch=True)
+            if val is not None:
+                v.load(val)
 
         with sess.as_default():
             self._match_vars(f)
@@ -185,14 +187,17 @@ class DictRestore(SessionInit):
     Restore variables from a dictionary.
     """
 
-    def __init__(self, variable_dict):
+    def __init__(self, variable_dict, ignore_mismatch=False):
         """
         Args:
             variable_dict (dict): a dict of {name: value}
+            ignore_mismatch (bool): ignore failures when the value and the
+                variable does not match.
         """
         assert isinstance(variable_dict, dict), type(variable_dict)
         # use varname (with :0) for consistency
         self._prms = {get_op_tensor_name(n)[1]: v for n, v in six.iteritems(variable_dict)}
+        self._ignore_mismatch = ignore_mismatch
 
     def _run_init(self, sess):
         variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -218,7 +223,7 @@ class DictRestore(SessionInit):
             mismatch.add(k)
         mismatch.log()
 
-        upd = SessionUpdate(sess, [v for v in variables if v.name in intersect])
+        upd = SessionUpdate(sess, [v for v in variables if v.name in intersect], ignore_mismatch=self._ignore_mismatch)
         logger.info("Restoring {} variables from dict ...".format(len(intersect)))
         upd.update({name: value for name, value in six.iteritems(self._prms) if name in intersect})
 
@@ -246,9 +251,14 @@ class ChainInit(SessionInit):
             i._run_init(sess)
 
 
-def get_model_loader(filename):
+def get_model_loader(filename, ignore_mismatch=False):
     """
     Get a corresponding model loader by looking at the file name.
+
+    Args:
+        filename (str): either a tensorflow checkpoint, or a npz file.
+        ignore_mismatch (bool): ignore failures when values in the file and
+            variables in the graph do not match.
 
     Returns:
         SessInit: either a :class:`DictRestore` (if name ends with 'npy/npz') or
@@ -258,10 +268,13 @@ def get_model_loader(filename):
     filename = os.path.expanduser(filename)
     if filename.endswith('.npy'):
         assert tf.gfile.Exists(filename), filename
-        return DictRestore(np.load(filename, encoding='latin1').item())
+        return DictRestore(np.load(filename, encoding='latin1').item(), ignore_mismatch=ignore_mismatch)
     elif filename.endswith('.npz'):
         assert tf.gfile.Exists(filename), filename
         obj = np.load(filename)
-        return DictRestore(dict(obj))
+        return DictRestore(dict(obj), ignore_mismatch=ignore_mismatch)
     else:
-        return SaverRestore(filename)
+        if ignore_mismatch:
+            return SaverRestoreRelaxed(filename)
+        else:
+            return SaverRestore(filename)

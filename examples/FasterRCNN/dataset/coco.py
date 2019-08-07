@@ -235,6 +235,7 @@ def register_coco(basedir):
         DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
         DatasetRegistry.register_metadata(name, 'class_names', class_names)
 
+
 if __name__ == '__main__':
     basedir = '~/data/coco'
     c = COCODetection(basedir, 'train2014')
