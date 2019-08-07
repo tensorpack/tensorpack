@@ -172,14 +172,18 @@ class SaverRestoreRelaxed(SaverRestore):
         logger.info(
             "Restoring checkpoint from {} ...".format(self.path))
 
+        matched_pairs = []
+
         def f(reader, name, v):
             val = reader.get_tensor(name)
             val = SessionUpdate.relaxed_value_for_var(val, v, ignore_mismatch=True)
             if val is not None:
-                v.load(val)
+                matched_pairs.append((v, val))
 
         with sess.as_default():
             self._match_vars(f)
+            upd = SessionUpdate(sess, [x[0] for x in matched_pairs])
+            upd.update({x[0].name: x[1] for x in matched_pairs})
 
 
 class DictRestore(SessionInit):

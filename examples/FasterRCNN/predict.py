@@ -18,13 +18,15 @@ from tensorpack.tfutils import get_model_loader, get_tf_version_tuple
 from tensorpack.tfutils.export import ModelExporter
 from tensorpack.utils import fs, logger
 
-from dataset import DatasetRegistry, register_coco
+from dataset import DatasetRegistry, register_coco, register_balloon
 from config import config as cfg
 from config import finalize_configs
 from data import get_eval_dataflow, get_train_dataflow
 from eval import DetectionResult, multithread_predict_dataflow, predict_image
 from modeling.generalized_rcnn import ResNetC4Model, ResNetFPNModel
-from viz import draw_annotation, draw_final_outputs, draw_predictions, draw_proposal_recall
+from viz import (
+    draw_annotation, draw_final_outputs, draw_predictions,
+    draw_proposal_recall, draw_final_outputs_blackwhite)
 
 
 def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
@@ -97,7 +99,10 @@ def do_evaluate(pred_config, output_file):
 def do_predict(pred_func, input_file):
     img = cv2.imread(input_file, cv2.IMREAD_COLOR)
     results = predict_image(img, pred_func)
-    final = draw_final_outputs(img, results)
+    if cfg.MODE_MASK:
+        final = draw_final_outputs_blackwhite(img, results)
+    else:
+        final = draw_final_outputs(img, results)
     viz = np.concatenate((img, final), axis=1)
     cv2.imwrite("output.png", viz)
     logger.info("Inference output for {} written to output.png".format(input_file))
@@ -122,6 +127,8 @@ if __name__ == '__main__':
     if args.config:
         cfg.update_args(args.config)
     register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    register_balloon(cfg.DATA.BASEDIR)
+
     MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     if not tf.test.is_gpu_available():

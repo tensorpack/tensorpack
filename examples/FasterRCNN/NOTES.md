@@ -31,6 +31,8 @@ Data:
      In this class you'll implement the logic to load your dataset and evaluate predictions.
 		 The documentation is in the docstring of `DatasetSplit.
 
+	 See [BALLOON.md](BALLOON.md) for an example of fine-tuning on a different dataset.
+
 1. If you load a COCO-trained model on a different dataset, you may see error messages
    complaining about unmatched number of categories for certain weights in the checkpoint.
    You can either remove those weights in checkpoint, or rename them in the model.

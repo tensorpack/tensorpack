@@ -10,7 +10,7 @@ from tensorpack import *
 from tensorpack.tfutils import collect_env_info
 from tensorpack.tfutils.common import get_tf_version_tuple
 
-from dataset import register_coco
+from dataset import register_coco, register_balloon
 from config import config as cfg
 from config import finalize_configs
 from data import get_train_dataflow
@@ -43,6 +43,7 @@ if __name__ == '__main__':
     if args.config:
         cfg.update_args(args.config)
     register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
+    register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
 
     # Setup logger ...
     is_horovod = cfg.TRAINER == 'horovod'
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     callbacks = [
         PeriodicCallback(
             ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
-            every_k_epochs=20),
+            every_k_epochs=cfg.TRAIN.CHECKPOINT_PERIOD),
         # linear warmup
         ScheduledHyperParamSetter(
             'learning_rate', warmup_schedule, interp='linear', step_based=True),
@@ -105,7 +106,8 @@ if __name__ == '__main__':
         session_init = None
     else:
         if args.load:
-            session_init = get_model_loader(args.load)
+            # ignore mismatched values, so you can `--load` a model for fine-tuning
+            session_init = get_model_loader(args.load, ignore_mismatch=True)
         else:
             session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
 

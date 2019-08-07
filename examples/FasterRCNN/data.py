@@ -49,8 +49,8 @@ def print_class_histogram(roidbs):
         gt_inds = np.where((entry["class"] > 0) & (entry["is_crowd"] == 0))[0]
         gt_classes = entry["class"][gt_inds]
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
-    COL = 6
     data = list(itertools.chain(*[[class_names[i + 1], v] for i, v in enumerate(gt_hist[1:])]))
+    COL = max(6, len(data))
     total_instances = sum(data[1::2])
     data.extend([None] * (COL - len(data) % COL))
     data.extend(["total", total_instances])
