@@ -24,7 +24,7 @@ Data:
 	`YourDatasetSplit` can be:
 
    + `COCODetection`, if your data is already in COCO format. In this case, you need to
-		 modify `COCODetection` to change the class names and the id mapping.
+		 modify `dataset/coco.py` to change the class names and the id mapping.
 
    + Your own class, if your data is not in COCO format.
 		 You need to write a subclass of `DatasetSplit`, similar to `COCODetection`.

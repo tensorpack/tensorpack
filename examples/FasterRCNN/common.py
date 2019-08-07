@@ -88,7 +88,7 @@ def point8_to_box(points):
     return np.concatenate((minxy, maxxy), axis=1)
 
 
-def segmentation_to_mask(polys, height, width):
+def polygons_to_mask(polys, height, width):
     """
     Convert polygons to binary masks.
 

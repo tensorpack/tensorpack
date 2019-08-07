@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+from collections import defaultdict
+
 __all__ = ['DatasetRegistry', 'DatasetSplit']
 
 
@@ -68,6 +71,7 @@ class DatasetSplit():
 
 class DatasetRegistry():
     _registry = {}
+    _metadata_registry = defaultdict(dict)
 
     @staticmethod
     def register(name, func):
@@ -90,3 +94,25 @@ class DatasetRegistry():
         """
         assert name in DatasetRegistry._registry, "Dataset {} was not registered!".format(name)
         return DatasetRegistry._registry[name]()
+
+    @staticmethod
+    def register_metadata(name, key, value):
+        """
+        Args:
+            name (str): the name of the dataset split, e.g. "coco_train2017"
+            key: the key of the metadata, e.g., "class_names"
+            value: the value of the metadata
+        """
+        DatasetRegistry._metadata_registry[name][key] = value
+
+    @staticmethod
+    def get_metadata(name, key):
+        """
+        Args:
+            name (str): the name of the dataset split, e.g. "coco_train2017"
+            key: the key of the metadata, e.g., "class_names"
+
+        Returns:
+            value
+        """
+        return DatasetRegistry._metadata_registry[name][key]

@@ -90,9 +90,10 @@ _C.DATA.TRAIN = ('coco_train2017',)   # i.e. trainval35k
 # Each VAL dataset will be evaluated separately (instead of concatenated)
 _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
 
-# This two config will be populated later by the dataset loader:
-_C.DATA.NUM_CATEGORY = 80  # without the background class (e.g., 80 for COCO)
+# These two configs will be populated later inside `finalize_configs`.
+_C.DATA.NUM_CATEGORY = -1  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
+
 # whether the coordinates in the annotations are absolute pixel values, or a relative value in [0, 1]
 _C.DATA.ABSOLUTE_COORD = True
 # Number of data loading workers.
@@ -227,6 +228,12 @@ def finalize_configs(is_training):
         _C.DATA.VAL = (_C.DATA.VAL, )
     if isinstance(_C.DATA.TRAIN, six.string_types):  # support single string
         _C.DATA.TRAIN = (_C.DATA.TRAIN, )
+
+    # finalize dataset definitions ...
+    from dataset import DatasetRegistry
+    datasets = list(_C.DATA.TRAIN) + list(_C.DATA.VAL)
+    _C.DATA.CLASS_NAMES = DatasetRegistry.get_metadata(datasets[0], "class_names")
+    _C.DATA.NUM_CATEGORY = len(_C.DATA.CLASS_NAMES) - 1
 
     assert _C.BACKBONE.NORM in ['FreezeBN', 'SyncBN', 'GN', 'None'], _C.BACKBONE.NORM
     if _C.BACKBONE.NORM != 'FreezeBN':
