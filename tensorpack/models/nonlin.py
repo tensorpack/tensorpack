@@ -8,6 +8,7 @@ from ..utils.develop import log_deprecated
 from ..compat import tfv1
 from .batch_norm import BatchNorm
 from .common import VariableHolder, layer_register
+from .utils import disable_autograph
 
 __all__ = ['Maxout', 'PReLU', 'BNReLU']
 
@@ -37,6 +38,7 @@ def Maxout(x, num_unit):
 
 
 @layer_register()
+@disable_autograph()
 def PReLU(x, init=0.001, name=None):
     """
     Parameterized ReLU as in the paper `Delving Deep into Rectifiers: Surpassing

@@ -15,6 +15,7 @@ from ..utils.argtools import get_data_format
 from ..utils.develop import log_deprecated
 from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
+from .utils import disable_autograph
 
 __all__ = ['BatchNorm', 'BatchRenorm']
 
@@ -58,15 +59,6 @@ def internal_update_bn_ema(xn, batch_mean, batch_var,
     # will hang when some BatchNorm layers are unused (https://github.com/tensorpack/tensorpack/issues/1078)
     with tf.control_dependencies([update_op1, update_op2]):
         return tf.identity(xn, name='output')
-
-
-try:
-    # When BN is used as an activation, keras layers try to autograph.convert it
-    # This leads to massive warnings so we disable it.
-    from tensorflow.python.autograph.impl.api import do_not_convert as disable_autograph
-except ImportError:
-    def disable_autograph():
-        return lambda x: x
 
 
 @layer_register()

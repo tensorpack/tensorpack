@@ -35,3 +35,12 @@ class VariableHolder(object):
             list of all variables
         """
         return list(six.itervalues(self._vars))
+
+
+try:
+    # When BN is used as an activation, keras layers try to autograph.convert it
+    # This leads to massive warnings so we disable it.
+    from tensorflow.python.autograph.impl.api import do_not_convert as disable_autograph
+except ImportError:
+    def disable_autograph():
+        return lambda x: x
