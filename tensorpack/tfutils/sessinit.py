@@ -165,8 +165,11 @@ class SaverRestoreRelaxed(SaverRestore):
 
         It allows upcasting certain variables, or reshape certain
         variables when there is a mismatch that can be fixed.
+
+        When variable shape and value shape do not match, it will print a
+        warning but will not crash.
+
         Another advantage is that it doesn't add any new ops to the graph.
-        But it is also slower than :class:`SaverRestore`.
     """
     def _run_init(self, sess):
         logger.info(
@@ -196,7 +199,9 @@ class DictRestore(SessionInit):
         Args:
             variable_dict (dict): a dict of {name: value}
             ignore_mismatch (bool): ignore failures when the value and the
-                variable does not match.
+                variable does not match in their shapes.
+                If False, it will throw exception on such errors.
+                If True, it will only print a warning.
         """
         assert isinstance(variable_dict, dict), type(variable_dict)
         # use varname (with :0) for consistency
@@ -261,8 +266,10 @@ def get_model_loader(filename, ignore_mismatch=False):
 
     Args:
         filename (str): either a tensorflow checkpoint, or a npz file.
-        ignore_mismatch (bool): ignore failures when values in the file and
-            variables in the graph do not match.
+        ignore_mismatch (bool): ignore failures when the value and the
+            variable does not match in their shapes.
+            If False, it will throw exception on such errors.
+            If True, it will only print a warning.
 
     Returns:
         SessInit: either a :class:`DictRestore` (if name ends with 'npy/npz') or

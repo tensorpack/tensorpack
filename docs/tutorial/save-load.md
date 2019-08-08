@@ -51,10 +51,13 @@ You can also use
 [get_model_loader(filename)](../modules/tfutils.html#tensorpack.tfutils.sessinit.get_model_loader),
 a small helper which returns either a `SaverRestore` or a `DictRestore` based on the file name.
 
-Variable restoring is completely based on __exact name match__ between
-variables in the current graph and variables in the `session_init` initializer.
-Variables that appear in only one side will be printed as warning.
-Variables of the same name but incompatible shapes will cause error.
+Whatever you use in `session_init`, this is what happen during the loading:
+
+* Variable restoring is completely based on __exact name match__ between
+	variables in the current graph and variables in the `session_init` initializer.
+* Variables that appear in only one side will be printed as warning.
+* Variables of the same name but incompatible shapes will cause exceptions.
+  If you set `ignore_mismatch=True`, then such errors will only be printed as warnings.
 
 ## Transfer Learning
 

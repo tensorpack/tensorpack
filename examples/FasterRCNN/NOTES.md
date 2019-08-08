@@ -33,11 +33,6 @@ Data:
 
 	 See [BALLOON.md](BALLOON.md) for an example of fine-tuning on a different dataset.
 
-1. If you load a COCO-trained model on a different dataset, you may see error messages
-   complaining about unmatched number of categories for certain weights in the checkpoint.
-   You can either remove those weights in checkpoint, or rename them in the model.
-   See [tensorpack tutorial](https://tensorpack.readthedocs.io/tutorial/save-load.html) for more details.
-
 1. You can easily add more augmentations such as rotation, but be careful how a box should be
    augmented. The code now will always use the minimal axis-aligned bounding box of the 4 corners,
    which is probably not the optimal way.
@@ -85,8 +80,6 @@ Efficiency:
 	 In fact, the current implementation uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
 
 Possible Future Enhancements:
-
-1. Define a better interface to load different datasets.
 
 1. Support batch>1 per GPU. Batching with inconsistent shapes is
    non-trivial to implement in TensorFlow.
