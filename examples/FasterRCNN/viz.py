@@ -102,30 +102,22 @@ def draw_final_outputs_blackwhite(img, results):
     Args:
         results: [DetectionResult]
     """
-    if len(results) == 0:
-        return img
-
-    # Display in largest to smallest order to reduce occlusion
-    boxes = np.asarray([r.box for r in results])
-    areas = np_area(boxes)
-    sorted_inds = np.argsort(-areas)
-
     img_bw = img.mean(axis=2)
     img_bw = np.stack([img_bw] * 3, axis=2)
 
-    tags = []
+    if len(results) == 0:
+        return img_bw
 
-    all_masks = [results[rid].mask for rid in sorted_inds]
+    boxes = np.asarray([r.box for r in results])
+
+    all_masks = [r.mask for r in results]
     if all_masks[0] is not None:
         m = all_masks[0] > 0
         for m2 in all_masks[1:]:
             m = m | (m2 > 0)
-        print(m, m.sum())
         img_bw[m] = img[m]
 
-    for r in results:
-        tags.append(
-            "{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score))
+    tags = ["{},{:.2f}".format(cfg.DATA.CLASS_NAMES[r.class_id], r.score) for r in results]
     ret = viz.draw_boxes(img_bw, boxes, tags)
     return ret
 
