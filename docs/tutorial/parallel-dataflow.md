@@ -15,7 +15,7 @@ A tensorpack DataFlow can be parallelized across CPUs in the following two ways:
 
 In this pattern, multiple identical DataFlows run on multiple CPUs,
 and put results in a queue.
-The master worker receives the output from the queue.
+The master receives the output from the queue.
 
 To use this pattern with multi-processing, you can do:
 ```
@@ -38,7 +38,7 @@ You can find them at the
 
 ### Distribute Tasks to Multiple Workers
 
-In this pattern, the master worker sends datapoints (the tasks)
+In this pattern, the master sends datapoints (the tasks)
 to multiple workers.
 The workers are responsible for executing a (possibly expensive) mapping
 function on the datapoints, and send the results back to the master.
@@ -58,7 +58,7 @@ d2 = MultiProcessMapData(dp, num_proc=20, f)
 The main difference between this pattern and the first, is that:
 1. `d1` is not executed in parallel. Only `f` runs in parallel.
   Therefore you don't have to worry about randomness or data distribution shift.
-  Also you need to make `d1` very efficient (e.g., just produce small metadata).
+  But you need to make `d1` very efficient (e.g. let it produce small metadata).
 2. More communication is required, because it needs to send data to workers.
 
 See its [API documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessMapData)
@@ -66,8 +66,8 @@ to learn more details.
 
 ## Threads & Processes
 
-Both the above two patterns can be used with either multi-threading or
-multi-proessing, with the following builtin DataFlows:
+Both the above two patterns can be used with 
+__either multi-threading or multi-processing__, with the following builtin DataFlows:
 
 * [MultiProcessRunnerZMQ](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)
   or [MultiProcessRunner](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunner)
@@ -82,16 +82,17 @@ Using threads and processes have their pros and cons:
 
 1. Threads in Python are limted by [GIL](https://wiki.python.org/moin/GlobalInterpreterLock).
    Threads in one process cannot interpret Python statements in parallel.
-   As a result, multi-threading may not scale very well, if the workers spend a
+   As a result, multi-threading may not scale well, if the workers spend a
    significant amount of time in the Python interpreter.
 2. Processes need to pay the overhead of communication with each other.
 
+Though __processes are most commonly used__,
 The best choice of the above parallel utilities varies across machines and tasks.
 You can even combine threads and processes sometimes.
 
 Note that in tensorpack, all the multiprocessing DataFlow with "ZMQ" in the name creates
 __zero Python threads__: this is a key implementation detail that makes tensorpack DataFlow
-faster than the alternatives in Keras or Pytorch.
+faster than the alternatives in Keras or PyTorch.
 
 For a new task, you often need to do a quick benchmark to choose the best pattern.
 See [Performance Tuning Tutorial](performance-tuning.html)

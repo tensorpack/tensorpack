@@ -11,7 +11,7 @@ Note that this article may contain subjective opinions and we're happy to hear d
 
 Your data pipeline **only has to be fast enough**.
 
-In practice, you should always make sure your data pipeline runs
+In practice, you should always first make sure your data pipeline runs
 asynchronously with your training.
 The method to do so is different in each training framework,
 and in tensorpack this is automatically done by the [InputSource](/tutorial/extend/input-source.html)
@@ -23,8 +23,8 @@ the data pipeline only needs to be as fast as the training.
 It only has to be fast enough.
 
 If you have used other data loading libraries, you may doubt
-how easy it is to make data pipeline fast enough, with pure Python.
-In fact, it is usually not hard with DataFlow.
+how easy it is to make data pipeline fast enough with pure Python.
+In fact, it is usually not hard with DataFlow, because it's carefully optimized.
 
 For example: if you train a ResNet-50 on ImageNet,
 DataFlow is fast enough for you unless you use

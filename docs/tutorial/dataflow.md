@@ -49,20 +49,20 @@ or other tensorpack examples.
 
 ### Parallelize the Pipeline
 
-DataFlow includes carefully optimized parallel runners and parallel mappers: `Multi{Thread,Process}{Runner,MapData}`.
+DataFlow includes **carefully optimized** parallel runners and parallel mappers: `Multi{Thread,Process}{Runner,MapData}`.
 Runners execute multiple clones of a dataflow in parallel.
 Mappers execute a mapping function in parallel on top of an existing dataflow.
 You can find details in the [API docs](../modules/dataflow.html) under the
 "parallel" and "parallel_map" section.
 
-The [Efficient DataFlow](efficient-dataflow.html) give a deeper dive
+[Parallel DataFlow tutorial](parallel-dataflow.html) give a deeper dive
 on how to use them to optimize your data pipeline.
 
 ### Run the DataFlow
 
 When training with tensorpack, typically it is the `InputSource` interface that runs the DataFlow.
 
-When using DataFlow alone without other tensorpack components,
+When using DataFlow alone without tensorpack,
 you need to call `reset_state()` first to initialize it,
 and then use the generator however you like:
 
@@ -76,6 +76,7 @@ for dp in df:
 
 ### Why DataFlow?
 
-It's **easy and fast***. For more discussions, see [Why DataFlow?](/tutorial/philosophy/dataflow.html)
+It's **easy and fast**.
+For more discussions, see [Why DataFlow?](/tutorial/philosophy/dataflow.html)
 Nevertheless, using DataFlow is not required in tensorpack.
 Tensorpack supports data loading with native TF operators / TF datasets as well.
