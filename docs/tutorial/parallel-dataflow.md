@@ -1,13 +1,13 @@
 # Parallel DataFlow
 
 This tutorial explains the parallel building blocks
-inside DataFlow, since most of the time they are the only thing
+inside DataFlow, since most of the time they are the only things
 needed to build an efficient dataflow.
-    
+
 
 ## Concepts: how to make things parallel:
 
-Code does not automatically utilize multiple CPUs. 
+Code does not automatically utilize multiple CPUs.
 You need to specify how to split the tasks across CPUs.
 A tensorpack DataFlow can be parallelized across CPUs in the following two ways:
 
@@ -23,7 +23,7 @@ d1 = MyDataFlow()   # some dataflow written by the user
 d2 = MultiProcessRunnerZMQ(d1, num_proc=20)
 ```
 
-The second line starts 25 processes running `d1`, and merge the results.
+The second line starts 20 processes running `d1`, and merge the results.
 You can then obtain the results in `d2`.
 
 Note that, all the workers run independently in this pattern.
@@ -32,14 +32,14 @@ If `d1` produce the same sequence in each worker,
 then `d2` will produce repetitive data points.
 
 There are some other similar issues you need to take care of when using this pattern.
-You can find them at the 
+You can find them at the
 [API documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ).
 
 
 ### Distribute Tasks to Multiple Workers
 
 In this pattern, the master worker sends datapoints (the tasks)
-to multiple workers. 
+to multiple workers.
 The workers are responsible for executing a (possibly expensive) mapping
 function on the datapoints, and send the results back to the master.
 An example with multi-processing is like this:
@@ -59,7 +59,7 @@ The main difference between this pattern and the first, is that:
 1. `d1` is not executed in parallel. Only `f` runs in parallel.
   Therefore you don't have to worry about randomness or data distribution shift.
   Also you need to make `d1` very efficient (e.g., just produce small metadata).
-2. More communication is required to send data to workers.
+2. More communication is required, because it needs to send data to workers.
 
 See its [API documentation](../modules/dataflow.html#tensorpack.dataflow.MultiProcessMapData)
 to learn more details.
@@ -86,8 +86,12 @@ Using threads and processes have their pros and cons:
    significant amount of time in the Python interpreter.
 2. Processes need to pay the overhead of communication with each other.
 
-The best choice of the above parallel utilities varies across machines and tasks. 
+The best choice of the above parallel utilities varies across machines and tasks.
 You can even combine threads and processes sometimes.
+
+Note that in tensorpack, all the multiprocessing DataFlow with "ZMQ" in the name creates
+__zero Python threads__: this is a key implementation detail that makes tensorpack DataFlow
+faster than the alternatives in Keras or Pytorch.
 
 For a new task, you often need to do a quick benchmark to choose the best pattern.
 See [Performance Tuning Tutorial](performance-tuning.html)
