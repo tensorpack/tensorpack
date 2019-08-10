@@ -22,7 +22,7 @@ from common import (
     filter_boxes_inside_shape, np_iou, point8_to_box, polygons_to_mask,
 )
 from config import config as cfg
-from dataset import DatasetRegistry
+from dataset import DatasetRegistry, register_coco
 from utils.np_box_ops import area as np_area
 from utils.np_box_ops import ioa as np_ioa
 
@@ -50,7 +50,7 @@ def print_class_histogram(roidbs):
         gt_classes = entry["class"][gt_inds]
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
     data = list(itertools.chain(*[[class_names[i + 1], v] for i, v in enumerate(gt_hist[1:])]))
-    COL = max(6, len(data))
+    COL = min(6, len(data))
     total_instances = sum(data[1::2])
     data.extend([None] * (COL - len(data) % COL))
     data.extend(["total", total_instances])
@@ -394,11 +394,12 @@ def get_eval_dataflow(name, shard=0, num_shards=1):
 if __name__ == "__main__":
     import os
     from tensorpack.dataflow import PrintData
+    from config import finalize_configs
 
-    cfg.DATA.BASEDIR = os.path.expanduser("~/data/coco")
+    register_coco(os.path.expanduser("~/data/coco"))
+    finalize_configs()
     ds = get_train_dataflow()
-    ds = PrintData(ds, 100)
+    ds = PrintData(ds, 10)
     TestDataSpeed(ds, 50000).start()
-    ds.reset_state()
     for k in ds:
         pass

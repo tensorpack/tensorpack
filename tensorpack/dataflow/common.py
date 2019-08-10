@@ -5,7 +5,7 @@ from __future__ import division
 import itertools
 import numpy as np
 import pprint
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Mapping
 from copy import copy
 import six
 import tqdm
@@ -748,7 +748,7 @@ class PrintData(ProxyDataFlow):
         Gather useful debug information from a datapoint.
 
         Args:
-            entry: the datapoint component
+            entry: the datapoint component, either a list or a dict
             k (int): index of this component in current datapoint
             depth (int, optional): recursion depth
             max_depth, max_list: same as in :meth:`__init__`.
@@ -779,7 +779,7 @@ class PrintData(ProxyDataFlow):
                     self.range = " in range [{}, {}]".format(el.min(), el.max())
                 elif type(el) in numpy_scalar_types:
                     self.range = " with value {}".format(el)
-                elif isinstance(el, (list)):
+                elif isinstance(el, (list, tuple)):
                     self.shape = " of len {}".format(len(el))
 
                     if depth < max_depth:
@@ -805,9 +805,15 @@ class PrintData(ProxyDataFlow):
         return str(_elementInfo(entry, k, depth, max_list))
 
     def _get_msg(self, dp):
-        msg = [u"datapoint %i<%i with %i components consists of" % (self.cnt, self.num, len(dp))]
+        msg = [colored(u"datapoint %i/%i with %i components consists of" %
+               (self.cnt, self.num, len(dp)), "cyan")]
+        is_dict = isinstance(dp, Mapping)
         for k, entry in enumerate(dp):
-            msg.append(self._analyze_input_data(entry, k, max_depth=self.max_depth, max_list=self.max_list))
+            if is_dict:
+                key, value = entry, dp[entry]
+            else:
+                key, value = k, entry
+            msg.append(self._analyze_input_data(value, key, max_depth=self.max_depth, max_list=self.max_list))
         return u'\n'.join(msg)
 
     def __iter__(self):
@@ -815,7 +821,7 @@ class PrintData(ProxyDataFlow):
             # it is important to place this here! otherwise it mixes the output of multiple PrintData
             if self.cnt == 0:
                 label = ' (%s)' % self.name if self.name is not None else ""
-                logger.info(colored("DataFlow Info%s:" % label, 'cyan'))
+                logger.info(colored("Contents of DataFlow%s:" % label, 'cyan'))
 
             if self.cnt < self.num:
                 print(self._get_msg(dp))
