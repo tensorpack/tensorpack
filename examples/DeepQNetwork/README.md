@@ -15,26 +15,14 @@ Reproduce (performance of) the following reinforcement learning methods:
 + A3C in [Asynchronous Methods for Deep Reinforcement Learning](http://arxiv.org/abs/1602.01783). (I
 used a modified version where each batch contains transitions from different simulators, which I called "Batch-A3C".)
 
-## Performance & Speed
-Claimed performance in the paper can be reproduced, on several games I've tested with.
-
-![DQN](curve-breakout.png)
-
-On one GTX 1080Ti,
-the ALE version took
-__~2 hours__ of training to reach 21 (maximum) score on Pong,
-__~10 hours__ of training to reach 400 score on Breakout.
-It runs at 100 batches (6.4k trained frames, 400 seen frames, 1.6k game frames) per second on GTX 1080Ti.
-This is likely the fastest open source TF implementation of DQN.
-
-## How to use
+## Usage:
 
 ### With ALE (paper's setting):
 Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and gym.
 
-Download an [atari rom](https://github.com/openai/atari-py/tree/master/atari_py/atari_roms), e.g.:
+Download an [atari rom](https://github.com/openai/atari-py/tree/gdb/atari_py/atari_roms), e.g.:
 ```
-wget https://github.com/openai/atari-py/raw/master/atari_py/atari_roms/breakout.bin
+wget https://github.com/openai/atari-py/raw/gdb/atari_py/atari_roms/breakout.bin
 ```
 
 Start Training:
@@ -46,16 +34,35 @@ Start Training:
 Watch the agent play:
 ```
 # Download pretrained models or use one you trained:
-wget http://models.tensorpack.com/DeepQNetwork/DoubleDQN-Breakout.npz
-./DQN.py --env breakout.bin --task play --load DoubleDQN-Breakout.npz
+wget http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz
+./DQN.py --env breakout.bin --task play --load DoubleDQN-breakout.bin.npz
+```
+
+Evaluation of 50 episodes:
+```
+./DQN.py --env breakout.bin --task eval --load DoubleDQN-breakout.bin.npz
 ```
 
 ### With gym's Atari:
 
-Install gym and atari_py.
+Install gym and atari_py. Use `--env BreakoutDeterministic-v4` instead of the ROM file.
 
-```
-./DQN.py --env BreakoutDeterministic-v4
-```
+## Performance
+Claimed performance in the paper can be reproduced, on several games I've tested with.
+
+![DQN](curve-breakout.png)
+
+| Environment  | Avg Score | Download                                                                             |
+|:-------------|:---------:|:------------------------------------------------------------------------------------:|
+| breakout.bin | 465       | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz) |
+| seaquest.bin | 8686      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-seaquest.bin.npz) |
+
+## Speed
+On one GTX 1080Ti,
+the ALE version took
+__~2 hours__ of training to reach 21 (maximum) score on Pong,
+__~10 hours__ of training to reach 400 score on Breakout.
+It runs at 100 batches (6.4k trained frames, 400 seen frames, 1.6k game frames) per second on GTX 1080Ti.
+This is likely the fastest open source TF implementation of DQN.
 
 A3C code and models for Atari games in OpenAI Gym are released in [examples/A3C-Gym](../A3C-Gym)
