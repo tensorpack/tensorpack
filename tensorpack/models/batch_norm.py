@@ -11,7 +11,7 @@ from ..tfutils.collection import backup_collection, restore_collection
 from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
-from ..utils.argtools import get_data_format
+from ..utils.argtools import get_data_format, log_once
 from ..utils.develop import log_deprecated
 from .common import VariableHolder, layer_register
 from .tflayer import convert_to_tflayer_args, rename_get_variable
@@ -216,7 +216,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
         assert TF_version >= (1, 4), \
             "Fine tuning a BatchNorm model with fixed statistics needs TF>=1.4!"
         if ctx.is_main_training_tower:  # only warn in first tower
-            logger.warn("[BatchNorm] Using moving_mean/moving_variance in training.")
+            log_once("Some BatchNorm layer uses moving_mean/moving_variance in training.", func='warn')
         # Using moving_mean/moving_variance in training, which means we
         # loaded a pre-trained BN and only fine-tuning the affine part.
 

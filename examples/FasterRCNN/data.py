@@ -52,7 +52,7 @@ def print_class_histogram(roidbs):
     data = list(itertools.chain(*[[class_names[i + 1], v] for i, v in enumerate(gt_hist[1:])]))
     COL = min(6, len(data))
     total_instances = sum(data[1::2])
-    data.extend([None] * (COL - len(data) % COL))
+    data.extend([None] * ((COL - len(data) % COL) % COL))
     data.extend(["total", total_instances])
     data = itertools.zip_longest(*[data[i::COL] for i in range(COL)])
     # the first line is BG
