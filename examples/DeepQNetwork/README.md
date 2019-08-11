@@ -18,7 +18,7 @@ used a modified version where each batch contains transitions from different sim
 ## Usage:
 
 ### With ALE (paper's setting):
-Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and gym.
+Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and `gym[atari]`.
 
 Download an [atari rom](https://github.com/openai/atari-py/tree/gdb/atari_py/atari_roms), e.g.:
 ```

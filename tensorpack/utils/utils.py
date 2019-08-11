@@ -251,15 +251,20 @@ def find_library_full_path(name):
         procmap = os.path.join('/proc', str(os.getpid()), 'maps')
         if not os.path.isfile(procmap):
             return None
-        with open(procmap, 'r') as f:
-            for line in f:
-                line = line.strip().split(' ')
-                sofile = line[-1]
+        try:
+            with open(procmap, 'r') as f:
+                for line in f:
+                    line = line.strip().split(' ')
+                    sofile = line[-1]
 
-                basename = os.path.basename(sofile)
-                if 'lib' + name + '.so' in basename:
-                    if os.path.isfile(sofile):
-                        return os.path.realpath(sofile)
+                    basename = os.path.basename(sofile)
+                    if 'lib' + name + '.so' in basename:
+                        if os.path.isfile(sofile):
+                            return os.path.realpath(sofile)
+        except PermissionError:
+            # can fail in certain environment (e.g. chroot)
+            # if the pids are incorrectly mapped
+            pass
 
     # The following two methods come from https://github.com/python/cpython/blob/master/Lib/ctypes/util.py
     def _use_ld(name):
