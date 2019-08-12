@@ -17,8 +17,9 @@ used a modified version where each batch contains transitions from different sim
 
 ## Usage:
 
+Install dependencies by `pip install 'gym[atari]'`.
+
 ### With ALE (paper's setting):
-Install [ALE](https://github.com/mgbellemare/Arcade-Learning-Environment) and `gym[atari]`.
 
 Download an [atari rom](https://github.com/openai/atari-py/tree/gdb/atari_py/atari_roms), e.g.:
 ```
@@ -52,10 +53,11 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-| Environment  | Avg Score | Download                                                                             |
-|:-------------|:---------:|:------------------------------------------------------------------------------------:|
-| breakout.bin | 465       | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz) |
-| seaquest.bin | 8686      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-seaquest.bin.npz) |
+| Environment   | Avg Score | Download                                                                              |
+|:--------------|:---------:|:-------------------------------------------------------------------------------------:|
+| breakout.bin  | 465       | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz)  |
+| seaquest.bin  | 8686      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-seaquest.bin.npz)  |
+| ms_pacman.bin | 3323      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-ms_pacman.bin.npz) |
 
 ## Speed
 On one GTX 1080Ti,

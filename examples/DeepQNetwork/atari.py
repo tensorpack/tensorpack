@@ -8,7 +8,7 @@ import threading
 import cv2
 import gym
 import six
-from ale_python_interface import ALEInterface
+from atari_py.ale_python_interface import ALEInterface
 from gym import spaces
 from gym.envs.atari.atari_env import ACTION_MEANING
 from six.moves import range
