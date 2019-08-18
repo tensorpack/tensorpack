@@ -26,7 +26,6 @@ MEMORY_SIZE = 1e6
 # will consume at least 1e6 * 84 * 84 bytes == 6.6G memory.
 INIT_MEMORY_SIZE = MEMORY_SIZE // 20
 STEPS_PER_EPOCH = 100000 // UPDATE_FREQ  # each epoch is 100k state transitions
-EVAL_EPISODE = 50
 NUM_PARALLEL_PLAYERS = 3
 
 USE_GYM = False
@@ -135,7 +134,7 @@ def get_config(model):
                 [(0, 1), (10, 0.1), (400, 0.01)],   # 1->0.1 in the first million steps
                 interp='linear'),
             PeriodicTrigger(Evaluator(
-                EVAL_EPISODE, ['state'], ['Qvalue'], get_player),
+                args.num_eval, ['state'], ['Qvalue'], get_player),
                 every_k_epochs=5 if 'pong' in args.env.lower() else 10),  # eval more frequently for easy games
         ],
         steps_per_epoch=STEPS_PER_EPOCH,
@@ -153,6 +152,7 @@ if __name__ == '__main__':
                         help='either an atari rom file (that ends with .bin) or a gym atari environment name')
     parser.add_argument('--algo', help='algorithm',
                         choices=['DQN', 'Double', 'Dueling'], default='Double')
+    parser.add_argument('--num-eval', default=50, type=int)
     args = parser.parse_args()
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -177,7 +177,7 @@ if __name__ == '__main__':
         if args.task == 'play':
             play_n_episodes(get_player(viz=0.01), pred, 100, render=True)
         elif args.task == 'eval':
-            eval_model_multithread(pred, EVAL_EPISODE, get_player)
+            eval_model_multithread(pred, args.num_eval, get_player)
     else:
         logger.set_logger_dir(
             os.path.join('train_log', 'DQN-{}'.format(

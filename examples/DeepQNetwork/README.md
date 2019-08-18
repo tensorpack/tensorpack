@@ -53,11 +53,12 @@ Claimed performance in the paper can be reproduced, on several games I've tested
 
 ![DQN](curve-breakout.png)
 
-| Environment   | Avg Score | Download                                                                              |
-|:--------------|:---------:|:-------------------------------------------------------------------------------------:|
-| breakout.bin  | 465       | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz)  |
-| seaquest.bin  | 8686      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-seaquest.bin.npz)  |
-| ms_pacman.bin | 3323      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-ms_pacman.bin.npz) |
+| Environment    | Avg Score | Download                                                                               |
+|:---------------|:---------:|:--------------------------------------------------------------------------------------:|
+| breakout.bin   | 465       | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-breakout.bin.npz)   |
+| seaquest.bin   | 8686      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-seaquest.bin.npz)   |
+| ms_pacman.bin  | 3323      | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-ms_pacman.bin.npz)  |
+| beam_rider.bin | 15835     | [:arrow_down:](http://models.tensorpack.com/DeepQNetwork/DoubleDQN-beam_rider.bin.npz) |
 
 ## Speed
 On one GTX 1080Ti,

@@ -100,7 +100,7 @@ class Model(ModelDesc):
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=1e-3, trainable=False)
-        tf.summary.scalar("learning_rate", lr)
+        tf.summary.scalar("learning_rate-summary", lr)
         opt = tf.train.RMSPropOptimizer(lr, decay=0.95, momentum=0.95, epsilon=1e-2)
         return optimizer.apply_grad_processors(opt, [gradproc.SummaryGradient()])
 
