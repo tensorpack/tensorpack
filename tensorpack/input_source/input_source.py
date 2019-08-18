@@ -512,7 +512,7 @@ class TFDatasetInput(FeedfreeInput):
         # TODO theoretically it can support dict
         assert isinstance(df, DataFlow), df
         assert isinstance(types, (list, tuple)), types
-        df = MapData(df, lambda dp: tuple(dp))
+        df = MapData(df, tuple)
         df.reset_state()
         ds = tf.data.Dataset.from_generator(
             df.get_data, tuple(types))

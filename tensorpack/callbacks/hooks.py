@@ -84,7 +84,7 @@ class TFLocalCLIDebugHook(HookToCallback):
                 Refer to tensorflow documentation for details.
         """
         from tensorflow.python import debug as tfdbg
-        super(TFLocalCLIDebugHook, self).__init__(tfdbg.LocalCLIDebugHook())
+        super(TFLocalCLIDebugHook, self).__init__(tfdbg.LocalCLIDebugHook(*args, **kwargs))
 
     def add_tensor_filter(self, *args, **kwargs):
         """
