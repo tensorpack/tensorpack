@@ -2,7 +2,9 @@
 # File: parallel.py
 
 import atexit
+import pickle
 import errno
+import traceback
 import itertools
 import multiprocessing as mp
 import os
@@ -23,6 +25,25 @@ from .base import DataFlow, DataFlowReentrantGuard, DataFlowTerminated, ProxyDat
 __all__ = ['PrefetchData', 'MultiProcessPrefetchData',
            'MultiProcessRunner', 'MultiProcessRunnerZMQ', 'MultiThreadRunner',
            'PrefetchDataZMQ', 'MultiThreadPrefetchData']
+
+
+# from https://github.com/pytorch/pytorch/blob/master/torch/utils/data/_utils/__init__.py
+class _ExceptionWrapper:
+    MAGIC = b"EXC_MAGIC"
+    """Wraps an exception plus traceback to communicate across threads"""
+    def __init__(self, exc_info):
+        # It is important that we don't store exc_info, see
+        # NOTE [ Python Traceback Reference Cycle Problem ]
+        self.exc_type = exc_info[0]
+        self.exc_msg = "".join(traceback.format_exception(*exc_info))
+
+    def pack(self):
+        return self.MAGIC + pickle.dumps(self)
+
+    @staticmethod
+    def unpack(dp):
+        if isinstance(dp, bytes) and dp.startswith(_ExceptionWrapper.MAGIC):
+            return pickle.loads(dp[len(_ExceptionWrapper.MAGIC):])
 
 
 def _repeat_iter(get_itr):
@@ -291,14 +312,21 @@ class MultiProcessRunnerZMQ(_MultiProcessZMQDataFlow):
         def run(self):
             enable_death_signal(_warn=self.idx == 0)
             self.ds.reset_state()
+            itr = _repeat_iter(lambda: self.ds)
+
             context = zmq.Context()
             socket = context.socket(zmq.PUSH)
             socket.set_hwm(self.hwm)
             socket.connect(self.conn_name)
             try:
                 while True:
-                    for dp in self.ds:
+                    try:
+                        dp = next(itr)
                         socket.send(dumps(dp), copy=False)
+                    except Exception:
+                        dp = _ExceptionWrapper(sys.exc_info()).pack()
+                        socket.send(dumps(dp), copy=False)
+                        raise
             # sigint could still propagate here, e.g. when nested
             except KeyboardInterrupt:
                 pass
@@ -332,7 +360,12 @@ class MultiProcessRunnerZMQ(_MultiProcessZMQDataFlow):
             self._size = -1
 
     def _recv(self):
-        return loads(self.socket.recv(copy=False))
+        ret = loads(self.socket.recv(copy=False))
+        exc = _ExceptionWrapper.unpack(ret)
+        if exc is not None:
+            logger.error("Exception '{}' in worker:".format(str(exc.exc_type)))
+            raise exc.exc_type(exc.exc_msg)
+        return ret
 
     def __len__(self):
         return self.ds.__len__()
