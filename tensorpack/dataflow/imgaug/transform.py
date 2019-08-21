@@ -15,7 +15,8 @@ Legacy alias. Please don't use.
 # This legacy augmentor requires us to import base from here, causing circular dependency.
 # Should remove this in the future.
 
-__all__ = ["Transform", "ResizeTransform", "CropTransform", "FlipTransform", "TransformList", "TransformFactory"]
+__all__ = ["Transform", "ResizeTransform", "CropTransform", "FlipTransform",
+           "TransformList", "TransformFactory"]
 
 
 # class WrappedImgFunc(object):
