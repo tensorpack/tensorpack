@@ -85,7 +85,7 @@ def launch_train_with_config(config, trainer):
 
     # This is the only place where the `ModelDesc` abstraction is useful.
     # We should gradually stay away from this unuseful abstraction.
-    # TowerFuncWrapper is a better abstraction (similar to tf.defun in the future)
+    # TowerFunc is a better abstraction (similar to tf.function in the future)
     trainer.setup_graph(
         model.get_input_signature(), input,
         model.build_graph, model.get_optimizer)

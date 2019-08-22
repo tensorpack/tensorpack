@@ -5,7 +5,6 @@
 import tensorflow as tf
 
 from ..compat import tfv1
-from ..utils.develop import deprecated
 
 __all__ = ['print_stat', 'rms']
 
@@ -37,7 +36,6 @@ def rms(x, name=None):
 
 
 # don't hurt to leave it here
-@deprecated("Please implement it by yourself.", "2018-04-28")
 def psnr(prediction, ground_truth, maxp=None, name='psnr'):
     """`Peak Signal to Noise Ratio <https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio>`_.
 

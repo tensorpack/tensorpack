@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     if get_num_gpu() <= 1:
         # single GPU:
-        launch_train_with_config(cfg, QueueInputTrainer())
+        launch_train_with_config(cfg, SimpleTrainer())
     else:
         # multi GPU:
         launch_train_with_config(cfg, SyncMultiGPUTrainerParameterServer(2))

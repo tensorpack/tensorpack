@@ -384,6 +384,7 @@ _DEPRECATED_NAMES = set([
     'get_nr_gpu',
     'TrainingMonitor',
     'PeakMemoryTracker',
+    'TowerFuncWrapper',
 
     'PrefetchData',
     'MultiProcessPrefetchData',
@@ -391,7 +392,7 @@ _DEPRECATED_NAMES = set([
     'MultiThreadPrefetchData',
 
     # deprecated or renamed symbolic code
-    'Deconv2D', 'psnr',
+    'Deconv2D',
 
     # shouldn't appear in doc:
     'l2_regularizer', 'l1_regularizer',

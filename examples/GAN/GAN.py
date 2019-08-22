@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorpack import BatchNorm, DataFlow, ModelDescBase, StagingInput, TowerTrainer, argscope
 from tensorpack.graph_builder import DataParallelBuilder, LeastLoadedDeviceSetter
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils.tower import TowerContext, TowerFuncWrapper
+from tensorpack.tfutils.tower import TowerContext, TowerFunc
 from tensorpack.utils import logger
 from tensorpack.utils.argtools import memoized_method
 
@@ -105,7 +105,7 @@ class GANTrainer(TowerTrainer):
         not needed. Just calling model.build_graph directly is OK.
         """
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.inputs())
+        self.tower_func = TowerFunc(model.build_graph, model.inputs())
         with TowerContext('', is_training=True):
             self.tower_func(*input.get_input_tensors())
         opt = model.get_optimizer()
@@ -127,7 +127,7 @@ class GANTrainer(TowerTrainer):
             model.build_graph(*inputs)
             return [model.d_loss, model.g_loss]
 
-        self.tower_func = TowerFuncWrapper(get_cost, model.get_input_signature())
+        self.tower_func = TowerFunc(get_cost, model.get_input_signature())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         cost_list = DataParallelBuilder.build_on_towers(
             list(range(num_gpu)),
@@ -167,7 +167,7 @@ class SeparateGANTrainer(TowerTrainer):
         self.register_callback(cbs)
 
         # Build the graph
-        self.tower_func = TowerFuncWrapper(model.build_graph, model.inputs())
+        self.tower_func = TowerFunc(model.build_graph, model.inputs())
         with TowerContext('', is_training=True), \
                 argscope(BatchNorm, ema_update='internal'):
             # should not hook the EMA updates to both train_op, it will hurt training speed.

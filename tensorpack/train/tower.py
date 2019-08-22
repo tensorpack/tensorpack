@@ -9,7 +9,7 @@ from ..compat import tfv1, is_tfv2
 from ..input_source import PlaceholderInput
 from ..predict.base import OnlinePredictor
 from ..tfutils.gradproc import FilterNoneGrad
-from ..tfutils.tower import PredictTowerContext, TowerFuncWrapper, get_current_tower_context
+from ..tfutils.tower import PredictTowerContext, TowerFunc, get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized
 from ..utils.develop import HIDE_DOC
@@ -38,13 +38,13 @@ class TowerTrainer(Trainer):
 
     @call_only_once
     def _set_tower_func(self, tower_func):
-        assert isinstance(tower_func, TowerFuncWrapper), tower_func
+        assert isinstance(tower_func, TowerFunc), tower_func
         self._tower_func = tower_func
 
     @property
     def tower_func(self):
         """
-        A :class:`TowerFuncWrapper` instance.
+        A :class:`TowerFunc` instance.
         See [tutorial on tower function](http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer)
         for more information.
         """
@@ -215,7 +215,7 @@ class SingleCostTrainer(TowerTrainer):
             It must follows the `rules of tower function.
             <http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer>`_.
         """
-        get_cost_fn = TowerFuncWrapper(get_cost_fn, input_signature)
+        get_cost_fn = TowerFunc(get_cost_fn, input_signature)
         get_opt_fn = memoized(get_opt_fn)
         self.tower_func = get_cost_fn
 

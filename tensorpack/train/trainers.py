@@ -18,7 +18,7 @@ from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TrainTowerContext
 from ..utils import logger
 from ..utils.argtools import map_arg
-from ..utils.develop import HIDE_DOC
+from ..utils.develop import HIDE_DOC, deprecated
 from .tower import SingleCostTrainer
 
 __all__ = ['NoOpTrainer', 'SimpleTrainer',
@@ -66,6 +66,7 @@ class NoOpTrainer(SimpleTrainer):
 
 # Only exists for type check & back-compatibility
 class QueueInputTrainer(SimpleTrainer):
+    @deprecated("SimpleTrainer is sufficient!", "2019-12-31")
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
         assert isinstance(input, QueueInput), input
         return super(QueueInputTrainer, self)._setup_graph(input, get_cost_fn, get_opt_fn)

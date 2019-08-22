@@ -15,7 +15,8 @@ from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .collection import CollectionGuard
 from .common import get_op_or_tensor_by_name, get_op_tensor_name
 
-__all__ = ['get_current_tower_context', 'BaseTowerContext', 'TowerContext', 'TowerFuncWrapper',
+__all__ = ['get_current_tower_context', 'BaseTowerContext', 'TowerContext',
+           'TowerFuncWrapper', 'TowerFunc',
            'TowerTensorHandle', 'TowerTensorHandles']
 
 _CurrentTowerContext = None
@@ -245,9 +246,9 @@ def TowerContext(tower_name, is_training, vs_name=''):
         return PredictTowerContext(tower_name, vs_name=vs_name)
 
 
-class TowerFuncWrapper(object):
+class TowerFunc(object):
     """
-    A wrapper around a tower function (see
+    A tower function (see
     [tutorial on tower function](http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer)).
     It keeps track of the name scope, variable scope and input/output tensors
     each time the function is called.
@@ -279,10 +280,10 @@ class TowerFuncWrapper(object):
 
     def __new__(cls, tower_fn, _):
         # to avoid double-wrapping a function
-        if isinstance(tower_fn, TowerFuncWrapper):
+        if isinstance(tower_fn, TowerFunc):
             return tower_fn
         else:
-            return super(TowerFuncWrapper, cls).__new__(cls)
+            return super(TowerFunc, cls).__new__(cls)
 
     def __call__(self, *args):
         ctx = get_current_tower_context()
@@ -309,6 +310,9 @@ class TowerFuncWrapper(object):
     def inputs_desc(self):
         # TODO mark deprecated
         return self._input_signature
+
+
+TowerFuncWrapper = TowerFunc
 
 
 class TowerTensorHandles(object):

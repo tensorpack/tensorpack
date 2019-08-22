@@ -6,7 +6,6 @@ from collections import namedtuple
 import tensorflow as tf
 
 from ..utils.argtools import memoized_method
-from ..utils.develop import deprecated
 from ..tfutils.common import get_op_tensor_name
 from ..compat import backport_tensor_spec, tfv1
 
@@ -174,7 +173,3 @@ class ModelDesc(ModelDescBase):
         A subclass is expected to implement this method.
         """
         raise NotImplementedError()
-
-    @deprecated("Just use `build_graph` instead!")
-    def _build_graph_get_cost(self, *inputs):
-        return self.build_graph(*inputs)
