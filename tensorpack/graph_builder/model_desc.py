@@ -33,12 +33,16 @@ def build_or_reuse_placeholder(tensor_spec):
         assert "Placeholder" in tensor.op.type, "Tensor {} exists but is not a placeholder!".format(name)
         assert tensor_spec.is_compatible_with(tensor), \
             "Tensor {} exists but is not compatible with the signature!".format(tensor)
-        return tensor
+        if tensor.shape == tensor_spec.shape:
+            # It might be desirable to use a placeholder of a different shape in some tower
+            # (e.g., a less specific shape)
+            return tensor
     except KeyError:
-        with tfv1.name_scope(None):   # clear any name scope it might get called in
-            ret = tfv1.placeholder(
-                tensor_spec.dtype, shape=tensor_spec.shape, name=tensor_spec.name)
-        return ret
+        pass
+    with tfv1.name_scope(None):   # clear any name scope it might get called in
+        ret = tfv1.placeholder(
+            tensor_spec.dtype, shape=tensor_spec.shape, name=tensor_spec.name)
+    return ret
 
 
 class InputDesc(
