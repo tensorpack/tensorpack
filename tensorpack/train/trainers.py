@@ -383,7 +383,7 @@ class HorovodTrainer(SingleCostTrainer):
         # lazy import
         import horovod.tensorflow as hvd
         import horovod
-        hvd_version = tuple(map(int, horovod.__version__.split('.')))
+        hvd_version = tuple(map(int, horovod.__version__.split('.')[:3]))
         self.hvd = hvd
 
         hvd.init()
