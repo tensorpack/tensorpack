@@ -449,13 +449,16 @@ class TFDatasetInput(FeedfreeInput):
     Use a :class:`tf.data.Dataset` instance as input.
 
     Note:
-        In training, the dataset should be infinite (use :func:`repeat()`).
+        1. In training, the given dataset or dataflow has to be infinite
+            (you can use :func:`repeat()`, or :class:`RepeatedData` ).
+
+        2. TensorFlow may keep the dataflow alive even if the dataset is no
+           longer used.
     """
     def __init__(self, dataset):
         """
         Args:
-            dataset (tf.data.Dataset or DataFlow): if a DataFlow, the dataflow
-                has to be infinite.
+            dataset (tf.data.Dataset or DataFlow):
         """
         if isinstance(dataset, tf.data.Dataset):
             self._dataset = dataset
@@ -519,6 +522,10 @@ class TFDatasetInput(FeedfreeInput):
 
         Returns:
             (tf.data.Dataset)
+
+        Note:
+            TensorFlow may keep the dataflow alive even if the dataset is no
+            longer used.
         """
         # TODO theoretically it can support dict
         assert isinstance(df, DataFlow), df

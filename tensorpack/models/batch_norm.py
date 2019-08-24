@@ -322,7 +322,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                 logger.warn("BatchNorm(sync_statistics='horovod') is used with only one process!")
             else:
                 import horovod
-                hvd_version = tuple(map(int, horovod.__version__.split('.')))
+                hvd_version = tuple(map(int, horovod.__version__.split('.')[:3]))
                 assert hvd_version >= (0, 13, 6), "sync_statistics=horovod needs horovod>=0.13.6 !"
 
                 batch_mean = hvd.allreduce(batch_mean, average=True)
