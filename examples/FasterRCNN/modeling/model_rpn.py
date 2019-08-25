@@ -142,11 +142,12 @@ def generate_rpn_proposals(boxes, scores, img_shape,
     topk_valid_boxes_y1x1y2x2 = tf.reshape(
         tf.reverse(topk_valid_boxes_x1y1x2y2, axis=[2]),
         (-1, 4), name='nms_input_boxes')
-    nms_indices = tf.image.non_max_suppression(
-        topk_valid_boxes_y1x1y2x2,
-        topk_valid_scores,
-        max_output_size=post_nms_topk,
-        iou_threshold=cfg.RPN.PROPOSAL_NMS_THRESH)
+    with tf.device('/cpu:0'):
+        nms_indices = tf.image.non_max_suppression(
+            topk_valid_boxes_y1x1y2x2,
+            topk_valid_scores,
+            max_output_size=post_nms_topk,
+            iou_threshold=cfg.RPN.PROPOSAL_NMS_THRESH)
 
     topk_valid_boxes = tf.reshape(topk_valid_boxes_x1y1x2y2, (-1, 4))
     proposal_boxes = tf.gather(topk_valid_boxes, nms_indices)

@@ -8,7 +8,6 @@ import os
 import time
 import tensorflow as tf
 from six.moves import map, queue
-from tensorflow.python.client import timeline
 import psutil
 
 from ..tfutils.common import gpu_available_in_session
@@ -200,6 +199,7 @@ class GraphProfiler(Callback):
             f.write(metadata.SerializeToString())
 
     def _write_tracing(self, metadata):
+        from tensorflow.python.client import timeline
         tl = timeline.Timeline(step_stats=metadata.step_stats)
         fname = os.path.join(
             self._dir, 'chrome-trace-{}.json'.format(self.global_step))
