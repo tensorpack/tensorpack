@@ -201,9 +201,10 @@ def fastrcnn_predictions(boxes, scores):
     filtered_scores = tf.gather_nd(scores, filtered_ids)  # F,
     cls_per_box = tf.slice(filtered_ids, [0, 0], [-1, 1])
     offsets = tf.cast(cls_per_box, tf.float32) * (max_coord + 1)  # F,1
+    nms_boxes = filtered_boxes + offsets
     with tf.device('/cpu:0'):
         selection = tf.image.non_max_suppression(
-            filtered_boxes + offsets,
+            nms_boxes,
             filtered_scores,
             cfg.TEST.RESULTS_PER_IM,
             cfg.TEST.FRCNN_NMS_THRESH)

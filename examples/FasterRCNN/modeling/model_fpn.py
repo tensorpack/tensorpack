@@ -33,17 +33,18 @@ def fpn_model(features):
     use_gn = cfg.FPN.NORM == 'GN'
 
     def upsample2x(name, x):
-        return FixedUnPooling(
-            name, x, 2, unpool_mat=np.ones((2, 2), dtype='float32'),
-            data_format='channels_first')
-
-        # tf.image.resize is, again, not aligned.
-        # with tf.name_scope(name):
-        #     shape2d = tf.shape(x)[2:]
-        #     x = tf.transpose(x, [0, 2, 3, 1])
-        #     x = tf.image.resize_nearest_neighbor(x, shape2d * 2, align_corners=True)
-        #     x = tf.transpose(x, [0, 3, 1, 2])
-        #     return x
+        try:
+            resize = tf.compat.v2.image.resize_images
+            with tf.name_scope(name):
+                shp2d = tf.shape(x)[2:]
+                x = tf.transpose(x, [0, 2, 3, 1])
+                x = resize(x, shp2d * 2, 'nearest')
+                x = tf.transpose(x, [0, 3, 1, 2])
+                return x
+        except AttributeError:
+            return FixedUnPooling(
+                name, x, 2, unpool_mat=np.ones((2, 2), dtype='float32'),
+                data_format='channels_first')
 
     with argscope(Conv2D, data_format='channels_first',
                   activation=tf.identity, use_bias=True,

@@ -68,7 +68,7 @@ Efficiency:
 	If all images have the same spatial size (in which case the per-GPU computation is *still different*),
 	then a 85%~90% scaling efficiency is observed when using 8 V100s and `HorovodTrainer`.
 
-1. This implementation does not use specialized CUDA ops (e.g. AffineChannel, ROIAlign).
+1. This implementation does not use specialized CUDA ops (e.g. NMS, ROIAlign).
    Therefore it might be slower than other highly-optimized implementations.
 
 1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as

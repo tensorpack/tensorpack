@@ -15,10 +15,11 @@ __all__ = ['register_coco']
 
 
 class COCODetection(DatasetSplit):
-    # handle the weird (but standard) split of train and val
+    # handle a few special splits whose names do not match the directory names
     _INSTANCE_TO_BASEDIR = {
         'valminusminival2014': 'val2014',
         'minival2014': 'val2014',
+        'val2017_100': 'val2017',
     }
 
     """
@@ -230,7 +231,7 @@ def register_coco(basedir):
     class_names = ["BG"] + class_names
 
     for split in ["train2017", "val2017", "train2014", "val2014",
-                  "valminusminival2014", "minival2014", "trainsingle"]:
+                  "valminusminival2014", "minival2014", "val2017_100"]:
         name = "coco_" + split
         DatasetRegistry.register(name, lambda x=split: COCODetection(basedir, x))
         DatasetRegistry.register_metadata(name, 'class_names', class_names)
