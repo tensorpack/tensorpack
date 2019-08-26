@@ -79,16 +79,15 @@ class AsyncPredictorBase(PredictorBase):
 
 
 class OnlinePredictor(PredictorBase):
-    """ A predictor which directly use an existing session and given tensors.
+    """
+    A predictor which directly use an existing session and given tensors.
+
+    Attributes:
+        sess: The tf.Session object associated with this predictor.
     """
 
     ACCEPT_OPTIONS = False
     """ See Session.make_callable """
-
-    sess = None
-    """
-    The tf.Session object associated with this predictor.
-    """
 
     def __init__(self, input_tensors, output_tensors,
                  return_input=False, sess=None):

@@ -166,7 +166,7 @@ if __name__ == '__main__':
             df = get_eval_dataflow(cfg.DATA.VAL[0])
             df.reset_state()
             predictor = OfflinePredictor(predcfg)
-            for img in tqdm.tqdm(df, total=len(df)):
-                # This include post-processing time, which is done on CPU and not optimized
+            for _, img in enumerate(tqdm.tqdm(df, total=len(df), smoothing=0.5)):
+                # This includes post-processing time, which is done on CPU and not optimized
                 # To exclude it, modify `predict_image`.
                 predict_image(img[0], predictor)

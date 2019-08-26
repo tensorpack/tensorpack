@@ -202,6 +202,7 @@ _C.FPN.MRCNN_HEAD_FUNC = 'maskrcnn_up4conv_head'   # choices: maskrcnn_up4conv_{
 
 # Mask R-CNN
 _C.MRCNN.HEAD_DIM = 256
+_C.MRCNN.ACCURATE_PASTE = True  # slightly more aligned results, but very slow on numpy
 
 # Cascade R-CNN, only available in FPN mode
 _C.FPN.CASCADE = False

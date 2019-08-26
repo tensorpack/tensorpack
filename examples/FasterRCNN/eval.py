@@ -70,7 +70,7 @@ def _paste_mask(box, mask, shape):
     """
     assert mask.shape[0] == mask.shape[1], mask.shape
 
-    if True:
+    if cfg.MRCNN.ACCURATE_PASTE:
         # This method is accurate but much slower.
         mask = np.pad(mask, [(1, 1), (1, 1)], mode='constant')
         box = _scale_box(box, float(mask.shape[0]) / (mask.shape[0] - 2))
@@ -82,6 +82,7 @@ def _paste_mask(box, mask, shape):
         xs = np.arange(0.0, w) + 0.5
         ys = (ys - box[1]) / (box[3] - box[1]) * mask.shape[0]
         xs = (xs - box[0]) / (box[2] - box[0]) * mask.shape[1]
+        # Waste a lot of compute since most indices are out-of-border
         res = mask_continuous(xs, ys)
         return (res >= 0.5).astype('uint8')
     else:
@@ -124,12 +125,12 @@ def predict_image(img, model_func):
     resized_img = resizer.augment(img)
     scale = np.sqrt(resized_img.shape[0] * 1.0 / img.shape[0] * resized_img.shape[1] / img.shape[1])
     boxes, probs, labels, *masks = model_func(resized_img)
+
+    # Some slow numpy postprocessing:
     boxes = boxes / scale
     # boxes are already clipped inside the graph, but after the floating point scaling, this may not be true any more.
     boxes = clip_boxes(boxes, orig_shape)
-
     if masks:
-        # has mask
         full_masks = [_paste_mask(box, mask, orig_shape)
                       for box, mask in zip(boxes, masks[0])]
         masks = full_masks

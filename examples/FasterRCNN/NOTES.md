@@ -70,6 +70,7 @@ Efficiency:
 
 1. This implementation does not use specialized CUDA ops (e.g. NMS, ROIAlign).
    Therefore it might be slower than other highly-optimized implementations.
+	 (CUDA kernel of NMS is currently only available in TF master)
 
 1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
    set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`

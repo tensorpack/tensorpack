@@ -20,9 +20,8 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
         fg_labels: #fg, in 1~#class, int64
         fg_target_masks: #fgxhxw, float32
     """
-    num_fg = tf.size(fg_labels, out_type=tf.int64)
-    indices = tf.stack([tf.range(num_fg), fg_labels - 1], axis=1)  # #fgx2
-    mask_logits = tf.gather_nd(mask_logits, indices)  # #fgxhxw
+    mask_logits = tf.batch_gather(mask_logits, tf.reshape(fg_labels, [-1, 1]) - 1)
+    mask_logits = tf.squeeze(mask_logits, axis=1)
     mask_probs = tf.sigmoid(mask_logits)
 
     # add some training visualizations to tensorboard
