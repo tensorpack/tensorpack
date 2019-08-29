@@ -190,13 +190,16 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
         grad_list = self._builder.call_for_each_tower(tower_fn)
         self.train_op, post_init_op = self._builder.build(grad_list, get_opt_fn)
 
-        cb = RunOp(
-            post_init_op,
-            run_before=True,
-            run_as_trigger=self.BROADCAST_EVERY_EPOCH,
-            verbose=True)
-        cb.name_scope = "SyncVariables"
-        return [cb]
+        if post_init_op is not None:
+            cb = RunOp(
+                post_init_op,
+                run_before=True,
+                run_as_trigger=self.BROADCAST_EVERY_EPOCH,
+                verbose=True)
+            cb.name_scope = "SyncVariables"
+            return [cb]
+        else:
+            return []
 
 
 class DistributedTrainerBase(SingleCostTrainer):

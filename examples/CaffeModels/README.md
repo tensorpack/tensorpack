@@ -1,8 +1,7 @@
 
 Example code to convert, load and run inference of some Caffe models.
 Require caffe python bindings to be installed.
-Converted models can also be found at [tensorpack model zoo](http://models.tensorpack.com).
-
+Converted models can also be found at [tensorpack model zoo](http://models.tensorpack.com/#Caffe-Converted).
 ## AlexNet:
 
 Download: https://github.com/BVLC/caffe/tree/master/models/bvlc_alexnet

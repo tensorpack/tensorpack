@@ -28,7 +28,7 @@ Some practicical notes:
 
 ### To test a model:
 
-Download models from [model zoo](http://models.tensorpack.com/OpenAIGym/).
+Download models from [model zoo](http://models.tensorpack.com/#OpenAIGym).
 
 Watch the agent play:
 `./train-atari.py --task play --env Breakout-v0 --load Breakout-v0.npz`

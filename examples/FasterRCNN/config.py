@@ -140,7 +140,7 @@ _C.TRAIN.STARTING_EPOCH = 1  # the first epoch to start with, useful to continue
 # Therefore, there is *no need* to modify the config if you only change the number of GPUs.
 
 _C.TRAIN.LR_SCHEDULE = "1x"      # "1x" schedule in detectron
-_C.TRAIN.EVAL_PERIOD = 25  # period (epochs) to run evaluation
+_C.TRAIN.EVAL_PERIOD = 50  # period (epochs) to run evaluation
 _C.TRAIN.CHECKPOINT_PERIOD = 20  # period (epochs) to save model
 
 # preprocessing --------------------

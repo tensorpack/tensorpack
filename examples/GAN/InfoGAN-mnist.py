@@ -24,7 +24,7 @@ To train:
 To visualize:
     ./InfoGAN-mnist.py --sample --load path/to/model
 
-A pretrained model is at http://models.tensorpack.com/GAN/
+A pretrained model is at http://models.tensorpack.com/#GAN
 """
 
 BATCH = 128

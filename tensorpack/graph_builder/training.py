@@ -304,7 +304,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
             with tf.name_scope('sync_variables'):
                 post_init_op = SyncMultiGPUReplicatedBuilder.get_post_init_ops()
         else:
-            post_init_op = tf.no_op(name='empty_sync_variables')
+            post_init_op = None
         return train_op, post_init_op
 
 # Adopt from https://github.com/tensorflow/benchmarks/blob/master/scripts/tf_cnn_benchmarks/variable_mgr.py

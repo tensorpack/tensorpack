@@ -33,4 +33,4 @@ To inference (produce a heatmap at each level at out*.png):
 ```bash
 ./hed.py --load pretrained.model --run a.jpg
 ```
-Models I trained can be downloaded [here](http://models.tensorpack.com/HED/).
+Models I trained can be downloaded [here](http://models.tensorpack.com/#HED).

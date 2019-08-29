@@ -14,7 +14,7 @@ There are two ways to do inference during training.
 	"evaluate some tensors for each input, and aggregate the results in the end".
 	You can use the `InferenceRunner` interface with some `Inferencer`.
 	This will further support prefetch & data-parallel inference.
-	
+
     Currently this lacks documentation, but you can refer to examples
     that uses `InferenceRunner` or custom `Inferencer` to learn more.
 
@@ -55,8 +55,8 @@ predictor = OfflinePredictor(pred_config)
 output1_array, output2_array = predictor(input1_array, input2_array)
 ```
 
-It's __common to use a different graph for inference__, 
-e.g., use NHWC format, support encoded image format, etc. 
+It's __common to use a different graph for inference__,
+e.g., use NHWC format, support encoded image format, etc.
 You can make these changes inside the `model` or `tower_func` in your `PredictConfig`.
 The example in [examples/basics/export-model.py](../examples/basics/export-model.py) demonstrates such an altered inference graph.
 
@@ -90,7 +90,7 @@ you can also save your models into other formats after training, so it may be mo
    - Removes all unnecessary operations (training-only ops, e.g., learning-rate) to compress the graph.
 
    This creates a self-contained graph which includes all necessary information to run inference.
-   
+
    To load the saved graph, you can simply:
    ```python
    graph_def = tf.GraphDef()
@@ -116,7 +116,7 @@ training:
 
 1. The model (the graph): you've already written it yourself with TF symbolic functions.
    Nothing about it is related to the tensorpack interface.
-   If you use tensorpack layers, they are mainly just wrappers around `tf.layers`.
+   If you use tensorpack layers, they are not so different from `tf.layers`.
 
 2. The trained parameters: tensorpack saves them in standard TF checkpoint format.
    Nothing about the format is related to tensorpack.
@@ -139,14 +139,16 @@ with TowerContext('', is_training=False):
 ```eval_rst
 .. note:: **Do not use metagraph for inference!**
 
-	Metagraph is the wrong abstraction for a "model". 
+	Tensorpack saves a metagraph during training. Users should not try to load it for inference.
+
+	Metagraph is the wrong abstraction for a "model".
 	It stores the entire graph which contains not only the mathematical model, but also all the
 	training settings (queues, iterators, summaries, evaluations, multi-gpu replications).
 	Therefore it is usually wrong to import a training metagraph for inference.
 
-    It's especially error-prone to load a metagraph on top of a non-empty graph.
-    The potential name conflicts between the current graph and the nodes in the
-    metagraph can lead to esoteric bugs or sometimes completely ruin the model.
+  It's especially error-prone to load a metagraph on top of a non-empty graph.
+  The potential name conflicts between the current graph and the nodes in the
+  metagraph can lead to esoteric bugs or sometimes completely ruin the model.
 
 	It's also very common to change the graph for inference.
 	For example, you may need a different data layout for CPU inference,
@@ -161,7 +163,7 @@ with TowerContext('', is_training=False):
 You can just use `tf.train.Saver` for all the work.
 Alternatively, use tensorpack's `get_model_loader(path).init(tf.get_default_session())`
 
-Now, you've already built a graph for inference, and the checkpoint is also loaded. 
+Now, you've already built a graph for inference, and the checkpoint is also loaded.
 You may now:
 
 1. use `sess.run` to do inference
