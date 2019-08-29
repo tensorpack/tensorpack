@@ -70,6 +70,8 @@ class COCODetection(DatasetSplit):
         """
         from pycocotools.cocoeval import COCOeval
         ret = {}
+        has_mask = "segmentation" in results[0]  # results will be modified by loadRes
+
         cocoDt = self.coco.loadRes(results)
         cocoEval = COCOeval(self.coco, cocoDt, 'bbox')
         cocoEval.evaluate()
@@ -79,7 +81,7 @@ class COCODetection(DatasetSplit):
         for k in range(6):
             ret['mAP(bbox)/' + fields[k]] = cocoEval.stats[k]
 
-        if len(results) > 0 and 'segmentation' in results[0]:
+        if len(results) > 0 and has_mask:
             cocoEval = COCOeval(self.coco, cocoDt, 'segm')
             cocoEval.evaluate()
             cocoEval.accumulate()
