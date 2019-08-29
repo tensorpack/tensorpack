@@ -56,6 +56,14 @@ Model:
 
 Efficiency:
 
+1. This implementation does not use specialized CUDA ops (e.g. NMS, ROIAlign).
+   Therefore it might be slower than other highly-optimized implementations.
+   With CUDA kernel of NMS (available only in TF master) and `HorovodTrainer`,
+   this implementation can train a standard R50-FPN at 50 img/s on 8 V100s,
+   compared to 35 img/s in [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines)
+   and [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn),
+   and 59 img/s in [torchvision](https://pytorch.org/blog/torchvision03/#detection-models).
+
 1. If CuDNN warmup is on, the training will start very slowly, until about
    10k steps (or more if scale augmentation is used) to reach a maximum speed.
    As a result, the ETA is also inaccurate at the beginning.
@@ -67,10 +75,6 @@ Efficiency:
 	Scalability isn't very meaningful since the amount of computation each GPU perform is data-dependent.
 	If all images have the same spatial size (in which case the per-GPU computation is *still different*),
 	then a 85%~90% scaling efficiency is observed when using 8 V100s and `HorovodTrainer`.
-
-1. This implementation does not use specialized CUDA ops (e.g. NMS, ROIAlign).
-   Therefore it might be slower than other highly-optimized implementations.
-	 (CUDA kernel of NMS is currently only available in TF master)
 
 1. To reduce RAM usage on host: (1) make sure you're using the "spawn" method as
    set in `train.py`; (2) reduce `buffer_size` or `NUM_WORKERS` in `data.py`
