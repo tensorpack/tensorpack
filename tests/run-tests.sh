@@ -17,7 +17,8 @@ python -c "import tensorflow as tf; tf.Operation._add_control_input"
 python -m tensorpack.callbacks.param_test
 python -m tensorpack.tfutils.unit_tests
 python -m unittest tensorpack.dataflow.imgaug._test
-TENSORPACK_SERIALIZE=pyarrow python test_serializer.py
+# use pyarrow after we organize the serializers.
+# TENSORPACK_SERIALIZE=pyarrow python test_serializer.py
 TENSORPACK_SERIALIZE=msgpack python test_serializer.py
 
 python -m unittest discover -v
