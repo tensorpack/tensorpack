@@ -20,24 +20,24 @@ matrix:
   include:
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.3.0 TF_TYPE=release
+    env: TF_VERSION=1.3.0
   - os: linux
     python: 3.6
-    env: TF_VERSION=1.3.0 TF_TYPE=release
+    env: TF_VERSION=1.3.0
   - os: linux
     python: 2.7
-    env: TF_VERSION=1.14.0 TF_TYPE=release
+    env: TF_VERSION=1.14.0
   - os: linux
     python: 3.6
-    env: TF_VERSION=1.14.0 TF_TYPE=release PYPI=true
+    env: TF_VERSION=1.14.0 PYPI=true
   - os: linux
     python: 2.7
-    env: TF_TYPE=nightly
+    env: TF_VERSION=nightly
   - os: linux
     python: 3.6
-    env: TF_TYPE=nightly
+    env: TF_VERSION=nightly
   allow_failures:
-  - env: TF_TYPE=nightly
+  - env: TF_VERSION=nightly
 
 install:
 - pip install -U pip    # the pip version on travis is too old
