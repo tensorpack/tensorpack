@@ -16,7 +16,7 @@ This is a minimal implementation that simply contains these files:
 
 ### Implementation Notes
 
-Data:
+#### Data:
 
 1. It's easy to train on your own data, by calling `DatasetRegistry.register(name, lambda: YourDatasetSplit())`,
 	 and modify `cfg.DATA.*` accordingly. Afterwards, "name" can be used in `cfg.DATA.TRAIN`.
@@ -38,7 +38,7 @@ Data:
    which is probably not the optimal way.
    A TODO is to generate bounding box from segmentation, so more augmentations can be naturally supported.
 
-Model:
+#### Model:
 
 1. Floating-point boxes are defined like this:
 
@@ -54,15 +54,25 @@ Model:
    GPUs (the `BACKBONE.NORM=SyncBN` option).
    Another alternative to BatchNorm is GroupNorm (`BACKBONE.NORM=GN`) which has better performance.
 
-Efficiency:
+#### Efficiency:
 
-1. This implementation does not use specialized CUDA ops (e.g. NMS, ROIAlign).
+Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100s:
+
+| Implementation                                                                                                                                   | Throughput (img/s) |
+| -                                                                                                                                                | -                  |
+| [torchvision](https://pytorch.org/blog/torchvision03/#segmentation-models)                                                                       | 59                 |
+| tensorpack                                                                                                                                       | 50                 |
+| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines) | 35                 |
+| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn)                                                | 35                 |
+| [Detectron](https://github.com/facebookresearch/Detectron)                                                                                       | 19                 |
+| [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                                                                 | 11                 |
+
+1. This implementation does not use specialized CUDA ops (e.g. ROIAlign), 
+   and does not use batch of images.
    Therefore it might be slower than other highly-optimized implementations.
-   With CUDA kernel of NMS (available only in TF master) and `HorovodTrainer`,
-   this implementation can train a standard R50-FPN at 50 img/s on 8 V100s,
-   compared to 35 img/s in [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines)
-   and [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn),
-   and 59 img/s in [torchvision](https://pytorch.org/blog/torchvision03/#detection-models).
+   Our number in the table above uses CUDA kernel of NMS (available only in TF
+   master with [PR30893](https://github.com/tensorflow/tensorflow/pull/30893)),
+   and `TRAINER=horovod`.
 
 1. If CuDNN warmup is on, the training will start very slowly, until about
    10k steps (or more if scale augmentation is used) to reach a maximum speed.
