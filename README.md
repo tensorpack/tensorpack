@@ -1,4 +1,4 @@
-![Tensorpack](.github/tensorpack.png)
+![Tensorpack](https://github.com/tensorpack/tensorpack/raw/master/.github/tensorpack.png)
 
 Tensorpack is a neural network training interface based on TensorFlow.
 
