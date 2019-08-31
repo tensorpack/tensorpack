@@ -6,7 +6,7 @@ import abc
 import tensorflow as tf
 
 from tensorpack import ModelDesc
-from tensorpack.tfutils import get_current_tower_context, gradproc, optimizer, summary, varreplace
+from tensorpack.tfutils import gradproc, optimizer, summary, varreplace
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.utils import logger
 
@@ -60,7 +60,7 @@ class Model(ModelDesc):
             [-1] * (input_rank - 1) + [self.history], name='state')
 
         self.predict_value = self.get_DQN_prediction(state)
-        if not get_current_tower_context().is_training:
+        if not self.training:
             return
 
         reward = tf.clip_by_value(reward, -1, 1)

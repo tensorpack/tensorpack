@@ -39,16 +39,16 @@ for epoch_num in range(starting_epoch, max_epoch):
 		run_step()  # do something
 ```
 
+In other words, the assumptions are:
 1. Training is **running some iterations**.
-Tensorpack base trainer implements the logic of __running the iteration__.
-Users or derived trainers should implement __what the iteration is__.
+Tensorpack base trainer implements the logic of __running the iterations__.
+Users or derived trainers should implement __what the iterations are__.
 
-2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
-`steps_per_epoch` can be any number you set
+2. The concept of __"epoch"__, i.e. we assume that the iterations run in nested for-loops.
+In fact, the steps per epoch can be any number
 and it only affects the [schedule of callbacks](callback.html).
 In other words, an "epoch" in tensorpack is the __default period to run
-callbacks__ (validation, summary, checkpoint, etc.). 
-It has nothing to do with your dataset.
+callbacks__ (validation, summary, checkpoint, etc.). It has nothing to do with your dataset.
 
 
 ### Built-in Trainers
@@ -76,8 +76,8 @@ It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTra
 Note some __common confusions__ when using these trainers:
 
 1. In each iteration, instead of taking one input tensor for all GPUs and split,
-    all GPUs take tensors from the `InputSource`.
-	So the total batch size across all GPUs is ``(batch size of InputSource) * #GPU``.
+    tensorpack trainers let all GPUs take tensors from the input.
+	Therefore, the total batch size across all GPUs is ``(batch size of input source) * #GPU``.
     You may want to change `steps_per_epoch` or learing rate appropriately according
     to the total batch size.
 
@@ -92,11 +92,11 @@ Note some __common confusions__ when using these trainers:
     ```
 
 2. The tower function (your model code) will get called once on each GPU.
-   You must follow some [rules of tower function](extend/trainer.html#rules-of-tower-function).
+   So you must follow some [rules of tower function](extend/trainer.html#rules-of-tower-function).
 
 ### Distributed Trainers
 
-Distributed training needs the [horovod](https://github.com/uber/horovod) library which offers high-performance allreduce implementation.
+Distributed training needs the [horovod](https://github.com/horovod/horovod) library which offers high-performance allreduce implementation.
 To run distributed training, first install horovod properly, then refer to the
 documentation of [HorovodTrainer](../modules/train.html#tensorpack.train.HorovodTrainer).
 

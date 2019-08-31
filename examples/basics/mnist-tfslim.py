@@ -30,7 +30,6 @@ class Model(ModelDesc):
 
         image = image * 2 - 1
 
-        is_training = get_current_tower_context().is_training
         with slim.arg_scope([slim.layers.fully_connected],
                             weights_regularizer=slim.l2_regularizer(1e-5)):
             l = slim.layers.conv2d(image, 32, [3, 3], scope='conv0')
@@ -41,7 +40,7 @@ class Model(ModelDesc):
             l = slim.layers.conv2d(l, 32, [3, 3], scope='conv3')
             l = slim.layers.flatten(l, scope='flatten')
             l = slim.layers.fully_connected(l, 512, scope='fc0')
-            l = slim.layers.dropout(l, is_training=is_training)
+            l = slim.layers.dropout(l, is_training=self.training)
             logits = slim.layers.fully_connected(l, 10, activation_fn=None, scope='fc1')
 
         cost = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=label)

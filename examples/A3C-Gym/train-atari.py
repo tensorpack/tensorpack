@@ -100,8 +100,7 @@ class Model(ModelDesc):
         logits, value = self._get_NN_prediction(state)
         value = tf.squeeze(value, [1], name='pred_value')  # (B,)
         policy = tf.nn.softmax(logits, name='policy')
-        is_training = get_current_tower_context().is_training
-        if not is_training:
+        if not self.training:
             return
         log_probs = tf.log(policy + 1e-6)
 

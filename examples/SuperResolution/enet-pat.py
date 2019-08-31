@@ -55,7 +55,6 @@ class Model(GANModelDesc):
 
     def build_graph(self, Ilr, Ihr):
         Ilr, Ihr = Ilr / 255.0, Ihr / 255.0
-        ctx = get_current_tower_context()
         Ibicubic = tf.image.resize_bicubic(
             Ilr, [4 * self.height, 4 * self.width], align_corners=True,
             name='bicubic_baseline')    # (0,1)
@@ -182,7 +181,7 @@ class Model(GANModelDesc):
 
         tf.multiply(fake_hr, 255.0, name='prediction')
 
-        if ctx.is_training:
+        if self.training:
             with tf.variable_scope('discrim'):
                 real_score = discriminator(real_hr)
                 fake_score = discriminator(fake_hr)

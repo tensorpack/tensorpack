@@ -7,7 +7,6 @@ from tensorpack import ModelDesc
 from tensorpack.models import GlobalAvgPooling, l2_regularizer, regularize_cost
 from tensorpack.tfutils import optimizer
 from tensorpack.tfutils.summary import add_moving_summary
-from tensorpack.tfutils.tower import get_current_tower_context
 
 from config import config as cfg
 from data import get_all_anchors, get_all_anchors_fpn
@@ -30,10 +29,6 @@ class GeneralizedRCNN(ModelDesc):
         image = tf.expand_dims(image, 0)
         image = image_preprocess(image, bgr=True)
         return tf.transpose(image, [0, 3, 1, 2])
-
-    @property
-    def training(self):
-        return get_current_tower_context().is_training
 
     def optimizer(self):
         lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)

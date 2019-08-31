@@ -45,8 +45,6 @@ class Model(ModelDesc):
                 tf.TensorSpec([None], tf.int32, 'label')]
 
     def build_graph(self, image, label):
-        is_training = get_current_tower_context().is_training
-
         fw, fa, fg = get_dorefa(BITW, BITA, BITG)
 
         # monkey-patch tf.get_variable to apply fw
@@ -100,7 +98,7 @@ class Model(ModelDesc):
                       .apply(fg)
                       .BatchNorm('bn5').apply(activate)
                       # 5
-                      .Dropout(rate=0.5 if is_training else 0.0)
+                      .Dropout(rate=0.5 if self.training else 0.0)
                       .Conv2D('conv6', 512, 5, padding='VALID')
                       .apply(fg).BatchNorm('bn6')
                       .apply(nonlin)

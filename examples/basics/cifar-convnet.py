@@ -33,10 +33,9 @@ class Model(ModelDesc):
                 tf.TensorSpec((None,), tf.int32, 'label')]
 
     def build_graph(self, image, label):
-        is_training = get_current_tower_context().is_training
-        drop_rate = tf.constant(0.5 if is_training else 0.0)
+        drop_rate = tf.constant(0.5 if self.training else 0.0)
 
-        if is_training:
+        if self.training:
             tf.summary.image("train_image", image, 10)
         if tf.test.is_gpu_available():
             image = tf.transpose(image, [0, 3, 1, 2])

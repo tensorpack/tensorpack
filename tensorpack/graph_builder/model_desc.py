@@ -7,6 +7,7 @@ import tensorflow as tf
 
 from ..utils.argtools import memoized_method
 from ..tfutils.common import get_op_tensor_name
+from ..tfutils.tower import get_current_tower_context
 from ..compat import backport_tensor_spec, tfv1
 
 TensorSpec = backport_tensor_spec()
@@ -136,6 +137,14 @@ class ModelDescBase(object):
             For example, `SingleCostTrainer` expect this method to return the cost tensor.
         """
         raise NotImplementedError()
+
+    @property
+    def training(self):
+        """
+        Returns:
+            bool: whether the caller is under a training context or not.
+        """
+        return get_current_tower_context().is_training
 
 
 class ModelDesc(ModelDescBase):
