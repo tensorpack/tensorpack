@@ -117,10 +117,10 @@ if __name__ == '__main__':
         data=FeedInput(dataset_train),
         callbacks=[
             ModelSaver(),   # save the model after every epoch
-            MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
             InferenceRunner(    # run inference(for validation) after every epoch
                 dataset_test,   # the DataFlow instance used for validation
                 ScalarStats(['cross_entropy_loss', 'accuracy'])),
+            MaxSaver('validation_accuracy'),  # save the model with highest accuracy (prefix 'validation_')
         ],
         steps_per_epoch=steps_per_epoch,
         max_epoch=100,
