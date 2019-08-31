@@ -59,7 +59,7 @@ This is a minimal implementation that simply contains these files:
 Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100s:
 
 | Implementation                                                                                                                                   | Throughput (img/s) |
-| -                                                                                                                                                | -                  |
+|--------------------------------------------------------------------------------------------------------------------------------------------------|:------------------:|
 | [torchvision](https://pytorch.org/blog/torchvision03/#segmentation-models)                                                                       | 59                 |
 | tensorpack                                                                                                                                       | 50                 |
 | [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines) | 35                 |

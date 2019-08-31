@@ -1,97 +1,79 @@
-
 # Trainers
 
-Tensorpack trainers contain logic of:
+Tensorpack follows the "define-and-run" paradigm.
+Therefore a training contains two steps:
 
-1. Building the graph.
-2. Running the iterations (with callbacks).
+1. __Define__: Build graph for the model.
+	Users can call whatever tensorflow functions to setup the graph.
+	Users may or may not use tensorpack `InputSource`, `ModelDesc` or other utilities to build the graph.
+	The goal of this step is to define "what to run" in later training steps,
+	and it can happen __either inside or outside__ tensorpack trainer.
 
-Usually you won't touch these methods directly, but use
-[higher-level interface](training-interface.html) on trainers.
-You'll only need to __select__ what trainer to use.
-But some basic knowledge of how they work is useful:
+2. __Run__: Train the model (the [Trainer.train() method](/modules/train.html#tensorpack.train.Trainer.train)):
 
-### Tower Trainer
+	1. Setup callbacks/monitors.
+	2. Finalize graph, initialize session.
+	3. Run the training loop.
 
-[TowerTrainer](../modules/train.html#tensorpack.train.TowerTrainer)
-is a trainer that uses "tower function" to build models.
-All existing trainers in tensorpack are subclass of ``TowerTrainer``,
-because this concept is able to cover most types of neural-network training tasks.
+Tensorpack `Trainers` aims to simplify the above two steps
+by exploiting some universal patterns.
 
-#### What is Tower Function
+### Assumptions of Base Trainer
 
-Following the terminology in TensorFlow,
-a __tower function__ is a callable that takes input tensors and adds __one replicate__ of the model to the graph.
+* Q: What types of training can you do with tensorpack?
+* A: Anything that runs in a loop.
 
-The concept of tower is used mainly to support:
-1. Data-parallel multi-GPU training, where a replicate is built on each GPU.
-2. Graph construction for inference, where a replicate is built under inference mode.
+In research we do training of various kind.
+Tensorpack trainers avoid making assumptions on what type of training
+you want to do. For example, unlike Keras, tensorpack does not wrongly assume that: 
+1. Your training is batched
+2. Your training is gradient-based optimization
+3. Your data has `X`(inputs) and `y`(outputs)
+4. You want to evaluate on zero or one validation dataset
+5. ... and more
 
-A user needs to provide a tower function to use `TowerTrainer`.
-In particular, when working with the `ModelDesc` interface, the `build_graph`
-method will be part of the tower function.
+The only assumption is that your training follows this pattern:
+```python
+for epoch_num in range(starting_epoch, max_epoch):
+	for local_step in range(steps_per_epoch):
+		run_step()  # do something
+```
 
-#### Rules of Tower Function
+1. Training is **running some iterations**.
+Tensorpack base trainer implements the logic of __running the iteration__.
+Users or derived trainers should implement __what the iteration is__.
 
-The tower function needs to follow some rules:
+2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
+`steps_per_epoch` can be any number you set
+and it only affects the [schedule of callbacks](callback.html).
+In other words, an "epoch" in tensorpack is the __default period to run
+callbacks__ (validation, summary, checkpoint, etc.). 
+It has nothing to do with your dataset.
 
-1. __It may get called multiple times__ for data-parallel training or inference. As a result:
-   * You'll need to be careful when modifying global states, e.g.
-     adding ops to collections, setting attributes of a model instance.
-   * To use a tensorflow-hub module, you need to initialize the
-     module outside the tower function, and call the module inside the tower function.
-2. It must __respect variable collections__:
-   * (Required) Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
-   * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
-3. It must __respect variable scope names__:
 
-   The name of any trainable variables created in the function must be like "variable_scope_name/other/scopes/and/name".
-	 Strictly speaking, the name of any trainable variables must:
+### Built-in Trainers
 
-     * Start with the name of the enclosing variable_scope when the tower function is called.
-	 * Not use the same variable_scope's name twice in its name.
-	 * Not depend on name_scope's name.
-	 * Not depend on any tensor's name (because the tensor's name may depend on name_scope's name).
+Tensorpack implements a few builtin trainers for __single-cost gradient-based optimization__,
+as this is the most common type of task.
+If your training follows this pattern, you only need to __select a trainer__,
+and use it with its [training interface](training-interface.html).
 
-	 Tensorpack layers create variables based on the name given to the layer:
-	 e.g., `Conv2D('test', x)` will open a variable scope named "test".
-     In order to respect the above rules,
-	 the name of the layer must not depend on name_scope's name or any tensor's name.
-4. It must __respect variable scope reuse__:
-   * The creation of any trainable variables must __respect reuse__ variable scope.
-     To respect variable reuse (i.e. sharing), use `tf.get_variable` instead of `tf.Variable` in the function.
-
-     On the other hand, for a non-trainable variable, it may be desirable to not reuse it between towers.
-     In this case, `tf.Variable` can be used to ensure creation of new variables in each tower even when `reuse=True`.
-   * Do not modify the reuse option (e.g., by `scope.reuse_variables()`) of a variable
-     scope that is not created by you. This affects other's code. You can always
-     open new scopes if you need the reuse option.
-5. It must not create scopes or variables containing the name 'tower', as it is
-   reserved for special use.
-
-These conventions are easy to follow, and most layer wrappers (e.g.,
-tf.layers/slim/tensorlayer) do follow them. Note that certain Keras layers do not
-follow these conventions and will need some workarounds if used within tensorpack.
-
-#### What You Can Do Inside Tower Function
-1. Call any symbolic functions as long as they follow the above rules.
-2. The tower function will be called under a
- [TowerContext](../modules/tfutils.html#tensorpack.tfutils.tower.BaseTowerContext),
- which can be accessed by [get_current_tower_context()](../modules/tfutils.html#tensorpack.tfutils.tower.get_current_tower_context).
-   The context contains information about training/inference mode, scope name, etc.
-   You can use the context to build a different graph under different mode.
-
+The simplest example of such a trainer is
+[SimpleTrainer](../modules/train.html#tensorpack.train.SimpleTrainer).
+All it does is building your model (which you have to provide) once 
+(or twice if inference is needed by callbacks) and minimizing its cost.
 
 ### Multi-GPU Trainers
 
 For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
 implement different distribution strategies.
 They take care of device placement, gradient averaging and synchronoization
-in the efficient way and all reach the same performance as the
-[official TF benchmarks](https://www.tensorflow.org/performance/benchmarks).
+in the efficient way, which is why multi-GPU training in tensorpack
+is up to 
+[5x faster than Keras](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers).
 It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTrainerReplicated(...)`.
 
-Note some __common problems__ when using these trainers:
+Note some __common confusions__ when using these trainers:
 
 1. In each iteration, instead of taking one input tensor for all GPUs and split,
     all GPUs take tensors from the `InputSource`.
@@ -110,7 +92,7 @@ Note some __common problems__ when using these trainers:
     ```
 
 2. The tower function (your model code) will get called once on each GPU.
-   You must follow the abovementioned rules of tower function.
+   You must follow some [rules of tower function](extend/trainer.html#rules-of-tower-function).
 
 ### Distributed Trainers
 
@@ -121,4 +103,4 @@ documentation of [HorovodTrainer](../modules/train.html#tensorpack.train.Horovod
 Tensorpack has implemented some other distributed trainers using TF's native API,
 but TensorFlow is not actively supporting its distributed training features, and
 its native distributed performance isn't very good even today.
-Therefore those trainers are not actively maintained and are __not recommended for use__.
+Therefore those trainers are not maintained and are __not recommended for use__.

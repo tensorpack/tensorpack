@@ -22,19 +22,10 @@ matrix:
     python: 2.7
     env: TF_VERSION=1.3.0
   - os: linux
-    python: 3.6
-    env: TF_VERSION=1.3.0
-  - os: linux
     python: 2.7
     env: TF_VERSION=1.14.0
   - os: linux
-    python: 3.6
-    env: TF_VERSION=1.14.0 PYPI=true
-  - os: linux
     python: 2.7
-    env: TF_VERSION=nightly
-  - os: linux
-    python: 3.6
     env: TF_VERSION=nightly
   allow_failures:
   - env: TF_VERSION=nightly
@@ -42,13 +33,12 @@ matrix:
 install:
 - pip install -U pip    # the pip version on travis is too old
 - pip install .
-- pip install flake8 scikit-image opencv-python lmdb h5py msgpack
+- pip install scikit-image opencv-python lmdb h5py msgpack
   # check that dataflow can be imported alone without tensorflow
 - python -c "import tensorpack.dataflow"
 - ./tests/install-tensorflow.sh
 
 before_script:
-- flake8 --version
 - protoc --version
 - python -c "import cv2; print('OpenCV '+ cv2.__version__)"
 - python -c "import tensorflow as tf; print('TensorFlow '+ tf.__version__)"
@@ -56,8 +46,6 @@ before_script:
 - export TENSORPACK_DATASET=$HOME/tensorpack_data
 
 script:
-- flake8 .
-- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then cd examples && flake8 .; fi  # some examples are py3 only
 - $TRAVIS_BUILD_DIR/tests/run-tests.sh
 - cd $TRAVIS_BUILD_DIR  # go back to root so that deploy may work
 
@@ -76,29 +64,29 @@ notifications:
 
 
 # see https://docs.travis-ci.com/user/deployment/pypi/
-deploy:
-- provider: pypi
-  user: ppwwyyxx
-  distributions: "sdist bdist_wheel"
-  skip_upload_docs: true
-  password:
-    secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
-  on:
-    tags: true
-    branch: master
-    repo: tensorpack/tensorpack
-    python: "3.6"
-    condition: "$PYPI = true"
+#deploy:
+#- provider: pypi
+  #user: ppwwyyxx
+  #distributions: "sdist bdist_wheel"
+  #skip_upload_docs: true
+  #password:
+    #secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
+  #on:
+    #tags: true
+    #branch: master
+    #repo: tensorpack/tensorpack
+    #python: "3.6"
+    #condition: "$PYPI = true"
 
-- provider: pypi
-  server: https://testpypi.python.org/pypi
-  user: ppwwyyxx
-  distributions: "sdist bdist_wheel"
-  skip_upload_docs: true
-  password:
-    secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
-  on:
-    branch: test-travis
-    repo: tensorpack/tensorpack
-    python: "3.6"
-    condition: "$PYPI = true"
+#- provider: pypi
+  #server: https://testpypi.python.org/pypi
+  #user: ppwwyyxx
+  #distributions: "sdist bdist_wheel"
+  #skip_upload_docs: true
+  #password:
+    #secure: lnNfzPFSk4HF7seuu63CoUa0g4V0JPs42H5FTzWecEIro8IqjdaAvzNKuhu9E4rkrMXPzoYYA6gC4YhseT7N/jg7lyV/Nn1koGXK1gmzu5JnXZXHw5/Ri0I3hOF3OFpEvkR39tzV0r5HsO0JIU3pl11+bBS8iloEtzdTPaUaRgyYxyZGrHl8l3VnUyM50PRnPGDouK6DHxJmknnFCOZFCrEpwN4zpOs55c1rChjJ8aql69rSsXQOUP8++jRtGwgqEvHh0K86uGm1AJUYvSWmcoD+5Urcg8LGaQzySmXtJnFgxtzsORactIEJoAteSMXufWZITn4OQ5VQkc4/CfU0HgHioQw86dpdJrfOLkhEx65JxfUsQiOTgpcTOgYYEda6+dY4cnTTpj2fASVDhQMQ/vo+Ab/W14nYG8z0IPwGJ1qDXRO6AtPD7vbah2LdHQTUTiAbbtva7NWuKbFiVxD2tdrVQHKWqmKXw+JF5F8TBDEnUxFtulW2hbM+vwu6mPxbYQZEpONjLKSa7qiZ8jQZ8cy9KatQYkqPLeGEbgI+IsmA4bnJJennToyWZ2N4W071ddtLB7hDH4ZRVdaLVYtfeKW/b/+YGX3N8p5cMKGIDjpGyF0BocFalQ7gYfg2ouAn1RyEPkCaw6ntA2uzIgvTqxU5inWJCFn20Ogst0oIaPs=
+  #on:
+    #branch: test-travis
+    #repo: tensorpack/tensorpack
+    #python: "3.6"
+    #condition: "$PYPI = true"

@@ -1,47 +1,5 @@
 ## Understand Trainer
 
-### Role of Trainer
-
-Tensorpack follows the "define-and-run" paradigm. Therefore a training script has two steps:
-
-1. __Define__: Build graph for the model.
-	Users can call whatever tensorflow functions to setup the graph.
-	Users may or may not use tensorpack `InputSource`, `ModelDesc` or other utilities to build the graph.
-	The goal of this step is to define "what to run" in later training steps,
-	and it can happen __either inside or outside__ tensorpack trainer.
-
-2. __Run__: Train the model (the [Trainer.train() method](/modules/train.html#tensorpack.train.Trainer.train)):
-
-	1. Setup callbacks/monitors.
-	2. Finalize graph, initialize session.
-	3. Run the training loop.
-
-
-### Assumptions of Base Trainer
-
-* Q: What types of training can you do with tensorpack?
-* A: Anything that runs in a loop.
-
-In research we do training of various kind.
-Tensorpack trainers avoid making assumptions on what type of training
-you want to do (e.g., it doesn't have to be batched, SGD-like, or have `X`(inputs) and `y`(outputs)).
-The only assumption is that your training follows this pattern:
-```python
-for epoch_num in range(starting_epoch, max_epoch):
-	for local_step in range(steps_per_epoch):
-		run_step()
-```
-
-1. Training is **running some iterations**.
-Tensorpack base trainer implements the logic of __running the iteration__.
-Users or derived trainers should implement __what the iteration is__.
-
-2. Trainer assumes the existence of __"epoch"__, i.e. that the iterations run in double for-loops.
-But `steps_per_epoch` can be any number you set
-and it only affects the [schedule of callbacks](callback.html).
-In other words, an "epoch" in tensorpack is the __default period to run callbacks__ (validation, summary, checkpoint, etc.).
-
-
 ### How Existing (Single-Cost) Trainers Work
 
 Most neural network training tasks are single-cost optimization.
@@ -57,6 +15,79 @@ These are documented in [SingleCostTrainer.setup_graph](/modules/train.html#tens
 In practice you'll not use this method directly, but use [high-level interface](/tutorial/training-interface.html#with-modeldesc-and-trainconfig) instead.
 
 
+### Tower Trainer
+
+[TowerTrainer](../modules/train.html#tensorpack.train.TowerTrainer)
+is a trainer that uses user-provided "tower function" to build models.
+All existing trainers in tensorpack are subclass of ``TowerTrainer``,
+because this concept is able to cover most types of neural-network training tasks.
+
+#### What is Tower Function
+
+Following the terminology in TensorFlow,
+a __tower function__ is a callable that takes input tensors and adds __one replicate__ of the model to the graph.
+In short, __tower function builds your model__.
+If you can write a function that builds your model, then you can use `TowerTrainer`.
+
+The concept of "tower" is used mainly to support:
+1. Data-parallel multi-GPU training, where a replicate is built on each GPU.
+2. Graph construction for inference, where a replicate is built under inference mode.
+
+A user needs to provide a tower function to use `TowerTrainer`.
+In particular, when working with the commonly used `ModelDesc` interface, the `build_graph`
+method will be part of the tower function.
+
+#### Rules of Tower Function
+
+The tower function needs to follow some rules:
+
+1. __It may get called multiple times__ for data-parallel training or inference. As a result:
+   * You'll need to be careful when modifying global states, e.g.
+     adding ops to collections, setting attributes of a model instance.
+   * To use a tensorflow-hub module, you need to initialize the
+     module outside the tower function, and call the module inside the tower function.
+2. It must __respect variable collections__:
+   * (Required) Only put variables __trainable by gradient descent__ into `TRAINABLE_VARIABLES`.
+   * (Recommended) Put non-trainable variables that need to be used in inference into `MODEL_VARIABLES`.
+3. It must __respect variable scope names__:
+
+   The name of any trainable variables created in the function must be like "variable_scope_name/other/scopes/and/name".
+	 Strictly speaking, the name of any trainable variables must:
+
+     * Start with the name of the enclosing variable_scope when the tower function is called.
+	 * Not use the same variable_scope's name twice in its name.
+	 * Not depend on name_scope's name.
+	 * Not depend on any tensor's name (because the tensor's name may depend on name_scope's name).
+
+	 Tensorpack layers create variables based on the name given to the layer:
+	 e.g., `Conv2D('test', x)` will open a variable scope named "test".
+     In order to respect the above rules,
+	 the name of the layer must not depend on name_scope's name or any tensor's name.
+4. It must __respect variable scope reuse__:
+   * The creation of any trainable variables must __respect reuse__ variable scope.
+     To respect variable reuse (i.e. sharing), use `tf.get_variable` instead of `tf.Variable` in the function.
+
+     On the other hand, for a non-trainable variable, it may be desirable to not reuse it between towers.
+     In this case, `tf.Variable` can be used to ensure creation of new variables in each tower even when `reuse=True`.
+   * Do not modify the reuse option (e.g., by `scope.reuse_variables()`) of a variable
+     scope that is not created by you. This affects other's code. You can always
+     open new scopes if you need the reuse option.
+5. It must not create scopes or variables containing the name 'tower', as it is
+   reserved for special use.
+
+These conventions are easy to follow, and most layer wrappers (e.g.,
+tf.layers/slim/tensorlayer) do follow them. Note that certain Keras layers do not
+follow these conventions and will need some workarounds if used within tensorpack.
+
+#### What You Can Do Inside a Tower Function
+1. Call any symbolic functions as long as they follow the above rules.
+2. The tower function will be called under a
+ [TowerContext](../modules/tfutils.html#tensorpack.tfutils.tower.BaseTowerContext),
+ which can be accessed by [get_current_tower_context()](../modules/tfutils.html#tensorpack.tfutils.tower.get_current_tower_context).
+   The context contains information about training/inference mode, scope name, etc.
+   You can use the context to build a different graph under different mode.
+
+
 ### Write a Trainer
 
 The existing trainers should be enough for data-parallel single-cost optimization tasks.
@@ -64,7 +95,7 @@ If you just want to do some extra work during training, first consider writing i
 or write an issue to see if there is a better solution than creating new trainers.
 If your task is fundamentally different from single-cost optimization, you will need to write a trainer.
 
-You can customize the trainer by either using or inheriting the base `Trainer` class.
+You can customize the trainer by either using or inheriting the `Trainer`/`TowerTrainer` class.
 You will need to do two things for a new Trainer:
 
 1. Define the graph. There are 2 ways you can do this:
@@ -82,5 +113,6 @@ You will need to do two things for a new Trainer:
        to be taken to choose which session to use, because many states
        (global steps, StagingArea, summaries) are maintained through `before_run`/`after_run`.
 
-
-There are several different [GAN trainers](../../examples/GAN/GAN.py) for reference.
+If you want to write a new trainer,
+Tensorpack examples include several different 
+[GAN trainers](../../examples/GAN/GAN.py) for a reference.
