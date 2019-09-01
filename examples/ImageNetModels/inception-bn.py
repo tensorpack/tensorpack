@@ -166,8 +166,7 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
+    config.session_init = SmartInit(args.load)
     nr_tower = get_num_gpu()
     assert nr_tower == NUM_GPU
     launch_train_with_config(config, SyncMultiGPUTrainer(NUM_GPU))

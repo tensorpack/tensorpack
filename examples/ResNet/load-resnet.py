@@ -79,7 +79,7 @@ def get_inference_augmentor():
 def run_test(params, input):
     pred_config = PredictConfig(
         model=Model(),
-        session_init=DictRestore(params),
+        session_init=SmartInit(params),
         input_names=['input'],
         output_names=['prob']
     )
@@ -172,6 +172,6 @@ if __name__ == '__main__':
 
     if args.eval:
         ds = get_imagenet_dataflow(args.eval, 'val', 128, get_inference_augmentor())
-        eval_classification(Model(), DictRestore(param), ds)
+        eval_classification(Model(), SmartRestore(param), ds)
     elif args.input:
         run_test(param, args.input)

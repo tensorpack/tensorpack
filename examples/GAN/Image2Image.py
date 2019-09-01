@@ -179,7 +179,7 @@ def get_data():
 
 def sample(datadir, model_path):
     pred = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=Model(),
         input_names=['input', 'output'],
         output_names=['viz'])
@@ -226,5 +226,5 @@ if __name__ == '__main__':
             ],
             steps_per_epoch=data.size(),
             max_epoch=300,
-            session_init=SaverRestore(args.load) if args.load else None
+            session_init=SmartInit(args.load)
         )

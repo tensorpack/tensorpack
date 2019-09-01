@@ -265,7 +265,7 @@ def train():
         ],
         session_creator=sesscreate.NewSessionCreator(config=get_default_sess_config(0.5)),
         steps_per_epoch=STEPS_PER_EPOCH,
-        session_init=get_model_loader(args.load) if args.load else None,
+        session_init=SmartInit(args.load),
         max_epoch=1000,
     )
     trainer = SimpleTrainer() if num_gpu == 1 else AsyncMultiGPUTrainer(train_tower)
@@ -294,7 +294,7 @@ if __name__ == '__main__':
         assert args.load is not None
         pred = OfflinePredictor(PredictConfig(
             model=Model(),
-            session_init=get_model_loader(args.load),
+            session_init=SmartInit(args.load),
             input_names=['state'],
             output_names=['policy']))
         if args.task == 'play':

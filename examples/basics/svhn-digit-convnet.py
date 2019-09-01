@@ -107,6 +107,6 @@ if __name__ == '__main__':
                             ScalarStats(['cost', 'accuracy']))
         ],
         max_epoch=350,
-        session_init=SaverRestore(args.load) if args.load else None
+        session_init=SmartInit(args.load)
     )
     launch_train_with_config(config, SimpleTrainer())

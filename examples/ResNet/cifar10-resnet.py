@@ -166,7 +166,7 @@ if __name__ == '__main__':
                                       [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
         ],
         max_epoch=400,
-        session_init=SaverRestore(args.load) if args.load else None
+        session_init=SmartInit(args.load),
     )
     num_gpu = max(get_num_gpu(), 1)
     launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(num_gpu))

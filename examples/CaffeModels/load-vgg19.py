@@ -64,7 +64,7 @@ def run_test(path, input):
     predict_func = OfflinePredictor(PredictConfig(
         input_signature=[tf.TensorSpec((None, 224, 224, 3), tf.float32, 'input')],
         tower_func=tower_func,
-        session_init=DictRestore(param_dict),
+        session_init=SmartInit(param_dict),
         input_names=['input'],
         output_names=['prob']   # prob:0 is the probability distribution
     ))

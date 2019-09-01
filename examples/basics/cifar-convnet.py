@@ -143,8 +143,7 @@ if __name__ == '__main__':
     with tf.Graph().as_default():
         logger.set_logger_dir(os.path.join('train_log', 'cifar' + str(args.classnum)))
         config = get_config(args.classnum)
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config.session_init = SmartInit(args.load)
 
         num_gpu = get_num_gpu()
         trainer = SimpleTrainer() if num_gpu <= 1 \

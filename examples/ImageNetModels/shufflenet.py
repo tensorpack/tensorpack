@@ -11,7 +11,7 @@ import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow import imgaug
-from tensorpack.tfutils import argscope, get_model_loader, model_utils
+from tensorpack.tfutils import argscope, SmartInit, model_utils
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.utils import logger
 from tensorpack.utils.gpu import get_num_gpu
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_data('val', batch)
-        eval_classification(model, get_model_loader(args.load), ds)
+        eval_classification(model, SmartInit(args.load), ds)
     elif args.flops:
         # manually build the graph with batch=1
         with TowerContext('', is_training=False):
@@ -277,6 +277,5 @@ if __name__ == '__main__':
 
         nr_tower = max(get_num_gpu(), 1)
         config = get_config(model, nr_tower)
-        if args.load:
-            config.session_init = get_model_loader(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(config, SyncMultiGPUTrainerParameterServer(nr_tower))

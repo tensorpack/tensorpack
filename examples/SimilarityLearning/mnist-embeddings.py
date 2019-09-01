@@ -364,7 +364,7 @@ def visualize(model_path, model, algo_name):
         logger.error("visualize requires matplotlib package ...")
         return
     pred = OfflinePredictor(PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=model(),
         input_names=['input'],
         output_names=['emb']))
@@ -432,7 +432,5 @@ if __name__ == '__main__':
             visualize(args.load, ALGO_CONFIGS[args.algorithm], args.algorithm)
         else:
             config = get_config(ALGO_CONFIGS[args.algorithm], args.algorithm)
-            if args.load:
-                config.session_init = SaverRestore(args.load)
-            else:
-                launch_train_with_config(config, SimpleTrainer())
+            config.session_init = SmartInit(args.load)
+            launch_train_with_config(config, SimpleTrainer())

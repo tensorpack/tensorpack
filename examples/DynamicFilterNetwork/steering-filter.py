@@ -255,6 +255,5 @@ if __name__ == '__main__':
     with change_gpu(args.gpu):
         NGPU = len(args.gpu.split(','))
         config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(config, SyncMultiGPUTrainer(NGPU))

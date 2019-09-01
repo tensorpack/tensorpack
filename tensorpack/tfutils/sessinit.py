@@ -12,7 +12,7 @@ from .varmanip import SessionUpdate, get_checkpoint_path, get_savename_from_varn
 
 __all__ = ['SessionInit', 'ChainInit',
            'SaverRestore', 'SaverRestoreRelaxed', 'DictRestore',
-           'JustCurrentSession', 'get_model_loader', 'SmartRestore']
+           'JustCurrentSession', 'get_model_loader', 'SmartInit']
 
 
 class SessionInit(object):
@@ -260,7 +260,7 @@ class ChainInit(SessionInit):
             i._run_init(sess)
 
 
-def SmartRestore(obj, ignore_mismatch=False):
+def SmartInit(obj, ignore_mismatch=False):
     """
     Create a :class:`SessionInit` to be loaded to a session,
     automatically from any supported objects, with some smart heuristics.
@@ -268,9 +268,9 @@ def SmartRestore(obj, ignore_mismatch=False):
 
     + A TF checkpoint
     + A dict of numpy arrays
-    + A npz file
-    + An empty string or None
-    + A list of supported objects
+    + A npz file, to be interpreted as a dict
+    + An empty string or None, in which case the sessinit will be a no-op
+    + A list of supported objects, to be initialized one by one
 
     Args:
         obj: a supported object
@@ -285,7 +285,7 @@ def SmartRestore(obj, ignore_mismatch=False):
     if not obj:
         return JustCurrentSession()
     if isinstance(obj, list):
-        return ChainInit([SmartRestore(x, ignore_mismatch=ignore_mismatch) for x in obj])
+        return ChainInit([SmartInit(x, ignore_mismatch=ignore_mismatch) for x in obj])
     if isinstance(obj, six.string_types):
         obj = os.path.expanduser(obj)
         if obj.endswith(".npy") or obj.endswith(".npz"):
@@ -301,11 +301,11 @@ def SmartRestore(obj, ignore_mismatch=False):
             # A TF checkpoint must be a prefix of an actual file.
             return (SaverRestoreRelaxed if ignore_mismatch else SaverRestore)(obj)
         else:
-            raise ValueError("Invalid argument to SmartRestore: " + obj)
+            raise ValueError("Invalid argument to SmartInit: " + obj)
 
     if isinstance(obj, dict):
         return DictRestore(obj, ignore_mismatch=ignore_mismatch)
-    raise ValueError("Invalid argument to SmartRestore: " + type(obj))
+    raise ValueError("Invalid argument to SmartInit: " + type(obj))
 
 
-get_model_loader = SmartRestore
+get_model_loader = SmartInit

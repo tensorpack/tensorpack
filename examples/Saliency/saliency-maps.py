@@ -68,7 +68,7 @@ class Model(tp.ModelDescBase):
 def run(model_path, image_path):
     predictor = tp.OfflinePredictor(tp.PredictConfig(
         model=Model(),
-        session_init=tp.get_model_loader(model_path),
+        session_init=tp.SmartInit(model_path),
         input_names=['image'],
         output_names=['saliency']))
     im = cv2.imread(image_path)

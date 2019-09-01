@@ -106,7 +106,7 @@ class InferenceOnlyModel(Model):
 def export_serving(model_path):
     """Export trained model to use it in TensorFlow Serving or cloudML. """
     pred_config = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=InferenceOnlyModel(),
         input_names=['input_img_bytes'],
         output_names=['prediction_img_bytes'])
@@ -117,7 +117,7 @@ def export_compact(model_path):
     """Export trained model to use it as a frozen and pruned inference graph in
        mobile applications. """
     pred_config = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=Model(),
         input_names=['input_img'],
         output_names=['prediction_img'])
@@ -127,7 +127,7 @@ def export_compact(model_path):
 def apply(model_path):
     """Run inference from a training model checkpoint. """
     pred_config = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=Model(),
         input_names=['input_img'],
         output_names=['prediction_img'])
@@ -141,7 +141,7 @@ def apply(model_path):
 def apply_inference_graph(model_path):
     """Run inference from a different graph, which receives encoded images buffers. """
     pred_config = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=InferenceOnlyModel(),
         input_names=['input_img_bytes'],
         output_names=['prediction_img_bytes'])

@@ -141,7 +141,7 @@ def sample(path, start, length):
 
     pred = OfflinePredictor(PredictConfig(
         model=Model(),
-        session_init=SaverRestore(path),
+        session_init=SmartInit(path),
         input_names=['input', 'c0', 'h0', 'c1', 'h1'],
         output_names=['prob', 'last_state']))
 
@@ -193,6 +193,5 @@ if __name__ == '__main__':
     else:
         param.corpus = args.corpus
         config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(config, SimpleTrainer())

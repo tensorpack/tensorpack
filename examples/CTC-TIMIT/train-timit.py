@@ -119,6 +119,5 @@ if __name__ == '__main__':
     ds_test = get_data(args.test, False, args.stat)
 
     config = get_config(ds_train, ds_test)
-    if args.load:
-        config.session_init = SaverRestore(args.load)
+    config.session_init = SmartInit(args.load)
     launch_train_with_config(config, SimpleTrainer())

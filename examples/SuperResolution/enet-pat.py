@@ -227,7 +227,7 @@ def apply(model_path, lowres_path="", output_path='.'):
 
     predict_func = OfflinePredictor(PredictConfig(
         model=Model(LR_SIZE_H, LR_SIZE_W),
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         input_names=['Ilr'],
         output_names=['prediction']))
 
@@ -279,12 +279,12 @@ if __name__ == '__main__':
         logger.auto_set_dir()
 
         if args.load:
-            session_init = SaverRestore(args.load)
+            session_init = SmartInit(args.load)
         else:
             assert os.path.isfile(args.vgg19)
             param_dict = dict(np.load(args.vgg19))
             param_dict = {'VGG19/' + name: value for name, value in six.iteritems(param_dict)}
-            session_init = DictRestore(param_dict)
+            session_init = SmartInit(param_dict)
 
         nr_tower = max(get_num_gpu(), 1)
         data = QueueInput(get_data(args.data))

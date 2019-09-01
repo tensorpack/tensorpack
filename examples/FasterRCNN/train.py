@@ -103,9 +103,9 @@ if __name__ == '__main__':
     else:
         if args.load:
             # ignore mismatched values, so you can `--load` a model for fine-tuning
-            session_init = SmartRestore(args.load, ignore_mismatch=True)
+            session_init = SmartInit(args.load, ignore_mismatch=True)
         else:
-            session_init = SmartRestore(cfg.BACKBONE.WEIGHTS)
+            session_init = SmartInit(cfg.BACKBONE.WEIGHTS)
 
     traincfg = TrainConfig(
         model=MODEL,

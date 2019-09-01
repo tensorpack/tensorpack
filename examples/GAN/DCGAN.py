@@ -121,7 +121,7 @@ def get_data():
 
 def sample(model, model_path, output_name='gen/gen'):
     pred = PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=model,
         input_names=['z'],
         output_names=[output_name, 'z'])
@@ -167,5 +167,5 @@ if __name__ == '__main__':
             callbacks=[ModelSaver()],
             steps_per_epoch=300,
             max_epoch=200,
-            session_init=SaverRestore(args.load) if args.load else None
+            session_init=SmartInit(args.load),
         )

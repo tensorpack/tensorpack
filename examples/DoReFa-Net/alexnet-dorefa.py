@@ -12,7 +12,7 @@ import tensorflow as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
-from tensorpack.tfutils.sessinit import get_model_loader
+from tensorpack.tfutils.sessinit import SmartInit
 from tensorpack.tfutils.summary import add_param_summary
 from tensorpack.tfutils.varreplace import remap_variables
 from tensorpack.utils.gpu import get_num_gpu
@@ -214,12 +214,12 @@ if __name__ == '__main__':
 
     if args.run:
         assert args.load.endswith('.npz')
-        run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)
+        run_image(Model(), SmartInit(args.load), args.run)
         sys.exit()
     if args.eval:
         BATCH_SIZE = 128
         ds = get_data('val')
-        eval_classification(Model(), get_model_loader(args.load), ds)
+        eval_classification(Model(), SmartInit(args.load), ds)
         sys.exit()
 
     nr_tower = max(get_num_gpu(), 1)
@@ -229,6 +229,5 @@ if __name__ == '__main__':
     logger.info("Batch per tower: {}".format(BATCH_SIZE))
 
     config = get_config()
-    if args.load:
-        config.session_init = SaverRestore(args.load)
+    config.session_init = SmartInit(args.load)
     launch_train_with_config(config, SyncMultiGPUTrainerReplicated(nr_tower))

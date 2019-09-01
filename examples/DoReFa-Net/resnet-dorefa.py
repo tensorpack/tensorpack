@@ -163,7 +163,7 @@ if __name__ == '__main__':
         ds = dataset.ILSVRC12(args.data, 'val', shuffle=False)
         ds = AugmentImageComponent(ds, get_inference_augmentor())
         ds = BatchData(ds, 192, remainder=True)
-        eval_classification(Model(), get_model_loader(args.load), ds)
+        eval_classification(Model(), SmartInit(args.load), ds)
     elif args.run:
         assert args.load.endswith('.npz')
-        run_image(Model(), DictRestore(dict(np.load(args.load))), args.run)
+        run_image(Model(), SmartInit(args.load), args.run)

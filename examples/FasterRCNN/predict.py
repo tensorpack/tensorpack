@@ -14,7 +14,7 @@ assert six.PY3, "This example requires Python 3!"
 
 import tensorpack.utils.viz as tpviz
 from tensorpack.predict import MultiTowerOfflinePredictor, OfflinePredictor, PredictConfig
-from tensorpack.tfutils import get_model_loader, get_tf_version_tuple
+from tensorpack.tfutils import SmartInit, get_tf_version_tuple
 from tensorpack.tfutils.export import ModelExporter
 from tensorpack.utils import fs, logger
 
@@ -38,7 +38,7 @@ def do_visualize(model, model_path, nr_visualize=100, output_dir='output'):
 
     pred = OfflinePredictor(PredictConfig(
         model=model,
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         input_names=['image', 'gt_boxes', 'gt_labels'],
         output_names=[
             'generate_{}_proposals/boxes'.format('fpn' if cfg.MODE_FPN else 'rpn'),
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     else:
         predcfg = PredictConfig(
             model=MODEL,
-            session_init=get_model_loader(args.load),
+            session_init=SmartInit(args.load),
             input_names=MODEL.get_inference_tensor_names()[0],
             output_names=MODEL.get_inference_tensor_names()[1])
 

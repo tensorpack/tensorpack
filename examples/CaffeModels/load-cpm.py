@@ -95,11 +95,10 @@ def CPM(image):
 
 
 def run_test(model_path, img_file):
-    param_dict = dict(np.load(model_path))
     predict_func = OfflinePredictor(PredictConfig(
         input_signature=[tf.TensorSpec((None, 368, 368, 3), tf.float32, 'input')],
         tower_func=CPM,
-        session_init=DictRestore(param_dict),
+        session_init=SmartInit(model_path),
         input_names=['input'],
         output_names=['resized_map']
     ))

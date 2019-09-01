@@ -171,7 +171,7 @@ if __name__ == '__main__':
         assert args.load is not None
         pred = OfflinePredictor(PredictConfig(
             model=model,
-            session_init=get_model_loader(args.load),
+            session_init=SmartInit(args.load),
             input_names=['state'],
             output_names=['Qvalue']))
         if args.task == 'play':
@@ -183,6 +183,5 @@ if __name__ == '__main__':
             os.path.join('train_log', 'DQN-{}'.format(
                 os.path.basename(args.env).split('.')[0])))
         config = get_config(model)
-        if args.load:
-            config.session_init = get_model_loader(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(config, SimpleTrainer())

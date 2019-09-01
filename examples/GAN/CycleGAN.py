@@ -224,5 +224,5 @@ if __name__ == '__main__':
         ],
         max_epoch=195,
         steps_per_epoch=data.size(),
-        session_init=SaverRestore(args.load) if args.load else None
+        session_init=SmartInit(args.load)
     )

@@ -201,7 +201,7 @@ def get_data(isTrain):
 
 def view_warp(modelpath):
     pred = OfflinePredictor(PredictConfig(
-        session_init=get_model_loader(modelpath),
+        session_init=SmartInit(modelpath),
         model=Model(),
         input_names=['input'],
         output_names=['visualization/viz', 'STN1/affine', 'STN2/affine']))
@@ -265,6 +265,5 @@ if __name__ == '__main__':
         view_warp(args.load)
     else:
         config = get_config()
-        if args.load:
-            config.session_init = SaverRestore(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(config, SimpleTrainer())

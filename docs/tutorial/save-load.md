@@ -39,13 +39,13 @@ For inference, use `session_init` in `PredictConfig(...)`.
 
 There are a few ways a session can be initialized:
 ```
-session_init=SmartRestore("path/to/checkpoint")  # load a TF checkpoint
-session_init=SmartRestore("path/to/model_zoo.npz")  # load tensorpack model zoo
-session_init=SmartRestore(dict_of_parameters)  # load a dictionary
-session_init=SmartRestore(["path1", dict2])  # load them sequentially
+session_init=SmartInit("path/to/checkpoint")  # load a TF checkpoint
+session_init=SmartInit("path/to/model_zoo.npz")  # load tensorpack model zoo
+session_init=SmartInit(dict_of_parameters)  # load a dictionary
+session_init=SmartInit(["path1", dict2])  # load them sequentially
 ```
 
-[SmartRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.SmartRestore)
+[SmartInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.SmartInit)
 is in fact a small helper which uses some heuristics to return you one of 
 [SaverRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore) or
 [DictRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore).

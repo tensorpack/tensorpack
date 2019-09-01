@@ -211,5 +211,5 @@ if __name__ == '__main__':
         callbacks=[ModelSaver()],
         steps_per_epoch=300,
         max_epoch=250,
-        session_init=SaverRestore(args.load) if args.load else None
+        session_init=SmartInit(args.load),
     )

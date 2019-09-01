@@ -24,7 +24,7 @@ def apply(model, model_path, images, ground_truth=None):
 
     predict_func = OfflinePredictor(PredictConfig(
         model=model(height=newh, width=neww),
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         input_names=['left', 'right'],
         output_names=['prediction']))
 
@@ -102,7 +102,7 @@ def inference(model, model_path, sintel_path):
 
     pred = PredictConfig(
         model=model(height=h, width=w),
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         input_names=['left', 'right', 'gt_flow'],
         output_names=['epe', 'prediction'])
     pred = SimpleDatasetPredictor(pred, ds)

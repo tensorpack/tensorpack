@@ -218,7 +218,7 @@ def get_data():
 
 def sample(model_path):
     pred = OfflinePredictor(PredictConfig(
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         model=Model(),
         input_names=['z_code', 'z_noise'],
         output_names=['gen/viz']))
@@ -276,5 +276,5 @@ if __name__ == '__main__':
             callbacks=[ModelSaver(keep_checkpoint_every_n_hours=0.1)],
             steps_per_epoch=500,
             max_epoch=100,
-            session_init=SaverRestore(args.load) if args.load else None
+            session_init=SmartInit(args.load)
         )

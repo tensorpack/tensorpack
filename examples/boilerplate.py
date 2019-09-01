@@ -70,8 +70,6 @@ if __name__ == '__main__':
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     config = get_config()
-
-    if args.load:
-        config.session_init = SaverRestore(args.load)
+    config.session_init = SmartInit(args.load)
 
     launch_train_with_config(config, SimpleTrainer())

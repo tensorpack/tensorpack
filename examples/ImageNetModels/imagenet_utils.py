@@ -431,7 +431,7 @@ class ImageNetModel(ModelDesc):
 
         Examples:
 
-            pred = OfflinePredictor(model.create_predict_config(get_model_loader(args.load)))
+            pred = OfflinePredictor(model.create_predict_config(SmartInit(args.load)))
             prob = pred(NCHW_image)[0]  # Nx1000 probabilities
         """
         return PredictConfig(model=self, input_names=['input'], output_names=['prob'], session_init=session_init)

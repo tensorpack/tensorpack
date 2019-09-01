@@ -9,7 +9,7 @@ from tensorpack import QueueInput, TFDatasetInput, logger
 from tensorpack.callbacks import *
 from tensorpack.dataflow import FakeData
 from tensorpack.models import *
-from tensorpack.tfutils import argscope, get_model_loader
+from tensorpack.tfutils import argscope, SmartInit
 from tensorpack.train import SyncMultiGPUTrainerReplicated, TrainConfig, launch_train_with_config
 from tensorpack.utils.gpu import get_num_gpu
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     if args.eval:
         batch = 128    # something that can run on one gpu
         ds = get_imagenet_dataflow(args.data, 'val', batch)
-        eval_classification(model, get_model_loader(args.load), ds)
+        eval_classification(model, SmartInit(args.load), ds)
     else:
         if args.fake:
             logger.set_logger_dir(os.path.join('train_log', 'tmp'), 'd')
@@ -147,7 +147,6 @@ if __name__ == '__main__':
                                  args.mode, args.depth, args.batch)))
 
         config = get_config(model)
-        if args.load:
-            config.session_init = get_model_loader(args.load)
+        config.session_init = SmartInit(args.load)
         trainer = SyncMultiGPUTrainerReplicated(max(get_num_gpu(), 1))
         launch_train_with_config(config, trainer)

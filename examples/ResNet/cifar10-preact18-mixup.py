@@ -149,6 +149,6 @@ if __name__ == '__main__':
         ],
         max_epoch=200,
         steps_per_epoch=len(dataset_train),
-        session_init=SaverRestore(args.load) if args.load else None
+        session_init=SmartInit(args.load)
     )
     launch_train_with_config(config, SimpleTrainer())

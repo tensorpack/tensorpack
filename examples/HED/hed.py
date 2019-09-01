@@ -271,7 +271,7 @@ def get_config():
 def run(model_path, image_path, output):
     pred_config = PredictConfig(
         model=Model(),
-        session_init=get_model_loader(model_path),
+        session_init=SmartInit(model_path),
         input_names=['image'],
         output_names=['output' + str(k) for k in range(1, 7)])
     predictor = OfflinePredictor(pred_config)
@@ -309,8 +309,7 @@ if __name__ == '__main__':
         run(args.load, args.run, args.output)
     else:
         config = get_config()
-        if args.load:
-            config.session_init = get_model_loader(args.load)
+        config.session_init = SmartInit(args.load)
         launch_train_with_config(
             config,
             SyncMultiGPUTrainer(max(get_num_gpu(), 1)))
