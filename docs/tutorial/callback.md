@@ -21,7 +21,7 @@ By writing callbacks to implement what to do at each place, tensorpack trainers
 will call the callbacks at the proper time.
 Therefore these features can be reused with one single line, as long as you are using tensorpack trainers.
 
-For example, these are the callbacks I used when training a ResNet:
+For example, here are some useful callbacks I used during model development:
 
 ```python
 callbacks=[
@@ -43,7 +43,7 @@ callbacks=[
              -d type=note -d title="validation error" \\
              -d body={val-error-top1} > /dev/null 2>&1',
              'val-error-top1'),
-  # record GPU utilizations during training
+  # record GPU utilization during training
   GPUUtilizationTracker(),
   # touch a file to pause the training and start a debug shell, to observe what's going on
   InjectShell(shell='ipython'),
@@ -69,12 +69,12 @@ monitors=[        # monitors are a special kind of callbacks. these are also ena
 ]
 ```
 
-You can see from the above snippet, that callbacks cover every detail of training, ranging from graph operations to the progress bar.
+You can see from the above snippet, that callbacks cover every detail of training, from graph operations to the progress bar.
 This means you can customize every part of the training to your preference, e.g. display something
 different in the progress bar, evaluate part of the summaries at a different frequency, etc.
 Similar concepts also exists in other frameworks, such as Keras callbacks, or
 `tf.train.SessionRunHook`. But tensorpack callbacks have more functionalities in
-design, and can achive much more features, as you can see above.
+design, and can achieve much more features, as you can see above.
 
 These features are not always necessary, but think about how messy the main loop would look like if you
 were to write these logic together with the loops, and how easy your life will be if you could enable

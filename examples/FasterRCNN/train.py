@@ -45,17 +45,16 @@ if __name__ == '__main__':
     register_coco(cfg.DATA.BASEDIR)  # add COCO datasets to the registry
     register_balloon(cfg.DATA.BASEDIR)  # add the demo balloon datasets to the registry
 
-    # Setup logger ...
+    # Setup logging ...
     is_horovod = cfg.TRAINER == 'horovod'
-    if is_horovod:
-        hvd.init()
-        logger.info("Horovod Rank={}, Size={}".format(hvd.rank(), hvd.size()))
-
     if not is_horovod or hvd.rank() == 0:
         logger.set_logger_dir(args.logdir, 'd')
     logger.info("Environment Information:\n" + collect_env_info())
 
     finalize_configs(is_training=True)
+
+    # Create model
+    MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
 
     # Compute the training schedule from the number of GPUs ...
     stepnum = cfg.TRAIN.STEPS_PER_EPOCH
@@ -77,9 +76,7 @@ if __name__ == '__main__':
     total_passes = cfg.TRAIN.LR_SCHEDULE[-1] * 8 / train_dataflow.size()
     logger.info("Total passes of the training set is: {:.5g}".format(total_passes))
 
-    # Create model and callbacks ...
-    MODEL = ResNetFPNModel() if cfg.MODE_FPN else ResNetC4Model()
-
+    # Create callbacks ...
     callbacks = [
         PeriodicCallback(
             ModelSaver(max_to_keep=10, keep_checkpoint_every_n_hours=1),
@@ -93,23 +90,22 @@ if __name__ == '__main__':
         ThroughputTracker(samples_per_step=cfg.TRAIN.NUM_GPUS),
         EstimatedTimeLeft(median=True),
         SessionRunTimeout(60000),   # 1 minute timeout
+        GPUUtilizationTracker()
     ]
     if cfg.TRAIN.EVAL_PERIOD > 0:
         callbacks.extend([
             EvalCallback(dataset, *MODEL.get_inference_tensor_names(), args.logdir)
             for dataset in cfg.DATA.VAL
         ])
-    if not is_horovod:
-        callbacks.append(GPUUtilizationTracker())
 
     if is_horovod and hvd.rank() > 0:
         session_init = None
     else:
         if args.load:
             # ignore mismatched values, so you can `--load` a model for fine-tuning
-            session_init = get_model_loader(args.load, ignore_mismatch=True)
+            session_init = SmartRestore(args.load, ignore_mismatch=True)
         else:
-            session_init = get_model_loader(cfg.BACKBONE.WEIGHTS) if cfg.BACKBONE.WEIGHTS else None
+            session_init = SmartRestore(cfg.BACKBONE.WEIGHTS)
 
     traincfg = TrainConfig(
         model=MODEL,
@@ -120,6 +116,7 @@ if __name__ == '__main__':
         session_init=session_init,
         starting_epoch=cfg.TRAIN.STARTING_EPOCH
     )
+
     if is_horovod:
         trainer = HorovodTrainer(average=False)
     else:

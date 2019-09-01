@@ -284,6 +284,8 @@ def finalize_configs(is_training):
         if _C.TRAINER == 'horovod':
             import horovod.tensorflow as hvd
             ngpu = hvd.size()
+            logger.info("Horovod Rank={}, Size={}, LocalRank={}".format(
+                hvd.rank(), hvd.size(), hvd.local_rank()))
         else:
             assert 'OMPI_COMM_WORLD_SIZE' not in os.environ
             ngpu = get_num_gpu()

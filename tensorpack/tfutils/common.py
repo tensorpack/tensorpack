@@ -221,7 +221,7 @@ def collect_env_info():
     # Other important dependencies:
     try:
         import horovod
-        data.append(("horovod", horovod.__version__))
+        data.append(("Horovod", horovod.__version__))
     except ImportError:
         pass
 

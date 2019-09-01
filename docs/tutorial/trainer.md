@@ -1,13 +1,12 @@
 # Trainers
 
-Tensorpack follows the "define-and-run" paradigm.
+TensorFlow & Tensorpack follow the "define-and-run" paradigm.
 Therefore a training contains two steps:
 
 1. __Define__: Build graph for the model.
 	Users can call whatever tensorflow functions to setup the graph.
 	Users may or may not use tensorpack `InputSource`, `ModelDesc` or other utilities to build the graph.
-	The goal of this step is to define "what to run" in later training steps,
-	and it can happen __either inside or outside__ tensorpack trainer.
+	The goal of this step is to define "what to run" in later training steps.
 
 2. __Run__: Train the model (the [Trainer.train() method](/modules/train.html#tensorpack.train.Trainer.train)):
 
@@ -26,7 +25,7 @@ by exploiting some universal patterns.
 In research we do training of various kind.
 Tensorpack trainers avoid making assumptions on what type of training
 you want to do. For example, unlike Keras, tensorpack does not wrongly assume that: 
-1. Your training is batched
+1. Your training data is batched
 2. Your training is gradient-based optimization
 3. Your data has `X`(inputs) and `y`(outputs)
 4. You want to evaluate on zero or one validation dataset
@@ -48,7 +47,8 @@ Users or derived trainers should implement __what the iterations are__.
 In fact, the steps per epoch can be any number
 and it only affects the [schedule of callbacks](callback.html).
 In other words, an "epoch" in tensorpack is the __default period to run
-callbacks__ (validation, summary, checkpoint, etc.). It has nothing to do with your dataset.
+callbacks__ (validation, summary, checkpoint, etc.).
+So this assumption effectively puts no extra constraints.
 
 
 ### Built-in Trainers

@@ -37,26 +37,41 @@ class GPUUtilizationTracker(Callback):
     def __init__(self, devices=None):
         """
         Args:
-            devices (list[int]): physical GPU ids. If None, will use CUDA_VISIBLE_DEVICES
+            devices (list[int]): physical GPU ids to monitor. If None, will guess from the environment.
         """
         assert os.name != 'nt', "GPUUtilizationTracker does not support windows!"
-        if devices is None:
-            env = os.environ.get('CUDA_VISIBLE_DEVICES')
-            if env is None:
-                self._devices = list(range(get_num_gpu()))
-                if len(self._devices) > 1:
-                    logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
-                                "Will monitor all {} visible GPUs!".format(len(self._devices)))
-            else:
-                if len(env):
-                    self._devices = list(map(int, env.split(',')))
-                else:
-                    self._devices = []
+        self._devices = devices
+        self._enabled = True
+
+    def _guess_devices(self):
+        env = os.environ.get('CUDA_VISIBLE_DEVICES')
+        if env is None:
+            devices = list(range(get_num_gpu()))
+            if len(devices) > 1:
+                logger.warn("[GPUUtilizationTracker] Both devices and CUDA_VISIBLE_DEVICES are None! "
+                            "Will monitor all {} visible GPUs!".format(len(devices)))
         else:
-            self._devices = devices
-        assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
+            if len(env):
+                devices = list(map(int, env.split(',')))
+            else:
+                devices = []
+        return devices
 
     def _setup_graph(self):
+        # special heuristics for Horovod
+        from ..train import HorovodTrainer
+        if isinstance(self.trainer, HorovodTrainer):
+            if self.trainer.mpi_enabled():
+                logger.warn("GPUUtilizationTracker is disabled under MPI.")
+                self._enabled = False
+                return
+            else:
+                self._devices = [self.trainer.hvd.local_rank()]
+
+        if self._devices is None:
+            self._devices = self._guess_devices()
+        assert len(self._devices), "[GPUUtilizationTracker] No GPU device given!"
+
         self._evt = mp.Event()
         self._stop_evt = mp.Event()
         self._queue = mp.Queue()
@@ -69,16 +84,20 @@ class GPUUtilizationTracker(Callback):
         assert gpu_available_in_session(), "[GPUUtilizationTracker] needs GPU!"
 
     def _before_epoch(self):
-        self._evt.set()
+        if self._enabled:
+            self._evt.set()
 
     def _after_epoch(self):
-        while self._evt.is_set():   # unlikely, unless the epoch is extremely fast
-            pass
-        self._evt.set()
+        if self._enabled:
+            while self._evt.is_set():   # unlikely, unless the epoch is extremely fast
+                pass
+            self._evt.set()
 
     def _trigger_epoch(self):
         # Don't do this in after_epoch because
         # before,after_epoch are supposed to be extremely fast by design.
+        if not self._enabled:
+            return
         try:
             stats = self._queue.get(timeout=60)
         except queue.Empty:
@@ -94,9 +113,10 @@ class GPUUtilizationTracker(Callback):
             self.trainer.monitors.put_scalar('GPUUtil/{}'.format(dev), stats[idx])
 
     def _after_train(self):
-        self._stop_evt.set()
-        self._evt.set()
-        self._proc.terminate()
+        if self._enabled:
+            self._stop_evt.set()
+            self._evt.set()
+            self._proc.terminate()
 
     @staticmethod
     def worker(evt, rst_queue, stop_evt, devices):

@@ -20,10 +20,10 @@ demos how to print all variables and their shapes in a checkpoint.
 Tensorpack includes another tool to save variables to TF checkpoint, see
 [save_chkpt_vars](../modules/tfutils.html#tensorpack.tfutils.varmanip.save_chkpt_vars).
 
-## Work with npz Files in Model Zoo
+## Work with .npz Files in the Model Zoo
 
 Most models provided by tensorpack are in npz (dictionary) format,
-because it's easy to manipulate without TF dependency.
+because it's easy to use without TF dependency.
 You can read/write them with `np.load` and `np.savez`.
 
 [scripts/dump-model-params.py](../scripts/dump-model-params.py) can be used to remove unnecessary variables in a checkpoint
@@ -34,24 +34,24 @@ It dumps the model to a `var-name: value` dict saved in npz format.
 ## Load a Model to a Session
 
 Model loading (in both training and inference) is through the `session_init` interface.
-For training, use `session_init` in `TrainConfig` or `Trainer.train()`.
-For inference, use `session_init` in `PredictConfig`.
+For training, use `session_init` in `TrainConfig(...)` or `Trainer.train(...)`.
+For inference, use `session_init` in `PredictConfig(...)`.
 
-There are two ways a session can be initialized:
-[session_init=SaverRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore)
-which restores a TF checkpoint,
-or [session_init=DictRestore(...)](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore) which restores a dict.
-`DictRestore` is the most general loader because you can make arbitrary changes
-you need (e.g., remove variables, rename variables) to the dict.
+There are a few ways a session can be initialized:
+```
+session_init=SmartRestore("path/to/checkpoint")  # load a TF checkpoint
+session_init=SmartRestore("path/to/model_zoo.npz")  # load tensorpack model zoo
+session_init=SmartRestore(dict_of_parameters)  # load a dictionary
+session_init=SmartRestore(["path1", dict2])  # load them sequentially
+```
 
-To load multiple models, use [ChainInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.ChainInit).
+[SmartRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.SmartRestore)
+is in fact a small helper which uses some heuristics to return you one of 
+[SaverRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore) or
+[DictRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore).
+They are responsible for the actual initialization work.
 
-To load an npz file from tensorpack model zoo to a session, you can use `DictRestore(dict(np.load(filename)))`.
-You can also use
-[get_model_loader(filename)](../modules/tfutils.html#tensorpack.tfutils.sessinit.get_model_loader),
-a small helper which returns either a `SaverRestore` or a `DictRestore` based on the file name.
-
-Whatever you use in `session_init`, this is what happen during the loading:
+Whatever you use in `session_init`, this is what happens during the loading:
 
 * Variable restoring is completely based on __exact name match__ between
 	variables in the current graph and variables in the `session_init` initializer.

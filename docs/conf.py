@@ -377,6 +377,7 @@ _DEPRECATED_NAMES = set([
     'InputDesc',
     'inputs_desc',
     'Augmentor',
+    "get_model_loader",
 
     # renamed items that should not appear in docs
     'DumpTensor',

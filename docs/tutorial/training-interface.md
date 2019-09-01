@@ -42,7 +42,7 @@ After defining such a model, use it with `TrainConfig` and `launch_train_with_co
 config = TrainConfig(
    model=MyModel()
    dataflow=my_dataflow,
-   # data=my_inputsource, # alternatively, use a customized InputSource
+   # data=my_inputsource, # alternatively, use an InputSource
    callbacks=[...],    # some default callbacks are automatically applied
    # some default monitors are automatically applied
    steps_per_epoch=300,   # default to the size of your InputSource/DataFlow

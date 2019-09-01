@@ -74,11 +74,11 @@ class QueueInputTrainer(SimpleTrainer):
 
 class SyncMultiGPUTrainerParameterServer(SingleCostTrainer):
 
-    __doc__ = SyncMultiGPUParameterServerBuilder.__doc__
+    __doc__ = SyncMultiGPUParameterServerBuilder.__doc__ + """
 
-    devices = None
-    """
-    List of GPU ids.
+    Attributes:
+        devices (list[int]): List of GPU ids.
+
     """
 
     @map_arg(gpus=_int_to_range)
@@ -117,11 +117,11 @@ def SyncMultiGPUTrainer(gpus):
 
 class AsyncMultiGPUTrainer(SingleCostTrainer):
 
-    __doc__ = AsyncMultiGPUBuilder.__doc__
+    __doc__ = AsyncMultiGPUBuilder.__doc__ + """
 
-    devices = None
-    """
-    List of GPU ids.
+    Attributes:
+        devices (list[int]): List of GPU ids.
+
     """
 
     @map_arg(gpus=_int_to_range)
@@ -146,21 +146,20 @@ class AsyncMultiGPUTrainer(SingleCostTrainer):
 
 class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
 
-    __doc__ = SyncMultiGPUReplicatedBuilder.__doc__
+    __doc__ = SyncMultiGPUReplicatedBuilder.__doc__ + """
 
-    devices = None
-    """
-    List of GPU ids.
+    Attributes:
+        devices (list[int]): List of GPU ids.
+
+        BROADCAST_EVERY_EPOCH (bool):
+            Whether to broadcast the variables every epoch.
+            Theoretically this is a no-op (because the variables
+            are supposed to be in-sync).
+            But this cheap operation may help prevent
+            certain numerical issues in practice.
     """
 
     BROADCAST_EVERY_EPOCH = True
-    """
-    Whether to broadcast the variables every epoch.
-    Theoretically this is a no-op (because the variables
-    are supposed to be in-sync).
-    But this cheap operation may help prevent
-    certain numerical issues in practice.
-    """
 
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, average=True, mode=None):
@@ -338,6 +337,10 @@ class HorovodTrainer(SingleCostTrainer):
         # If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
         # There are other MPI options that can potentially improve performance especially on special hardwares.
 
+    Horovod can also be launched without MPI. See
+    `its documentation <https://github.com/horovod/horovod#running-horovod>`_
+    for more details.
+
     Note:
         1. To reach the maximum speed in your system, there are many options to tune
            for Horovod installation and in the MPI command line.
@@ -348,9 +351,10 @@ class HorovodTrainer(SingleCostTrainer):
            must be avoided.
            You can, however, use `tf.config.experimental.list_physical_devices('GPU')`, introduced in TF 1.14.
 
-        2. MPI does not like `fork()`. If your dataflow contains multiprocessing, it may cause problems.
+        3. Horovod supports both MPI and gloo. There are a few drawbacks of the MPI backend:
 
-        3. MPI sometimes fails to kill all processes in the end. Be sure to check it afterwards.
+            + MPI does not like `fork()`. If your code (e.g. dataflow) contains multiprocessing, it may cause problems.
+            + MPI sometimes fails to kill all processes in the end. Be sure to check it afterwards.
 
         4. Keep in mind that there is one process running the script per GPU, therefore:
 
@@ -364,7 +368,8 @@ class HorovodTrainer(SingleCostTrainer):
 
            + Callbacks have an option to be run only in the chief process, or in all processes.
              See :meth:`Callback.set_chief_only()`. Most callbacks have a reasonable
-             default already, but certain callbacks may not behave properly by default. Report an issue if you find any.
+             default already, but certain callbacks may need your customization.
+             Report an issue if you find any bad defaults.
 
            + You can use Horovod API such as `hvd.rank()` to know which process you are and choose
              different code path. Chief process has rank 0.
@@ -373,7 +378,18 @@ class HorovodTrainer(SingleCostTrainer):
            `ResNet-Horovod <https://github.com/tensorpack/benchmarks/tree/master/ResNet-Horovod>`_
            for a full example which has handled these common issues.
            This example can train ImageNet in roughly an hour following the paper's setup.
+
+    Attributes:
+        BROADCAST_EVERY_EPOCH (bool):
+            Whether to broadcast the variables every epoch.
+            Theoretically this is a no-op (because the variables
+            are supposed to be in-sync).
+            But this cheap operation may help prevent
+            certain numerical issues in practice.
     """
+
+    BROADCAST_EVERY_EPOCH = True
+
     def __init__(self, average=True, compression=None):
         """
         Args:
@@ -398,6 +414,16 @@ class HorovodTrainer(SingleCostTrainer):
         self._has_compression = hvd_version >= (0, 15, 0)
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
+
+    def mpi_enabled(self):
+        """
+        Returns:
+            bool: whether hvd is currently running under MPI
+        """
+        try:
+            return self.hvd.mpi_enabled()
+        except AttributeError:
+            return False
 
     def allreduce(self, grads):
         if self.hvd.size() == 1:
@@ -424,7 +450,10 @@ class HorovodTrainer(SingleCostTrainer):
             opt = get_opt_fn()
             self.train_op = opt.apply_gradients(grads, name='train_op')
 
-        cb = CallbackFactory(before_train=self.broadcast, trigger=self.broadcast).set_chief_only(False)
+        cb = CallbackFactory(
+            before_train=self.broadcast,
+            trigger=self.broadcast if self.BROADCAST_EVERY_EPOCH else None
+        ).set_chief_only(False)
         return [cb]
 
     def broadcast(self, _):
@@ -502,3 +531,10 @@ class BytePSTrainer(HorovodTrainer):
         self._has_compression = False
         logger.info("[BytePSTrainer] local rank={}".format(self._local_rank))
         SingleCostTrainer.__init__(self)
+
+    def mpi_enabled(self):
+        """
+        Returns:
+            bool: whether hvd is currently running under MPI
+        """
+        return False

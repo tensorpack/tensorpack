@@ -12,7 +12,7 @@ from .varmanip import SessionUpdate, get_checkpoint_path, get_savename_from_varn
 
 __all__ = ['SessionInit', 'ChainInit',
            'SaverRestore', 'SaverRestoreRelaxed', 'DictRestore',
-           'JustCurrentSession', 'get_model_loader']
+           'JustCurrentSession', 'get_model_loader', 'SmartRestore']
 
 
 class SessionInit(object):
@@ -260,32 +260,52 @@ class ChainInit(SessionInit):
             i._run_init(sess)
 
 
-def get_model_loader(filename, ignore_mismatch=False):
+def SmartRestore(obj, ignore_mismatch=False):
     """
-    Get a corresponding model loader by looking at the file name.
+    Create a :class:`SessionInit` to be loaded to a session,
+    automatically from any supported objects, with some smart heuristics.
+    The object can be:
+
+    + A TF checkpoint
+    + A dict of numpy arrays
+    + A npz file
+    + An empty string or None
+    + A list of supported objects
 
     Args:
-        filename (str): either a tensorflow checkpoint, or a npz file.
+        obj: a supported object
         ignore_mismatch (bool): ignore failures when the value and the
             variable does not match in their shapes.
             If False, it will throw exception on such errors.
             If True, it will only print a warning.
 
     Returns:
-        SessInit: either a :class:`DictRestore` (if name ends with 'npy/npz') or
-        :class:`SaverRestore` (otherwise).
+        SessionInit:
     """
-    assert isinstance(filename, six.string_types), filename
-    filename = os.path.expanduser(filename)
-    if filename.endswith('.npy'):
-        assert tf.gfile.Exists(filename), filename
-        return DictRestore(np.load(filename, encoding='latin1').item(), ignore_mismatch=ignore_mismatch)
-    elif filename.endswith('.npz'):
-        assert tf.gfile.Exists(filename), filename
-        obj = np.load(filename)
-        return DictRestore(dict(obj), ignore_mismatch=ignore_mismatch)
-    else:
-        if ignore_mismatch:
-            return SaverRestoreRelaxed(filename)
+    if not obj:
+        return JustCurrentSession()
+    if isinstance(obj, list):
+        return ChainInit([SmartRestore(x, ignore_mismatch=ignore_mismatch) for x in obj])
+    if isinstance(obj, six.string_types):
+        obj = os.path.expanduser(obj)
+        if obj.endswith(".npy") or obj.endswith(".npz"):
+            assert tf.gfile.Exists(obj), "File {} does not exist!".format(obj)
+            filename = obj
+            logger.info("Loading dictionary from {} ...".format(filename))
+            if filename.endswith('.npy'):
+                obj = np.load(filename, encoding='latin1').item()
+            elif filename.endswith('.npz'):
+                obj = dict(np.load(filename))
+        elif len(tf.gfile.Glob(obj + "*")):
+            # Assume to be a TF checkpoint.
+            # A TF checkpoint must be a prefix of an actual file.
+            return (SaverRestoreRelaxed if ignore_mismatch else SaverRestore)(obj)
         else:
-            return SaverRestore(filename)
+            raise ValueError("Invalid argument to SmartRestore: " + obj)
+
+    if isinstance(obj, dict):
+        return DictRestore(obj, ignore_mismatch=ignore_mismatch)
+    raise ValueError("Invalid argument to SmartRestore: " + type(obj))
+
+
+get_model_loader = SmartRestore
