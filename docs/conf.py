@@ -418,6 +418,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Hide some names that are deprecated or not intended to be used
     if name in _DEPRECATED_NAMES:
         return True
+
     if name in ['__iter__', '__len__', 'reset_state', 'get_data', 'size']:
         # skip these methods with empty docstring
         if not obj.__doc__ and inspect.isfunction(obj):

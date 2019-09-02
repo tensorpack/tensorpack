@@ -32,7 +32,9 @@ The `official TensorFlow benchmark <https://github.com/tensorflow/benchmarks/tre
 
 which seems to suggest that you cannot have **performance and ease-of-use together**.
 However you can have them both in tensorpack.
-Tensorpack uses TensorFlow efficiently, and hides performance details under its APIs.
+Tensorpack
+`uses TensorFlow efficiently <https://github.com/tensorpack/benchmarks/>`_,
+and hides performance details under its APIs.
 You no longer need to write
 data prefetch, multi-GPU replication, device placement, variables synchronization -- anything that's unrelated to the model itself.
 You still need to understand graph and learn to write models with TF, but performance is all taken care of by tensorpack.
@@ -48,11 +50,11 @@ A High Level Glance
   They will eventually be wrapped under the same ``InputSource`` interface and go through prefetching.
 
 * You can use any TF-based symbolic function library to define a model, including
-  a small set of functions within tensorpack. ``ModelDesc`` is an interface to connect the model with the
-  ``InputSource`` interface.
+  a small set of functions within tensorpack. ``ModelDesc`` is an interface to connect
+  the model with the trainers, but you can also use trainers without ``ModelDesc``.
 
 * Tensorpack trainers manage the training loops for you.
-  They also include data parallel logic for multi-GPU or distributed training.
+  They also include data parallel logic for multi-GPU and distributed training.
   At the same time, you have the power of customization through callbacks.
 
 * Callbacks are like ``tf.train.SessionRunHook``, or plugins. During training,

@@ -12,7 +12,7 @@ from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import PredictTowerContext, TowerFunc, get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized
-from ..utils.develop import HIDE_DOC
+from ..utils.develop import HIDE_DOC, log_deprecated
 from .base import Trainer
 
 __all__ = ['SingleCostTrainer', 'TowerTrainer']
@@ -22,11 +22,12 @@ class TowerTrainer(Trainer):
     """
     Base trainers for models that can be built by calling a tower function under a :class:`TowerContext`.
 
-    This is required by some features that replicates the model
-    automatically, e.g. creating a predictor.
+    The assumption of tower function is required by some features that replicates the model
+    automatically. For example, TowerTrainer can create a predictor for you automatically,
+    by calling the tower function.
 
-    To use features of :class:`TowerTrainer`, set `tower_func` and use it to build the graph.
-    Note that `tower_func` can only be set once per instance.
+    To use :class:`TowerTrainer`, set `tower_func` and use it to build the graph.
+    Note that `tower_func` can only be set once per instance of `TowerTrainer`.
     """
 
     _tower_func = None
@@ -56,25 +57,22 @@ class TowerTrainer(Trainer):
 
     @property
     def inputs_desc(self):
-        # TODO mark deprecated
+        log_deprecated("TowerTrainer.inputs_desc", "Use .input_signature instead!", "2020-03-01")
         return self.input_signature
 
     @property
     def input_signature(self):
         """
-        Returns:
-            list[tf.TensorSpec]: metainfo about the inputs to the tower.
+        list[tf.TensorSpec]: metainfo about the inputs to the tower.
         """
         return self.tower_func.input_signature
 
     @property
     def towers(self):
         """
-        Returns:
-            a :class:`TowerTensorHandles` object, to
-            access the tower handles by either indices or names.
+        TowerTensorHandles: used to access the tower handles by either indices or names.
 
-        It is accessbile only after the graph is set up.
+        This property is accessbile only after the graph is set up.
         With :meth:`towers`, you can then access many attributes of each tower:
 
         Example:
@@ -91,7 +89,8 @@ class TowerTrainer(Trainer):
         This method will build the trainer's tower function under ``TowerContext(is_training=False)``,
         and returns a callable predictor with input placeholders & output tensors in this tower.
 
-        This method handles the common case of inference with the same tower function.
+        This method handles the common case where you inference with the same tower function
+        you provide to the trainer.
         If you want to do inference with a different tower function, you can always build the tower by yourself,
         under a "reuse" variable scope and a `TowerContext(is_training=False)`.
 
@@ -205,7 +204,7 @@ class SingleCostTrainer(TowerTrainer):
 
         Args:
             input_signature ([TensorSpec]): list of TensorSpec that describe the inputs
-            input (InputSource):
+            input (InputSource): an InputSource which has to match the input signature
             get_cost_fn ([tf.Tensor] -> tf.Tensor): callable, takes some input tensors and return a cost tensor.
             get_opt_fn (-> tf.train.Optimizer): callable which returns an
                 optimizer. Will only be called once.

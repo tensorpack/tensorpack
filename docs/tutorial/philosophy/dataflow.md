@@ -3,13 +3,13 @@
 
 There are many other data loading solutions for deep learning.
 Here we explain why you may want to use Tensorpack DataFlow for your own good:
-it's easy, and fast (enough).
+**it's easy, and fast (enough)**.
 
 Note that this article may contain subjective opinions and we're happy to hear different voices.
 
 ### How Fast Do You Actually Need?
 
-Your data pipeline **only has to be fast enough**.
+Your data pipeline **only needs to be fast enough**.
 
 In practice, you should always first make sure your data pipeline runs
 asynchronously with your training.
@@ -20,7 +20,7 @@ interface.
 Once you make sure the data pipeline runs async with your training,
 the data pipeline only needs to be as fast as the training.
 **Getting faster brings no gains** to overall throughput.
-It only has to be fast enough.
+It only needs to be fast enough.
 
 If you have used other data loading libraries, you may doubt
 how easy it is to make data pipeline fast enough with pure Python.
@@ -86,11 +86,10 @@ On the other hand, DataFlow is:
 
 1. **Easy**: Any Python function that produces data can be made a DataFlow and
    used for training. No need for intermediate format when you don't.
-1. **Flexible**: Since it is in pure Python, you still have the choice to use
-   a different data format when you need.
-   And we have provided tools to easily
-   [serialize a DataFlow](../../modules/dataflow.html#tensorpack.dataflow.LMDBSerializer)
-   to a single-file binary format when you need.
+1. **Flexible**: Since it is in pure Python, you can use any data format.
+   When you need, you can still easily serialize your dataflow to a single-file
+   format with 
+   [a few lines of code](../../modules/dataflow.html#tensorpack.dataflow.LMDBSerializer).
 
 
 ### Alternative Data Loading Solutions:

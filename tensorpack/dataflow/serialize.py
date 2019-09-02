@@ -33,6 +33,14 @@ class LMDBSerializer():
     are serialized datapoints.
 
     You will need to ``pip install lmdb`` to use it.
+
+    Example:
+
+    .. code-block:: python
+
+        LMDBSerializer.save(my_df, "output.lmdb")
+
+        new_df = LMDBSerializer.load("output.lmdb", shuffle=True)
     """
     @staticmethod
     def save(df, path, write_frequency=5000):

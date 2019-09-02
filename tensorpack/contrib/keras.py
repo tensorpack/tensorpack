@@ -224,7 +224,7 @@ def setup_keras_trainer(
 
 class KerasModel(object):
     def __init__(self, get_model, input_signature=None, target_signature=None,
-                 input=None, trainer=None, inputs_desc=None, targets_desc=None):
+                 input=None, trainer=None):
         """
         Args:
             get_model (input1, input2, ... -> keras.Model):
@@ -234,12 +234,7 @@ class KerasModel(object):
             target_signature ([tf.TensorSpec]): required. The signature for the targets tensors.
             input (InputSource | DataFlow): the InputSource or DataFlow where the input data comes from.
             trainer (Trainer): the default will check the number of available GPUs and use them all.
-            inputs_desc, targets_desc: deprecated names for `input_signature` and `target_signature`
         """
-        if inputs_desc is not None:
-            input_signature = inputs_desc
-        if targets_desc is not None:
-            target_signature = targets_desc
         self.get_model = get_model
         assert callable(get_model), get_model
         self.input_signature = input_signature

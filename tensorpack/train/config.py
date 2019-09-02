@@ -7,11 +7,12 @@ import tensorflow as tf
 from ..callbacks import (
     JSONWriter, MergeAllSummaries, MovingAverageSummary, ProgressBar, RunUpdateOps, ScalarPrinter, TFEventWriter)
 from ..dataflow.base import DataFlow
-from ..graph_builder.model_desc import ModelDescBase
 from ..input_source import InputSource
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.sessinit import SaverRestore, SessionInit
 from ..utils import logger
+
+from .model_desc import ModelDescBase
 
 __all__ = ['TrainConfig', 'AutoResumeTrainConfig', 'DEFAULT_CALLBACKS', 'DEFAULT_MONITORS']
 

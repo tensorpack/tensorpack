@@ -5,12 +5,13 @@
 import six
 from ..compat import tfv1 as tf
 
-from ..graph_builder import ModelDescBase
+from ..train.model_desc import ModelDescBase
 from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import JustCurrentSession, SessionInit
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TowerFunc
 from ..utils import logger
+from ..utils.develop import log_deprecated
 
 __all__ = ['PredictConfig']
 
@@ -77,7 +78,7 @@ class PredictConfig(object):
                     name, tp.__name__, v.__class__.__name__)
 
         if inputs_desc is not None:
-            # TODO warn deprecated or not?
+            log_deprecated("PredictConfig(inputs_desc)", "Use input_signature instead!", "2020-03-01")
             assert input_signature is None, "Cannot set both inputs_desc and input_signature!"
             input_signature = inputs_desc
 
