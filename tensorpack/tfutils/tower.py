@@ -372,9 +372,9 @@ class TowerTensorHandle(object):
 
         self._extra_tensor_names = {}
         if input_signature is not None:
-            assert len(input_signature) == len(input)
+            assert len(input_signature) == len(inputs)
             self._extra_tensor_names = {
-                get_op_tensor_name(x.name)[1]: y for x, y in zip(input_signature, input)}
+                get_op_tensor_name(x.name)[1]: y for x, y in zip(input_signature, inputs)}
         self._inputs = inputs
         self._outputs = outputs
 
