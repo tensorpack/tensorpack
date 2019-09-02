@@ -18,8 +18,7 @@ from ..tfutils.summary import add_moving_summary
 from ..tfutils.tower import get_current_tower_context
 from ..utils import logger
 from ..utils.concurrency import ShareSessionThread
-from .input_source_base import InputSource
-from ..graph_builder.model_desc import build_or_reuse_placeholder
+from .input_source_base import InputSource, build_or_reuse_placeholder
 
 try:
     from tensorflow.python.ops.data_flow_ops import StagingArea

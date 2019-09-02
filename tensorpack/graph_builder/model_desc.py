@@ -17,35 +17,6 @@ TensorSpec = backport_tensor_spec()
 __all__ = ['InputDesc', 'ModelDesc', 'ModelDescBase']
 
 
-def build_or_reuse_placeholder(tensor_spec):
-    """
-    Build a tf.placeholder from the metadata in the given tensor spec, or return an existing one.
-
-    Args:
-        tensor_spec (tf.TensorSpec):
-
-    Returns:
-        tf.Tensor:
-    """
-    g = tfv1.get_default_graph()
-    name = tensor_spec.name
-    try:
-        tensor = g.get_tensor_by_name(name + ':0')
-        assert "Placeholder" in tensor.op.type, "Tensor {} exists but is not a placeholder!".format(name)
-        assert tensor_spec.is_compatible_with(tensor), \
-            "Tensor {} exists but is not compatible with the signature!".format(tensor)
-        if tensor.shape == tensor_spec.shape:
-            # It might be desirable to use a placeholder of a different shape in some tower
-            # (e.g., a less specific shape)
-            return tensor
-    except KeyError:
-        pass
-    with tfv1.name_scope(None):   # clear any name scope it might get called in
-        ret = tfv1.placeholder(
-            tensor_spec.dtype, shape=tensor_spec.shape, name=tensor_spec.name)
-    return ret
-
-
 class InputDesc(
         namedtuple('InputDescTuple', ['type', 'shape', 'name'])):
     """
@@ -65,7 +36,7 @@ class InputDesc(
             shape (tuple):
             name (str):
         """
-        # TODO mark deprecated
+        log_deprecated("InputDesc", "Use tf.TensorSpec instead!", "2020-03-01")
         assert isinstance(type, tf.DType), type
         return tf.TensorSpec(shape=shape, dtype=type, name=name)
 
