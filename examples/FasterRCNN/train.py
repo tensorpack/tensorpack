@@ -47,6 +47,8 @@ if __name__ == '__main__':
 
     # Setup logging ...
     is_horovod = cfg.TRAINER == 'horovod'
+    if is_horovod:
+        hvd.init()
     if not is_horovod or hvd.rank() == 0:
         logger.set_logger_dir(args.logdir, 'd')
     logger.info("Environment Information:\n" + collect_env_info())

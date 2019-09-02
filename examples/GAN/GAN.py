@@ -129,7 +129,7 @@ class GANTrainer(TowerTrainer):
 
         self.tower_func = TowerFunc(get_cost, model.get_input_signature())
         devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
-        cost_list = DataParallelBuilder.build_on_towers(
+        cost_list = DataParallelBuilder.call_for_each_tower(
             list(range(num_gpu)),
             lambda: self.tower_func(*input.get_input_tensors()),
             devices)

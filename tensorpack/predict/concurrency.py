@@ -14,8 +14,7 @@ from ..utils import logger
 from ..utils.concurrency import DIE, ShareSessionThread, StoppableThread
 from .base import AsyncPredictorBase, OfflinePredictor, OnlinePredictor
 
-__all__ = ['MultiProcessPredictWorker', 'MultiProcessQueuePredictWorker',
-           'MultiThreadAsyncPredictor']
+__all__ = ['MultiThreadAsyncPredictor']
 
 
 class MultiProcessPredictWorker(multiprocessing.Process):
@@ -171,7 +170,13 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
 
     def put_task(self, dp, callback=None):
         """
-        Same as in :meth:`AsyncPredictorBase.put_task`.
+        Args:
+            dp (list): A datapoint as inputs. It could be either batched or not
+                batched depending on the predictor implementation).
+            callback: a thread-safe callback. When the results are ready, it will be called
+                with the "future" object.
+        Returns:
+            concurrent.futures.Future: a Future of results.
         """
         f = Future()
         if callback is not None:

@@ -13,9 +13,8 @@ from gym import spaces
 from gym.envs.atari.atari_env import ACTION_MEANING
 from six.moves import range
 
-from tensorpack.utils import logger
+from tensorpack.utils import logger, execute_only_once, get_rng
 from tensorpack.utils.fs import get_dataset_path
-from tensorpack.utils.utils import execute_only_once, get_rng
 
 __all__ = ['AtariPlayer']
 

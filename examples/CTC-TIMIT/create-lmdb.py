@@ -10,10 +10,9 @@ import bob.ap
 import scipy.io.wavfile as wavfile
 
 from tensorpack.dataflow import DataFlow, LMDBSerializer
-from tensorpack.utils import fs, logger, serialize
+from tensorpack.utils import fs, logger, serialize, get_tqdm
 from tensorpack.utils.argtools import memoized
 from tensorpack.utils.stats import OnlineMoments
-from tensorpack.utils.utils import get_tqdm
 
 CHARSET = set(string.ascii_lowercase + ' ')
 PHONEME_LIST = [

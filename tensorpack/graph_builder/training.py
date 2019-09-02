@@ -15,13 +15,12 @@ from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.gradproc import ScaleGradient
 from ..tfutils.tower import TrainTowerContext
 from ..utils import logger
+from ..utils.develop import HIDE_DOC
 from .utils import (
     GradientPacker, LeastLoadedDeviceSetter, aggregate_grads, allreduce_grads, allreduce_grads_hierarchical,
     merge_grad_list, override_to_local_variable, split_grad_list)
 
-__all__ = ['GraphBuilder',
-           'SyncMultiGPUParameterServerBuilder', 'DataParallelBuilder',
-           'SyncMultiGPUReplicatedBuilder', 'AsyncMultiGPUBuilder']
+__all__ = ["DataParallelBuilder"]
 
 
 @six.add_metaclass(ABCMeta)
@@ -117,6 +116,7 @@ class DataParallelBuilder(GraphBuilder):
                     ret.append(func())
         return ret
 
+    @HIDE_DOC
     @staticmethod
     def build_on_towers(*args, **kwargs):
         return DataParallelBuilder.call_for_each_tower(*args, **kwargs)

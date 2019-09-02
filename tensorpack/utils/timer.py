@@ -15,8 +15,7 @@ if six.PY3:
     from time import perf_counter as timer  # noqa
 
 
-__all__ = ['total_timer', 'timed_operation',
-           'print_total_timer', 'IterSpeedCounter', 'Timer']
+__all__ = ['timed_operation', 'IterSpeedCounter', 'Timer']
 
 
 @contextmanager
@@ -55,7 +54,7 @@ _TOTAL_TIMER_DATA = defaultdict(StatCounter)
 
 @contextmanager
 def total_timer(msg):
-    """ A context which add the time spent inside to TotalTimer. """
+    """ A context which add the time spent inside to the global TotalTimer. """
     start = timer()
     yield
     t = timer() - start
@@ -64,7 +63,7 @@ def total_timer(msg):
 
 def print_total_timer():
     """
-    Print the content of the TotalTimer, if it's not empty. This function will automatically get
+    Print the content of the global TotalTimer, if it's not empty. This function will automatically get
     called when program exits.
     """
     if len(_TOTAL_TIMER_DATA) == 0:

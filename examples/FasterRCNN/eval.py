@@ -17,8 +17,7 @@ from scipy import interpolate
 
 from tensorpack.callbacks import Callback
 from tensorpack.tfutils.common import get_tf_version_tuple
-from tensorpack.utils import logger
-from tensorpack.utils.utils import get_tqdm
+from tensorpack.utils import logger, get_tqdm
 
 from common import CustomResize, clip_boxes
 from config import config as cfg

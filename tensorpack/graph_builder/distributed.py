@@ -11,7 +11,7 @@ from ..utils.argtools import memoized
 from .training import DataParallelBuilder, GraphBuilder
 from .utils import OverrideCachingDevice, aggregate_grads, override_to_local_variable
 
-__all__ = ['DistributedParameterServerBuilder', 'DistributedReplicatedBuilder']
+__all__ = []
 
 
 class DistributedBuilderBase(GraphBuilder):

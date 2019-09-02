@@ -184,47 +184,47 @@ def save_chkpt_vars(dic, path):
             saver.save(sess, path, write_meta_graph=False)
 
 
-def get_checkpoint_path(model_path):
+def get_checkpoint_path(path):
     """
     Work around TF problems in checkpoint path handling.
 
     Args:
-        model_path: a user-input path
+        path: a user-input path
     Returns:
         str: the argument that can be passed to NewCheckpointReader
     """
-    if os.path.basename(model_path) == model_path:
-        model_path = os.path.join('.', model_path)  # avoid #4921 and #6142
-    if os.path.basename(model_path) == 'checkpoint':
-        assert tfv1.gfile.Exists(model_path), model_path
-        model_path = tf.train.latest_checkpoint(os.path.dirname(model_path))
+    if os.path.basename(path) == path:
+        path = os.path.join('.', path)  # avoid #4921 and #6142
+    if os.path.basename(path) == 'checkpoint':
+        assert tfv1.gfile.Exists(path), path
+        path = tf.train.latest_checkpoint(os.path.dirname(path))
         # to be consistent with either v1 or v2
 
     # fix paths if provided a wrong one
-    new_path = model_path
-    if '00000-of-00001' in model_path:
-        new_path = model_path.split('.data')[0]
-    elif model_path.endswith('.index'):
-        new_path = model_path.split('.index')[0]
-    if new_path != model_path:
+    new_path = path
+    if '00000-of-00001' in path:
+        new_path = path.split('.data')[0]
+    elif path.endswith('.index'):
+        new_path = path.split('.index')[0]
+    if new_path != path:
         logger.info(
-            "Checkpoint path {} is auto-corrected to {}.".format(model_path, new_path))
-        model_path = new_path
-    assert tfv1.gfile.Exists(model_path) or tfv1.gfile.Exists(model_path + '.index'), model_path
-    return model_path
+            "Checkpoint path {} is auto-corrected to {}.".format(path, new_path))
+        path = new_path
+    assert tfv1.gfile.Exists(path) or tfv1.gfile.Exists(path + '.index'), path
+    return path
 
 
-def load_chkpt_vars(model_path):
+def load_chkpt_vars(path):
     """ Load all variables from a checkpoint to a dict.
 
     Args:
-        model_path(str): path to a checkpoint.
+        path(str): path to a checkpoint.
 
     Returns:
         dict: a name:value dict
     """
-    model_path = get_checkpoint_path(model_path)
-    reader = tfv1.train.NewCheckpointReader(model_path)
+    path = get_checkpoint_path(path)
+    reader = tfv1.train.NewCheckpointReader(path)
     var_names = reader.get_variable_to_shape_map().keys()
     result = {}
     for n in var_names:

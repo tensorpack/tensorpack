@@ -13,13 +13,7 @@ from ..tfutils.varreplace import custom_getter_scope
 from ..utils import logger
 from ..utils.argtools import call_only_once
 
-__all__ = ['LeastLoadedDeviceSetter',
-           'OverrideCachingDevice',
-           'override_to_local_variable',
-           'allreduce_grads',
-           'average_grads',
-           'aggregate_grads'
-           ]
+__all__ = ["LeastLoadedDeviceSetter"]
 
 
 """

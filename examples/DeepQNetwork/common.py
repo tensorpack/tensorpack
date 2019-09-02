@@ -7,13 +7,11 @@ import numpy as np
 import random
 import time
 from six.moves import queue
-from tqdm import tqdm
 
 from tensorpack.callbacks import Callback
-from tensorpack.utils import logger
+from tensorpack.utils import logger, get_tqdm
 from tensorpack.utils.concurrency import ShareSessionThread, StoppableThread
 from tensorpack.utils.stats import StatCounter
-from tensorpack.utils.utils import get_tqdm_kwargs
 
 
 def play_one_episode(env, func, render=False):
@@ -87,7 +85,7 @@ def eval_with_funcs(predictors, nr_eval, get_player_fn, verbose=False):
         if verbose:
             logger.info("Score: {}".format(r))
 
-    for _ in tqdm(range(nr_eval), **get_tqdm_kwargs()):
+    for _ in get_tqdm(range(nr_eval)):
         fetch()
     # waiting is necessary, otherwise the estimated mean score is biased
     logger.info("Waiting for all the workers to finish the last run...")

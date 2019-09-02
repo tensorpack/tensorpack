@@ -399,11 +399,11 @@ _DEPRECATED_NAMES = set([
     'l2_regularizer', 'l1_regularizer',
 
     # internal only
+    'execute_only_once',
+    'humanize_time_delta',
     'SessionUpdate',
-    'average_grads',
-    'aggregate_grads',
-    'allreduce_grads',
-    'get_checkpoint_path'
+    'get_checkpoint_path',
+    'IterSpeedCounter'
 ])
 
 def autodoc_skip_member(app, what, name, obj, skip, options):

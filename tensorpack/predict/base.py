@@ -10,9 +10,8 @@ from ..input_source import PlaceholderInput
 from ..tfutils.common import get_tensors_by_names
 from ..tfutils.tower import PredictTowerContext
 
-__all__ = ['PredictorBase', 'AsyncPredictorBase',
-           'OnlinePredictor', 'OfflinePredictor',
-           ]
+__all__ = ['PredictorBase',
+           'OnlinePredictor', 'OfflinePredictor']
 
 
 @six.add_metaclass(ABCMeta)
@@ -62,7 +61,7 @@ class AsyncPredictorBase(PredictorBase):
             dp (list): A datapoint as inputs. It could be either batched or not
                 batched depending on the predictor implementation).
             callback: a thread-safe callback to get called with
-                either outputs or (inputs, outputs).
+                either outputs or (inputs, outputs), if `return_input` is True.
         Returns:
             concurrent.futures.Future: a Future of results
         """

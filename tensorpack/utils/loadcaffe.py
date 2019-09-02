@@ -97,6 +97,7 @@ def load_caffe(model_desc, model_file):
     """
     Load a caffe model. You must be able to ``import caffe`` to use this
     function.
+
     Args:
         model_desc (str): path to caffe model description file (.prototxt).
         model_file (str): path to caffe model parameter file (.caffemodel).
@@ -116,6 +117,7 @@ def load_caffe(model_desc, model_file):
 def get_caffe_pb():
     """
     Get caffe protobuf.
+
     Returns:
         The imported caffe protobuf module.
     """

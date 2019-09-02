@@ -13,7 +13,7 @@ else:
     import functools
 
 __all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape4d',
-           'memoized_ignoreargs', 'log_once', 'call_only_once']
+           'memoized_ignoreargs', 'log_once']
 
 
 def map_arg(**maps):

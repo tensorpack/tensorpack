@@ -13,7 +13,7 @@ from .develop import create_dummy_func
 msgpack_numpy.patch()
 assert msgpack.version >= (0, 5, 2)
 
-__all__ = ['loads', 'dumps', 'NonPicklableWrapper']
+__all__ = ['loads', 'dumps']
 
 
 MAX_MSGPACK_LEN = 1000000000

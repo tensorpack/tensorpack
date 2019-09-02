@@ -26,8 +26,7 @@ else:
 
 __all__ = ['StoppableThread', 'LoopThread', 'ShareSessionThread',
            'ensure_proc_terminate',
-           'OrderedResultGatherProc', 'OrderedContainer', 'DIE',
-           'mask_sigint', 'start_proc_mask_signal']
+           'start_proc_mask_signal']
 
 
 class StoppableThread(threading.Thread):
