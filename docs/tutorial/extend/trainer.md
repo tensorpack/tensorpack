@@ -4,7 +4,7 @@
 
 Most neural network training tasks are single-cost optimization.
 Tensorpack provides some trainer implementations for such tasks.
-These trainers will take care of step 1 (define the graph), with the following arguments:
+These trainers will take care help you define the graph, with the following arguments:
 
 1. Some `tf.TensorSpec`, the signature of the input.
 2. An `InputSource`, where the input come from. See [Input Pipeline](input-source.html).

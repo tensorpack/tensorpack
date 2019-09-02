@@ -65,7 +65,7 @@ See [config.py](config.py) for details about how to correctly set `BACKBONE.WEIG
 
 ### Inference:
 
-To predict on an image (needs DISPLAY to show the outputs):
+To predict on given images (needs DISPLAY to show the outputs):
 ```
 ./predict.py --predict input1.jpg input2.jpg --load /path/to/Trained-Model-Checkpoint --config SAME-AS-TRAINING
 ```

@@ -116,8 +116,8 @@ class DataParallelBuilder(GraphBuilder):
                     ret.append(func())
         return ret
 
-    @HIDE_DOC
     @staticmethod
+    @HIDE_DOC
     def build_on_towers(*args, **kwargs):
         return DataParallelBuilder.call_for_each_tower(*args, **kwargs)
 

@@ -2,7 +2,7 @@
 # Performance Tuning
 
 __We do not know why your training is slow__ 
-(and most of the times it's not due to issues in tensorpack),
+(and most of the times it's not due to tensorpack),
 unless we can reproduce the slowness with your instsructions.
 
 Tensorpack is designed to be high-performance, as can be seen in the [benchmarks](https://github.com/tensorpack/benchmarks).

@@ -5,6 +5,7 @@
 from collections import namedtuple
 import tensorflow as tf
 
+from ..utils.develop import log_deprecated, HIDE_DOC
 from ..utils.argtools import memoized_method
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
@@ -74,9 +75,9 @@ class ModelDescBase(object):
     Base class for a model description.
     """
 
-    @memoized_method
+    @HIDE_DOC
     def get_inputs_desc(self):
-        # TODO mark deprecated
+        log_deprecated("ModelDesc.get_inputs_desc", "Use get_input_signature instead!", "2020-03-01")
         return self.get_input_signature()
 
     @memoized_method
@@ -100,8 +101,7 @@ class ModelDescBase(object):
     @property
     def input_names(self):
         """
-        Returns:
-            [str]: the names of all the inputs.
+        list[str]: the names of all the inputs.
         """
         return [k.name for k in self.get_input_signature()]
 
@@ -111,7 +111,7 @@ class ModelDescBase(object):
         A subclass is expected to implement this method.
 
         If returning placeholders,
-        the placeholders __have to__ be created inside this method.
+        the placeholders **have to** be created inside this method.
         Don't return placeholders created in other places.
 
         Also, you should never call this method by yourself.
@@ -141,8 +141,7 @@ class ModelDescBase(object):
     @property
     def training(self):
         """
-        Returns:
-            bool: whether the caller is under a training context or not.
+        bool: whether the caller is under a training context or not.
         """
         return get_current_tower_context().is_training
 
