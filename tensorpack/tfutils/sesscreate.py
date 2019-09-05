@@ -17,6 +17,21 @@ A SessionCreator should:
 """
 
 
+_WRN1 = """User-provided custom session config may not work due to TF bugs. If you saw logs like
+```
+tensorflow/core/common_runtime/gpu/gpu_device.cc:1433] Found device 0 with properties:
+```
+before this line, then your GPU has been initialized and custom GPU options may not take effect. """
+
+_WRN2 = """To workaround this issue, you can do one of the following:
+1. Avoid initializing the GPU too early. Find code that initializes the GPU and skip it.
+   Typically examples are: creating a session; check GPU availability; check GPU number.
+2. Manually set your GPU options earlier. You can create a session with custom
+   GPU options at the beginning of your program, as described in
+   https://github.com/tensorpack/tensorpack/issues/497
+"""
+
+
 class NewSessionCreator(tf.train.SessionCreator):
     def __init__(self, target='', config=None):
         """
@@ -33,9 +48,8 @@ class NewSessionCreator(tf.train.SessionCreator):
             config = get_default_sess_config()
         else:
             self.user_provided_config = True
-            logger.warn(
-                "User-provided custom session config may not work due to TF \
-bugs. See https://github.com/tensorpack/tensorpack/issues/497 for workarounds.")
+            logger.warn(_WRN1)
+            logger.warn(_WRN2)
         self.config = config
 
     def create_session(self):

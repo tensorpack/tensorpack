@@ -75,24 +75,24 @@ if __name__ == '__main__':
     if os.path.isdir(args.input):
         input, meta = guess_inputs(args.input)
     else:
-        assert args.meta is not None
         meta = args.meta
         input = args.input
 
     # this script does not need GPU
     os.environ['CUDA_VISIBLE_DEVICES'] = ''
 
-    while True:
-        try:
-            tf.reset_default_graph()
-            tf.train.import_meta_graph(meta, clear_devices=True)
-        except KeyError as e:
-            op_name = e.args[0]
-            _import_external_ops(op_name)
-        except tf.errors.NotFoundError as e:
-            _import_external_ops(e.message)
-        else:
-            break
+    if args.meta is not None:
+        while True:
+            try:
+                tf.reset_default_graph()
+                tf.train.import_meta_graph(meta, clear_devices=True)
+            except KeyError as e:
+                op_name = e.args[0]
+                _import_external_ops(op_name)
+            except tf.errors.NotFoundError as e:
+                _import_external_ops(e.message)
+            else:
+                break
 
     # loading...
     if input.endswith('.npz'):
@@ -101,17 +101,20 @@ if __name__ == '__main__':
         dic = varmanip.load_chkpt_vars(input)
     dic = {get_op_tensor_name(k)[1]: v for k, v in six.iteritems(dic)}
 
-    # save variables that are GLOBAL, and either TRAINABLE or MODEL
-    var_to_dump = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
-    var_to_dump.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
-    if len(set(var_to_dump)) != len(var_to_dump):
-        logger.warn("TRAINABLE and MODEL variables have duplication!")
-    var_to_dump = list(set(var_to_dump))
-    globvarname = set([k.name for k in tf.global_variables()])
-    var_to_dump = set([k.name for k in var_to_dump if k.name in globvarname])
+    if args.meta is not None:
+        # save variables that are GLOBAL, and either TRAINABLE or MODEL
+        var_to_dump = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+        var_to_dump.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
+        if len(set(var_to_dump)) != len(var_to_dump):
+            logger.warn("TRAINABLE and MODEL variables have duplication!")
+        var_to_dump = list(set(var_to_dump))
+        globvarname = set([k.name for k in tf.global_variables()])
+        var_to_dump = set([k.name for k in var_to_dump if k.name in globvarname])
 
-    for name in var_to_dump:
-        assert name in dic, "Variable {} not found in the model!".format(name)
+        for name in var_to_dump:
+            assert name in dic, "Variable {} not found in the model!".format(name)
+    else:
+        var_to_dump = set(dic.keys())
 
     dic_to_dump = {k: v for k, v in six.iteritems(dic) if k in var_to_dump}
     varmanip.save_chkpt_vars(dic_to_dump, args.output)
