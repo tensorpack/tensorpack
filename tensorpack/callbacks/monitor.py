@@ -239,7 +239,7 @@ class TFEventWriter(MonitorBase):
         if logdir is None:
             logdir = logger.get_logger_dir()
         assert tf.gfile.IsDirectory(logdir), logdir
-        self._logdir = os.path.normpath(logdir)
+        self._logdir = logdir
         self._max_queue = max_queue
         self._flush_secs = flush_secs
         self._split_files = split_files
