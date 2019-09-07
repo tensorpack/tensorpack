@@ -17,7 +17,7 @@ import threading
 from ..compat import tfv1 as tf
 from ..libinfo import __git_version__
 from ..tfutils.summary import create_image_summary, create_scalar_summary
-from ..utils import logger
+from ..utils import fs, logger
 from ..utils.develop import HIDE_DOC
 from .base import Callback
 
@@ -239,7 +239,7 @@ class TFEventWriter(MonitorBase):
         if logdir is None:
             logdir = logger.get_logger_dir()
         assert tf.gfile.IsDirectory(logdir), logdir
-        self._logdir = os.path.normpath(logdir)
+        self._logdir = fs.normpath(logdir)
         self._max_queue = max_queue
         self._flush_secs = flush_secs
         self._split_files = split_files

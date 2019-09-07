@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 from ..compat import tfv1 as tf
-from ..utils import logger
+from ..utils import fs, logger
 from .base import Callback
 
 __all__ = ['ModelSaver', 'MinSaver', 'MaxSaver']
@@ -45,7 +45,7 @@ class ModelSaver(Callback):
         # If None, allow it to be init, but fail later if used
         # For example, if chief_only=True, it can still be safely initialized
         # in non-chief workers which don't have logger dir
-        self.checkpoint_dir = os.path.normpath(checkpoint_dir) if checkpoint_dir is not None else checkpoint_dir
+        self.checkpoint_dir = fs.normpath(checkpoint_dir) if checkpoint_dir is not None else checkpoint_dir
 
     def _setup_graph(self):
         assert self.checkpoint_dir is not None, \
@@ -121,7 +121,7 @@ class MinSaver(Callback):
         self.checkpoint_dir = checkpoint_dir
         if self.checkpoint_dir is None:
             self.checkpoint_dir = logger.get_logger_dir()
-        self.checkpoint_dir = os.path.normpath(self.checkpoint_dir)
+        self.checkpoint_dir = fs.normpath(self.checkpoint_dir)
 
     def _get_stat(self):
         try:

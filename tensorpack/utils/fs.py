@@ -10,7 +10,7 @@ from six.moves import urllib
 from . import logger
 from .utils import execute_only_once
 
-__all__ = ['mkdir_p', 'download', 'recursive_walk', 'get_dataset_path']
+__all__ = ['mkdir_p', 'download', 'recursive_walk', 'get_dataset_path', 'normpath']
 
 
 def mkdir_p(dirname):
@@ -104,6 +104,20 @@ def get_dataset_path(*args):
             logger.info("Created the directory {}.".format(d))
     assert os.path.isdir(d), d
     return os.path.join(d, *args)
+
+
+def normpath(path):
+    """
+    Normalizes a path to a folder by taking into consideration remote storages like Cloud storaged
+    referenced by '://' at the beginning of the path.
+
+    Args:
+        args: path to be normalized.
+
+    Returns:
+        str: normalized path.
+    """
+    return path if '://' in path else os.path.normpath(path)
 
 
 if __name__ == '__main__':
