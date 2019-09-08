@@ -5,7 +5,6 @@ import numpy as np
 from ..compat import tfv1 as tf  # this should be avoided first in model code
 
 from ..utils.argtools import get_data_format, shape2d
-from ._test import TestModel
 from .common import layer_register
 from .shape_utils import StaticDynamicShape
 from .tflayer import convert_to_tflayer_args
@@ -137,44 +136,3 @@ def FixedUnPooling(x, shape, unpool_mat=None, data_format='channels_last'):
 
     ret.set_shape(tf.TensorShape(output_shape.get_static()))
     return ret
-
-
-class TestPool(TestModel):
-    def test_FixedUnPooling(self):
-        h, w = 3, 4
-        scale = 2
-        mat = np.random.rand(h, w, 3).astype('float32')
-        inp = self.make_variable(mat)
-        inp = tf.reshape(inp, [1, h, w, 3])
-        output = FixedUnPooling('unpool', inp, scale)
-        res = self.run_variable(output)
-        self.assertEqual(res.shape, (1, scale * h, scale * w, 3))
-
-        # mat is on corner
-        ele = res[0, ::scale, ::scale, 0]
-        self.assertTrue((ele == mat[:, :, 0]).all())
-        # the rest are zeros
-        res[0, ::scale, ::scale, :] = 0
-        self.assertTrue((res == 0).all())
-
-# Below was originally for the BilinearUpsample layer used in the HED example
-#     def test_BilinearUpSample(self):
-#         h, w = 12, 12
-#         scale = 2
-#
-#         mat = np.random.rand(h, w).astype('float32')
-#         inp = self.make_variable(mat)
-#         inp = tf.reshape(inp, [1, h, w, 1])
-#
-#         output = BilinearUpSample(inp, scale)
-#         res = self.run_variable(output)[0, :, :, 0]
-#
-#         from skimage.transform import rescale
-#         res2 = rescale(mat, scale, mode='edge')
-#
-#         diff = np.abs(res2 - res)
-#
-#         # if not diff.max() < 1e-4:
-#         #     import IPython
-#         #     IPython.embed(config=IPython.terminal.ipapp.load_default_config())
-#         self.assertTrue(diff.max() < 1e-4, diff.max())

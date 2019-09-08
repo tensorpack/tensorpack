@@ -48,5 +48,5 @@ else:
         srcpath = os.path.join(_CURR_DIR, module_name + '.py')
         if not os.path.isfile(srcpath):
             continue
-        if not module_name.startswith('_'):
+        if not module_name.startswith('_') and "_test" not in module_name:
             global_import(module_name)

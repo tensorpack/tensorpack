@@ -43,7 +43,8 @@ for _, module_name, __ in iter_modules(
     srcpath = os.path.join(_CURR_DIR, module_name + '.py')
     if not os.path.isfile(srcpath):
         continue
-    if not module_name.startswith('_') and \
+    if "_test" not in module_name and \
+       not module_name.startswith('_') and \
             module_name not in __SKIP:
         _global_import(module_name)
 

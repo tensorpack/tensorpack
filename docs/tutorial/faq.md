@@ -52,6 +52,14 @@ Note that the above methods only prevent variables being updated by SGD.
 Some variables may be updated by other means,
 e.g., BatchNorm statistics are updated through the `UPDATE_OPS` collection and the [RunUpdateOps](../modules/callbacks.html#tensorpack.callbacks.RunUpdateOps) callback.
 
+## The model does not run on CPUs?
+
+Some TensorFlow ops are not implemented on CPUs.
+For example, it does not support many ops in NCHW format on CPUs.
+Note that if you use MKL-enabled version of TensorFlow, it supports more NCHW ops.
+
+In general, you need to implement the model in a way your version of TensorFlow supports.
+
 ## My training seems slow. Why?
 
 Checkout the [Performance Tuning tutorial](performance-tuning.html)
