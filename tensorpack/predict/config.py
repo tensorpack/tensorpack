@@ -6,7 +6,6 @@ import six
 from ..compat import tfv1 as tf
 
 from ..train.model_desc import ModelDescBase
-from ..tfutils import get_default_sess_config
 from ..tfutils.sessinit import JustCurrentSession, SessionInit
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TowerFunc
@@ -100,7 +99,7 @@ class PredictConfig(object):
         assert_type(self.session_init, SessionInit, 'session_init')
 
         if session_creator is None:
-            self.session_creator = NewSessionCreator(config=get_default_sess_config())
+            self.session_creator = NewSessionCreator()
         else:
             self.session_creator = session_creator
 
