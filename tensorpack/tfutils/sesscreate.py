@@ -2,7 +2,7 @@
 # File: sesscreate.py
 
 
-from ..compat import tfv1 as tf, is_tfv2
+from ..compat import tfv1 as tf
 from ..utils import logger
 from .common import get_default_sess_config
 
@@ -70,16 +70,19 @@ class NewSessionCreator(tf.train.SessionCreator):
             return False
 
         def run(op):
-            if not is_tfv2():
-                from tensorflow.contrib.graph_editor import get_backward_walk_ops
+            try:
+                from tensorflow.contrib.graph_editor import get_backward_walk_ops  # deprecated
+            except ImportError:
+                from tensorflow.python.ops.op_selector import get_backward_walk_ops
 
-                deps = get_backward_walk_ops(op, control_inputs=True)
-                for dep_op in deps:
-                    if blocking_op(dep_op):
-                        logger.warn(
-                            "Initializer '{}' depends on a blocking op '{}'. "
-                            "This initializer is likely to hang!".format(
-                                op.name, dep_op.name))
+            deps = get_backward_walk_ops(op, control_inputs=True)
+            for dep_op in deps:
+                if blocking_op(dep_op):
+                    logger.warn(
+                        "Initializer '{}' depends on a blocking op '{}'. "
+                        "This initializer is likely to hang!".format(
+                            op.name, dep_op.name))
+
             sess.run(op)
 
         run(tf.global_variables_initializer())

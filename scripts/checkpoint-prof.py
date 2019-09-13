@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from tensorpack import get_default_sess_config, get_op_tensor_name
-from tensorpack.tfutils.sessinit import get_model_loader
+from tensorpack.tfutils.sessinit import SmartInit
 from tensorpack.utils import logger
 
 if __name__ == '__main__':
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     tf.train.import_meta_graph(args.meta, clear_devices=True)
     G = tf.get_default_graph()
     with tf.Session(config=get_default_sess_config()) as sess:
-        init = get_model_loader(args.model)
+        init = SmartInit(args.model)
         init.init(sess)
 
         feed = {}
@@ -52,16 +52,20 @@ if __name__ == '__main__':
         sess.run(fetches, feed_dict=feed, options=opt, run_metadata=meta)
 
         if args.print_flops:
-            tf.contrib.tfprof.model_analyzer.print_model_analysis(
-                G, run_meta=meta,
-                tfprof_options=tf.contrib.tfprof.model_analyzer.FLOAT_OPS_OPTIONS)
+            tf.profiler.profile(
+                G,
+                run_meta=meta,
+                cmd='op',
+                options=tf.profiler.ProfileOptionBuilder.float_operation())
 
         if args.print_params:
-            tf.contrib.tfprof.model_analyzer.print_model_analysis(
-                G, run_meta=meta,
-                tfprof_options=tf.contrib.tfprof.model_analyzer.TRAINABLE_VARS_PARAMS_STAT_OPTIONS)
+            tf.profiler.profile(
+                G,
+                run_meta=meta,
+                options=tf.profiler.ProfileOptionBuilder.trainable_variables_parameter())
 
         if args.print_timing:
-            tf.contrib.tfprof.model_analyzer.print_model_analysis(
-                G, run_meta=meta,
-                tfprof_options=tf.contrib.tfprof.model_analyzer.PRINT_ALL_TIMING_MEMORY)
+            tf.profiler.profile(
+                G,
+                run_meta=meta,
+                options=tf.profiler.ProfileOptionBuilder.time_and_memory())

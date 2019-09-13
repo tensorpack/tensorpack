@@ -143,7 +143,7 @@ def allreduce_grads(all_grads, average):
     """
 
     if get_tf_version_tuple() <= (1, 12):
-        from tensorflow.contrib import nccl
+        from tensorflow.contrib import nccl  # deprecated
     else:
         from tensorflow.python.ops import nccl_ops as nccl
     nr_tower = len(all_grads)

@@ -140,7 +140,7 @@ class SessionUpdate(object):
 def dump_session_params(path):
     """
     Dump value of all TRAINABLE + MODEL variables to a dict, and save as
-    npz format (loadable by :func:`sessinit.get_model_loader`).
+    npz format (loadable by :func:`sessinit.SmartInit`).
 
     Args:
         path(str): the file name to save the parameters. Must ends with npz.

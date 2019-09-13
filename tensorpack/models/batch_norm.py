@@ -296,12 +296,12 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
 
                 if TF_version <= (1, 12):
                     try:
-                        from tensorflow.contrib.nccl.python.ops.nccl_ops import _validate_and_load_nccl_so
+                        from tensorflow.contrib.nccl.python.ops.nccl_ops import _validate_and_load_nccl_so  # deprecated
                     except Exception:
                         pass
                     else:
                         _validate_and_load_nccl_so()
-                    from tensorflow.contrib.nccl.ops import gen_nccl_ops
+                    from tensorflow.contrib.nccl.ops import gen_nccl_ops  # deprecated
                 else:
                     from tensorflow.python.ops import gen_nccl_ops
                 shared_name = re.sub('tower[0-9]+/', '', tf.get_variable_scope().name)

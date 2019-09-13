@@ -279,7 +279,10 @@ class SingleCostTrainer(TowerTrainer):
             if not self.XLA_COMPILE:
                 return compute_grad_from_inputs(*inputs)
             else:
-                from tensorflow.contrib.compiler import xla
+                try:
+                    from tensorflow.contrib.compiler import xla  # deprecated
+                except ImportError:
+                    from tensorflow.python.compiler.xla import xla
 
                 def xla_func():
                     grads = compute_grad_from_inputs(*inputs)

@@ -48,7 +48,7 @@ def FullyConnected(
     """
     if kernel_initializer is None:
         if get_tf_version_tuple() <= (1, 12):
-            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)
+            kernel_initializer = tf.contrib.layers.variance_scaling_initializer(2.0)  # deprecated
         else:
             kernel_initializer = tf.keras.initializers.VarianceScaling(2.0, distribution='untruncated_normal')
 

@@ -48,7 +48,7 @@ A simple example of how it works:
 ```python
 pred_config = PredictConfig(
     model=YourModel(),
-    session_init=get_model_loader(model_path),
+    session_init=SmartInit(model_path),
     input_names=['input1', 'input2'],  # tensor names in the graph, or name of the declared inputs
     output_names=['output1', 'output2'])  # tensor names in the graph
 predictor = OfflinePredictor(pred_config)
@@ -161,7 +161,7 @@ with TowerContext('', is_training=False):
 ### Step 2: load the checkpoint
 
 You can just use `tf.train.Saver` for all the work.
-Alternatively, use tensorpack's `get_model_loader(path).init(tf.get_default_session())`
+Alternatively, use tensorpack's `SmartInit(path).init(tf.get_default_session())`
 
 Now, you've already built a graph for inference, and the checkpoint is also loaded.
 You may now:

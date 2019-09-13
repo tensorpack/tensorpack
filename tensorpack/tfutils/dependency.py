@@ -32,7 +32,10 @@ def dependency_of_targets(targets, op):
         op = op.op
     assert isinstance(op, tf.Operation), op
 
-    from tensorflow.contrib.graph_editor import get_backward_walk_ops
+    try:
+        from tensorflow.contrib.graph_editor import get_backward_walk_ops  # deprecated
+    except ImportError:
+        from tensorflow.python.ops.op_selector import get_backward_walk_ops
     # alternative implementation can use graph_util.extract_sub_graph
     dependent_ops = get_backward_walk_ops(targets, control_inputs=True)
     return op in dependent_ops
