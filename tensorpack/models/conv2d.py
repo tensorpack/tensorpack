@@ -207,28 +207,39 @@ def Conv2DTranspose(
         data_format = get_data_format(data_format, keras_mode=False)
         shape_dyn = tf.shape(inputs)
         strides2d = shape2d(strides)
-        channels_in = inputs.shape[1 if data_format == 'NCHW' else 3]
+        kernel_shape = shape2d(kernel_size)
+
+        assert padding.lower() in ['valid', 'full', 'same'], "Padding {} is not supported!".format(padding)
+
+        if padding.lower() == 'valid':
+            shape_residue2d = [max(kernel_shape[0] - strides2d[0], 0),
+                               max(kernel_shape[1] - strides2d[1], 0)]
+        elif padding.lower() == 'full':
+            shape_residue2d = [2 - strides2d[0] - kernel_shape[0],
+                               2 - strides2d[1] - kernel_shape[1]]
+        else:
+            shape_residue2d = shape2d(0)
+
         if data_format == 'NCHW':
             channels_in = inputs.shape[1]
             out_shape_dyn = tf.stack(
                 [shape_dyn[0], filters,
-                 shape_dyn[2] * strides2d[0],
-                 shape_dyn[3] * strides2d[1]])
+                 shape_dyn[2] * strides2d[0] + shape_residue2d[0],
+                 shape_dyn[3] * strides2d[1] + shape_residue2d[1]])
             out_shape3_sta = [filters,
-                              None if inputs.shape[2] is None else inputs.shape[2] * strides2d[0],
-                              None if inputs.shape[3] is None else inputs.shape[3] * strides2d[1]]
+                              None if inputs.shape[2] is None else inputs.shape[2] * strides2d[0] + shape_residue2d[0],
+                              None if inputs.shape[3] is None else inputs.shape[3] * strides2d[1] + shape_residue2d[1]]
         else:
             channels_in = inputs.shape[-1]
             out_shape_dyn = tf.stack(
                 [shape_dyn[0],
-                 shape_dyn[1] * strides2d[0],
-                 shape_dyn[2] * strides2d[1],
+                 shape_dyn[1] * strides2d[0] + shape_residue2d[0],
+                 shape_dyn[2] * strides2d[1] + shape_residue2d[1],
                  filters])
-            out_shape3_sta = [None if inputs.shape[1] is None else inputs.shape[1] * strides2d[0],
-                              None if inputs.shape[2] is None else inputs.shape[2] * strides2d[1],
+            out_shape3_sta = [None if inputs.shape[1] is None else inputs.shape[1] * strides2d[0] + shape_residue2d[0],
+                              None if inputs.shape[2] is None else inputs.shape[2] * strides2d[1] + shape_residue2d[1],
                               filters]
 
-        kernel_shape = shape2d(kernel_size)
         W = tf.get_variable('W', kernel_shape + [filters, channels_in], initializer=kernel_initializer)
         if use_bias:
             b = tf.get_variable('b', [filters], initializer=bias_initializer)
