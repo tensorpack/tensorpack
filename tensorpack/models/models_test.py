@@ -76,7 +76,7 @@ class TestConv2DTranspose(TestModel):
     def test_shape_match(self):
         h, w = 12, 18
         input = self.make_variable(np.random.rand(1, h, w, 3).astype("float32"))
-        for padding in ["same"]:
+        for padding in ["same", "valid"]:
             for stride in [1, 2]:
                 output = Conv2DTranspose(
                     'deconv_s{}_pad{}'.format(stride, padding),
