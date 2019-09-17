@@ -206,8 +206,8 @@ class NVMLContext(object):
 
 if __name__ == '__main__':
     with NVMLContext() as ctx:
-        print(ctx.devices())
-        print(ctx.devices()[0].utilization())
+        for idx, dev in enumerate(ctx.devices()):
+            print(idx, dev.name())
 
     with NVMLContext() as ctx:
         print(ctx.devices())
