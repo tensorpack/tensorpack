@@ -75,16 +75,19 @@ class TestConv2DTranspose(TestModel):
 
     def test_shape_match(self):
         h, w = 12, 18
-        input = self.make_variable(np.random.rand(1, h, w, 3).astype("float32"))
-        for padding in ["same"]:
-            for stride in [1, 2]:
-                output = Conv2DTranspose(
-                    'deconv_s{}_pad{}'.format(stride, padding),
-                    input, 20, 3, strides=stride, padding=padding)
+        input_nhwc = self.make_variable(np.random.rand(1, h, w, 3).astype("float32"))
+        input_nchw = self.make_variable(np.random.rand(1, 3, h, w).astype("float32"))
 
-                static_shape = output.shape
-                dynamic_shape = self.run_variable(output).shape
-                self.assertTrue(static_shape == dynamic_shape)
+        for padding in ["same", "valid"]:
+            for stride in [1, 2]:
+                for data_format, input in zip(["NCHW", "NHWC"], [input_nchw, input_nhwc]):
+                    output = Conv2DTranspose(
+                        'deconv_s{}_pad{}_format{}'.format(stride, padding, data_format),
+                        input, 20, 3, strides=stride, padding=padding, data_format=data_format)
+
+                    static_shape = output.shape
+                    dynamic_shape = self.run_variable(output).shape
+                    self.assertTrue(static_shape == dynamic_shape)
 
 
 def run_test_case(case):
