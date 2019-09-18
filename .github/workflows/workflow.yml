@@ -36,7 +36,8 @@ jobs:
       max-parallel: 6
       matrix:
         python-version: [3.6]
-        TF-version: [1.3.0, 1.14.0, nightly]
+        # TF-version: [1.3.0, 1.14.0, nightly] # TODO make nightly work
+        TF-version: [1.3.0, 1.14.0]
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
