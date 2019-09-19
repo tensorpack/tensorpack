@@ -246,7 +246,7 @@ def Conv2DTranspose(
             shape4d(strides, data_format=data_format),
             padding=padding.upper(),
             data_format=data_format)
-        conv.set_shape(tf.TensorShape([None] + out_shape3_sta))
+        conv.set_shape(tf.TensorShape([shape_sta[0]] + out_shape3_sta))
 
         ret = tf.nn.bias_add(conv, b, data_format=data_format) if use_bias else conv
         if activation is not None:
