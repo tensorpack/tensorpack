@@ -151,8 +151,13 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     num_fg = tf.size(fg_inds, out_type=tf.int64)
     empty_fg = tf.equal(num_fg, 0)
     if int(fg_box_logits.shape[1]) > 1:
-        fg_box_logits = tf.batch_gather(fg_box_logits, tf.expand_dims(fg_labels, axis=1))
-    fg_box_logits = tf.reshape(fg_box_logits, [-1, 4])
+        if get_tf_version_tuple() >= (1, 14):
+            fg_labels = tf.expand_dims(fg_labels, axis=1)  # nfg x 1
+            fg_box_logits = tf.gather(fg_box_logits, fg_labels, batch_dims=1)
+        else:
+            indices = tf.stack([tf.range(num_fg), fg_labels], axis=1)  # nfgx2
+            fg_box_logits = tf.gather_nd(fg_box_logits, indices)
+    fg_box_logits = tf.reshape(fg_box_logits, [-1, 4])  # nfg x 4
 
     with tf.name_scope('label_metrics'), tf.device('/cpu:0'):
         prediction = tf.argmax(label_logits, axis=1, name='label_prediction')

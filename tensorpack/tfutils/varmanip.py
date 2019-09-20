@@ -76,12 +76,12 @@ class SessionUpdate(object):
             if np.prod(varshape) != np.prod(value.shape):
                 if ignore_mismatch:
                     logger.warn(
-                        "Cannot load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
+                        "Cannot load an array of shape {} into variable '{}' whose shape is {}.".format(
                             value.shape, name, varshape))
                     return None
                 else:
                     raise ValueError(
-                        "Trying to load a tensor of shape {} into the variable '{}' whose shape is {}.".format(
+                        "Trying to load an array of shape {} into variable '{}' whose shape is {}.".format(
                             value.shape, name, varshape))
             # TODO only allow reshape when shape different by empty axis
             logger.warn("The tensor is reshaped from {} to {} when assigned to '{}'".format(
