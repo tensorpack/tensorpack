@@ -6,7 +6,7 @@
 There are two ways to do inference during training.
 
 1. The easiest way is to write a callback, and use
-  [self.trainer.get_predictor()](../modules/modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
+  [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
 	to get a callable under inference mode.
 	See [Write a Callback](extend/callback.html).
 

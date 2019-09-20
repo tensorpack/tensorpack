@@ -46,7 +46,8 @@ class TowerTrainer(Trainer):
     def tower_func(self):
         """
         A :class:`TowerFunc` instance.
-        See [tutorial on tower function](http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer)
+        See `tutorial on tower function
+        <http://tensorpack.readthedocs.io/tutorial/trainer.html#tower-trainer>`_
         for more information.
         """
         return self._tower_func

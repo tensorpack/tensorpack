@@ -388,8 +388,6 @@ class HorovodTrainer(SingleCostTrainer):
             certain numerical issues in practice.
     """
 
-    BROADCAST_EVERY_EPOCH = True
-
     def __init__(self, average=True, compression=None):
         """
         Args:
@@ -414,6 +412,8 @@ class HorovodTrainer(SingleCostTrainer):
         self._has_compression = hvd_version >= (0, 15, 0)
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
+
+        self.BROADCAST_EVERY_EPOCH = True
 
     def mpi_enabled(self):
         """
