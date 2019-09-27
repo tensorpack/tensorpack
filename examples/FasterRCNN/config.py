@@ -94,7 +94,8 @@ _C.DATA.VAL = ('coco_val2017',)  # AKA minival2014
 _C.DATA.NUM_CATEGORY = -1  # without the background class (e.g., 80 for COCO)
 _C.DATA.CLASS_NAMES = []  # NUM_CLASS (NUM_CATEGORY+1) strings, the first is "BG".
 
-# whether the coordinates in the annotations are absolute pixel values, or a relative value in [0, 1]
+# whether the coordinates in your registered dataset are
+# absolute pixel values in range [0, W or H] or relative values in [0, 1]
 _C.DATA.ABSOLUTE_COORD = True
 # Number of data loading workers.
 # In case of horovod training, this is the number of workers per-GPU (so you may want to use a smaller number).
