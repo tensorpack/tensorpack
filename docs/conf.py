@@ -83,7 +83,10 @@ if ON_RTD:
 else:
     # skip this when building locally
     intersphinx_timeout = 0.1
-intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None)}
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.6', None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+}
 # -------------------------
 
 # Add any paths that contain templates here, relative to this directory.
@@ -106,7 +109,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'tensorpack'
-copyright = u'2015 - 2018, Yuxin Wu, et al.'
+copyright = u'2015 - 2019, Yuxin Wu, et al.'
 author = u'Yuxin Wu, et al.'
 
 # The version info for the project you're documenting, acts as replacement for

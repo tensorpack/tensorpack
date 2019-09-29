@@ -55,7 +55,7 @@ Mappers execute a mapping function in parallel on top of an existing dataflow.
 You can find details in the [API docs](../modules/dataflow.html) under the
 "parallel" and "parallel_map" section.
 
-[Parallel DataFlow tutorial](parallel-dataflow.html) give a deeper dive
+[Parallel DataFlow tutorial](parallel-dataflow.html) gives a deeper dive
 on how to use them to optimize your data pipeline.
 
 ### Run the DataFlow

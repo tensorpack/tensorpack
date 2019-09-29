@@ -5,8 +5,6 @@ There are many other data loading solutions for deep learning.
 Here we explain why you may want to use Tensorpack DataFlow for your own good:
 **it's easy, and fast (enough)**.
 
-Note that this article may contain subjective opinions and we're happy to hear different voices.
-
 ### How Fast Do You Actually Need?
 
 Your data pipeline **only needs to be fast enough**.
@@ -42,7 +40,8 @@ And for us, we may optimize DataFlow even more, but we just haven't found the re
 
 Certain libraries advocate for a new binary data format (e.g., TFRecords, RecordIO).
 Do you need to use them?
-We think you usually do not, at least not after you try DataFlow, because they are:
+We think you usually do not, at least not after you try DataFlow, because these
+formats are:
 
 1. **Not Easy**: To use the new binary format,
 	 you need to write a script, to process your data from its original format,
@@ -98,7 +97,7 @@ Some frameworks have also provided good framework-specific solutions for data lo
 On the contrary, DataFlow is framework-agnostic: you can use it in any Python environment.
 In addition to this benefit, there are other reasons you might prefer DataFlow over the alternatives:
 
-#### tf.data or other TF operations
+#### tf.data and other graph operations
 
 The huge disadvantage of loading data in a computation graph is obvious:
 __it's extremely inflexible__.

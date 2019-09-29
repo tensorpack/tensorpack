@@ -13,4 +13,5 @@ extraction:
     prepare:
       packages:
         - libcap-dev
-
+    python_setup:
+      version: 3

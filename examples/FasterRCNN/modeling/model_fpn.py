@@ -128,7 +128,7 @@ def multilevel_roi_align(features, rcnn_boxes, resolution):
     # Unshuffle to the original order, to match the original samples
     level_id_perm = tf.concat(level_ids, axis=0)  # A permutation of 1~N
     level_id_invert_perm = tf.invert_permutation(level_id_perm)
-    all_rois = tf.gather(all_rois, level_id_invert_perm)
+    all_rois = tf.gather(all_rois, level_id_invert_perm, name="output")
     return all_rois
 
 
@@ -202,7 +202,7 @@ def generate_fpn_proposals(
         # Detectron picks top-k within the batch, rather than within an image. However we do not have a batch.
         proposal_topk = tf.minimum(tf.size(proposal_scores), fpn_nms_topk)
         proposal_scores, topk_indices = tf.nn.top_k(proposal_scores, k=proposal_topk, sorted=False)
-        proposal_boxes = tf.gather(proposal_boxes, topk_indices)
+        proposal_boxes = tf.gather(proposal_boxes, topk_indices, name="all_proposals")
     else:
         for lvl in range(num_lvl):
             with tf.name_scope('Lvl{}'.format(lvl + 2)):
