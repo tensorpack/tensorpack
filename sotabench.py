@@ -6,6 +6,7 @@ import tqdm
 
 from tensorpack.predict import OfflinePredictor, PredictConfig
 from tensorpack.tfutils import SmartInit
+from tensorpack.utils.fs import download
 
 from sotabencheval.utils import is_server
 from sotabencheval.object_detection import COCOEvaluator
@@ -76,6 +77,10 @@ def evaluate_rcnn(model_name, paper_arxiv_id, cfg_list, model_file):
     evaluator.save()
 
 
+download(
+    "http://models.tensorpack.com/FasterRCNN/COCO-MaskRCNN-R101FPN9xGNCasAugScratch.npz",
+    "./",
+    expect_size=355680386)
 evaluate_rcnn(
     "Mask R-CNN (ResNet-101-FPN, GN, Cascade)",
     "1811.08883",

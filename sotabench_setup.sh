@@ -1,10 +1,10 @@
 #!/bin/bash
 
+. /workspace/venv/bin/activate
+
 pip install -e .
 
-wget http://models.tensorpack.com/FasterRCNN/COCO-MaskRCNN-R101FPN9xGNCasAugScratch.npz
-
 cd ./.data/vision/coco
-unzip annotations_trainval2017.zip
-unzip val2017.zip
+python -c 'import zipfile; zipfile.ZipFile("annotations_trainval2017.zip").extractall()'
+python -c 'import zipfile; zipfile.ZipFile("val2017.zip").extractall()'
 cd -
