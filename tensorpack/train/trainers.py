@@ -159,7 +159,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             certain numerical issues in practice.
     """
 
-    BROADCAST_EVERY_EPOCH = True
+    BROADCAST_EVERY_EPOCH = False
 
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, average=True, mode=None):
