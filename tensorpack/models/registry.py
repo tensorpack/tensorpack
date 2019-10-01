@@ -18,7 +18,7 @@ from ..utils import logger
 _LAYER_LOGGED = set()
 _LAYER_REGISTRY = {}
 
-__all__ = ['layer_register']
+__all__ = ['layer_register', 'disable_layer_logging']
 
 
 _NameConflict = "LAYER_NAME_CONFLICT!!"
