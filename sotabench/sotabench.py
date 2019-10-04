@@ -12,7 +12,7 @@ from sotabencheval.utils import is_server
 from sotabencheval.object_detection import COCOEvaluator
 
 # import faster rcnn example
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "examples", "FasterRCNN"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "FasterRCNN"))
 from config import finalize_configs, config as cfg  # noqa
 from eval import predict_image  # noqa
 from dataset import register_coco  # noqa
