@@ -7,7 +7,6 @@ set -v
 pip install -e .
 pip install tensorflow-gpu==1.14.0
 pip install opencv-python scipy
-pip install matplotlib
 
 echo "Extracting ..."
 cd ./.data/vision/coco
