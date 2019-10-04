@@ -413,7 +413,7 @@ class HorovodTrainer(SingleCostTrainer):
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
-        self.BROADCAST_EVERY_EPOCH = True
+        self.BROADCAST_EVERY_EPOCH = False
 
     def mpi_enabled(self):
         """
