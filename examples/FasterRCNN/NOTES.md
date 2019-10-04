@@ -60,19 +60,16 @@ Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100
 
 | Implementation                                                                                                                                   | Throughput (img/s) |
 |--------------------------------------------------------------------------------------------------------------------------------------------------|:------------------:|
-| [torchvision](https://pytorch.org/blog/torchvision03/#segmentation-models)                                                                       | 59                 |
+| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines) | 51                 |
 | tensorpack                                                                                                                                       | 50                 |
-| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines) | 35                 |
-| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn)                                                | 35                 |
+| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn)                                                | 41                 |
 | [Detectron](https://github.com/facebookresearch/Detectron)                                                                                       | 19                 |
-| [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                                                                 | 11                 |
+| [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                                                                 | 14                 |
 
-1. This implementation does not use specialized CUDA ops (e.g. ROIAlign), 
+1. This implementation does not use specialized CUDA ops (e.g. ROIAlign),
    and does not use batch of images.
    Therefore it might be slower than other highly-optimized implementations.
-   Our number in the table above uses CUDA kernel of NMS (available only in TF
-   master with [PR30893](https://github.com/tensorflow/tensorflow/pull/30893)),
-   and `TRAINER=horovod`.
+   Our number in the table above uses TF 1.15.0rc2 and `TRAINER=horovod`.
 
 1. If CuDNN warmup is on, the training will start very slowly, until about
    10k steps (or more if scale augmentation is used) to reach a maximum speed.
