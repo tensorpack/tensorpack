@@ -3,6 +3,7 @@
 import os
 import sys
 import tqdm
+from contextlib import contextmanager
 
 from tensorpack.predict import OfflinePredictor, PredictConfig
 from tensorpack.tfutils import SmartInit
@@ -29,6 +30,13 @@ COCO_ROOT = os.path.join(DATA_ROOT, "coco")
 
 
 register_coco(COCO_ROOT)
+
+
+@contextmanager
+def backup_cfg():
+    orig_config = cfg.to_dict()
+    yield
+    cfg.from_dict(orig_config)
 
 
 def evaluate_rcnn(model_name, paper_arxiv_id, cfg_list, model_file):
@@ -78,15 +86,40 @@ def evaluate_rcnn(model_name, paper_arxiv_id, cfg_list, model_file):
 
 
 download(
+    "http://models.tensorpack.com/FasterRCNN/COCO-MaskRCNN-R50FPN2x.npz",
+    "./",
+    expect_size=165362754)
+with backup_cfg():
+    evaluate_rcnn(
+        "Mask R-CNN (ResNet-50-FPN, 2x)", "1703.06870", [],
+        "COCO-MaskRCNN-R50FPN2x.npz",
+    )
+
+
+download(
+    "http://models.tensorpack.com/FasterRCNN/COCO-MaskRCNN-R50FPN2xGN.npz",
+    "./",
+    expect_size=167363872)
+with backup_cfg():
+    evaluate_rcnn(
+        "Mask R-CNN (ResNet-50-FPN, GroupNorm)", "1803.08494",
+        """FPN.NORM=GN BACKBONE.NORM=GN
+FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head
+FPN.MRCNN_HEAD_FUNC=maskrcnn_up4conv_gn_head""".split(),
+        "COCO-MaskRCNN-R50FPN2xGN.npz",
+    )
+
+
+download(
     "http://models.tensorpack.com/FasterRCNN/COCO-MaskRCNN-R101FPN9xGNCasAugScratch.npz",
     "./",
     expect_size=355680386)
-evaluate_rcnn(
-    "Mask R-CNN (ResNet-101-FPN, GN, Cascade)",
-    "1811.08883",
-    """
-FPN.CASCADE=True BACKBONE.RESNET_NUM_BLOCKS=[3,4,23,3] FPN.NORM=GN
-BACKBONE.NORM=GN FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head
-FPN.MRCNN_HEAD_FUNC=maskrcnn_up4conv_gn_head""".split(),
-    "COCO-MaskRCNN-R101FPN9xGNCasAugScratch.npz",
-)
+with backup_cfg():
+    evaluate_rcnn(
+        "Mask R-CNN (ResNet-101-FPN, GN, Cascade)", "1811.08883",
+        """
+    FPN.CASCADE=True BACKBONE.RESNET_NUM_BLOCKS=[3,4,23,3] FPN.NORM=GN
+    BACKBONE.NORM=GN FPN.FRCNN_HEAD_FUNC=fastrcnn_4conv1fc_gn_head
+    FPN.MRCNN_HEAD_FUNC=maskrcnn_up4conv_gn_head""".split(),
+        "COCO-MaskRCNN-R101FPN9xGNCasAugScratch.npz",
+    )

@@ -98,7 +98,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
             This is not a good argument name, but it is what the Tensorflow layer uses.
         ema_update (str): Only effective when ``training=True``. It has the following options:
 
-          * "default": same as "collection". Because this is the default behavior in tensorflow.
+          * "default": same as "collection". Because this is the default behavior in TensorFlow.
           * "skip": do not update EMA. This can be useful when you reuse a batch norm layer in several places
             but do not want them to all update your EMA.
           * "collection": Add EMA update ops to collection `tf.GraphKeys.UPDATE_OPS`.
@@ -106,7 +106,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
             your training iterations. This can waste compute if your training iterations do not always depend
             on the BatchNorm layer.
           * "internal": EMA is updated inside this layer itself by control dependencies.
-            In common cases, it has similar speed to "collection". But it covers more cases, e.g.:
+            In standard scenarios, it has similar speed to "collection". But it has some more benefits:
 
             1. BatchNorm is used inside dynamic control flow.
                The collection-based update does not support dynamic control flows.
@@ -114,7 +114,9 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
                Putting all update ops into a single collection will waste a lot of compute.
             3. Other part of the model relies on the "updated" EMA. The collection-based method does not update
                EMA immediately.
+            4. It has less chance to cause TensorFlow bugs in a graph with complicated control flow.
 
+            Therefore this option is preferred over TensorFlow default.
             Corresponding TF issue: https://github.com/tensorflow/tensorflow/issues/14699
         sync_statistics (str or None): one of None, "nccl", or "horovod". It determines how to compute the
           "per-batch statistics" when ``training==True``.

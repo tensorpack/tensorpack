@@ -43,6 +43,15 @@ class AttrDict():
         return {k: v.to_dict() if isinstance(v, AttrDict) else v
                 for k, v in self.__dict__.items() if not k.startswith('_')}
 
+    def from_dict(self, d):
+        self.freeze(False)
+        for k, v in d.items():
+            self_v = getattr(self, k)
+            if isinstance(self_v, AttrDict):
+                self_v.from_dict(v)
+            else:
+                setattr(self, k, v)
+
     def update_args(self, args):
         """Update from command line args. """
         for cfg in args:
