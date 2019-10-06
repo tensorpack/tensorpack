@@ -48,6 +48,8 @@ def print_class_histogram(roidbs):
         # filter crowd?
         gt_inds = np.where((entry["class"] > 0) & (entry["is_crowd"] == 0))[0]
         gt_classes = entry["class"][gt_inds]
+        if len(gt_classes):
+            assert gt_classes.max() <= len(class_names) - 1
         gt_hist += np.histogram(gt_classes, bins=hist_bins)[0]
     data = list(itertools.chain(*[[class_names[i + 1], v] for i, v in enumerate(gt_hist[1:])]))
     COL = min(6, len(data))
@@ -97,6 +99,7 @@ class TrainingDataPreprocessor:
         points = tfms.apply_coords(points)
         boxes = point8_to_box(points)
         if len(boxes):
+            assert klass.max() <= cfg.DATA.NUM_CATEGORY, "Invalid category {}!".format(klass.max())
             assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
         ret = {"image": im}

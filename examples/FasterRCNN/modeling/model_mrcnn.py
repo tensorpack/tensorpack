@@ -23,12 +23,12 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
     if get_tf_version_tuple() >= (1, 14):
         mask_logits = tf.gather(
             mask_logits, tf.reshape(fg_labels - 1, [-1, 1]), batch_dims=1)
+        mask_logits = tf.squeeze(mask_logits, axis=1)
     else:
         indices = tf.stack([tf.range(tf.size(fg_labels, out_type=tf.int64)),
                             fg_labels - 1], axis=1)  # #fgx2
         mask_logits = tf.gather_nd(mask_logits, indices)  # #fg x h x w
 
-    mask_logits = tf.squeeze(mask_logits, axis=1)
     mask_probs = tf.sigmoid(mask_logits)
 
     # add some training visualizations to tensorboard
