@@ -51,13 +51,16 @@ is in fact a small helper which uses some heuristics to return you one of
 [DictRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore).
 They are responsible for the actual initialization work.
 
-Whatever you use in `session_init`, this is what happens during the loading:
+Whatever you use in `session_init`, this is what happens during the initialization:
 
 * Variable restoring is completely based on __exact name match__ between
 	variables in the current graph and variables in the `session_init` initializer.
 * Variables that appear in only one side will be printed as warning.
 * Variables of the same name but incompatible shapes will cause exceptions.
   If you set `ignore_mismatch=True`, then such errors will only be printed as warnings.
+  
+You can also use `SmartInit` to load a model to a session manually,
+without involving the rest of the tensorpack, by `SmartInit(...).init(session)`.
 
 ## Transfer Learning
 
