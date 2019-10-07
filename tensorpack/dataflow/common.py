@@ -5,7 +5,7 @@ from __future__ import division
 import itertools
 import numpy as np
 import pprint
-from collections import defaultdict, deque, Mapping
+from collections import defaultdict, deque
 from copy import copy
 import six
 import tqdm
@@ -16,6 +16,11 @@ from ..utils import logger
 from ..utils.utils import get_rng, get_tqdm, get_tqdm_kwargs
 from ..utils.develop import log_deprecated
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow, RNGDataFlow
+
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 __all__ = ['TestDataSpeed', 'PrintData', 'BatchData', 'BatchDataByShape', 'FixedSizeData', 'MapData',
            'MapDataComponent', 'RepeatedData', 'RepeatedDataPoint', 'RandomChooseData',

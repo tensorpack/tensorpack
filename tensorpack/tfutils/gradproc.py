@@ -119,7 +119,10 @@ class MapGradient(GradientProcessor):
                 If it return None, the gradient is discarded (hence no update to the variable will happen).
             regex (str): used to match variables. Defaults to match all variables.
         """
-        args = inspect.getargspec(func).args
+        if six.PY2:
+            args = inspect.getargspec(func).args
+        else:
+            args = inspect.getfullargspec(func).args
         arg_num = len(args) - inspect.ismethod(func)
         assert arg_num in [1, 2], \
             "The function must take 1 or 2 arguments!  ({})".format(args)
