@@ -62,4 +62,6 @@ jobs:
           python -c "import tensorflow as tf; print(tf.VERSION, tf.GIT_VERSION)"
 
       - name: Run Tests
+        env:
+          TENSORPACK_DATASET: TP_DATA_TF${{ matrix.TF-version }}
         run: ./tests/run-tests.sh
