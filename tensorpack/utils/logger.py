@@ -122,9 +122,9 @@ def set_logger_dir(dirname, action=None):
 
     if dir_nonempty(dirname):
         if not action:
-            _logger.warn("""\
+            _logger.warning("""\
 Log directory {} exists! Use 'd' to delete it. """.format(dirname))
-            _logger.warn("""\
+            _logger.warning("""\
 If you're resuming from a previous run, you can choose to keep it.
 Press any other key to exit. """)
         while not action:
