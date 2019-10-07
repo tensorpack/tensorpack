@@ -63,5 +63,5 @@ jobs:
 
       - name: Run Tests
         env:
-          TENSORPACK_DATASET: TP_DATA_TF${{ matrix.TF-version }}
+          TENSORPACK_DATASET: /home/runner/TP_DATA_TF${{ matrix.TF-version }}
         run: ./tests/run-tests.sh
