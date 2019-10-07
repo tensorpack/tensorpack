@@ -1,6 +1,7 @@
 #!/bin/bash -ev
 # File: run-tests.sh
 
+mkdir -p "$TENSORPACK_DATASET"
 DIR=$(dirname $0)
 cd $DIR
 
