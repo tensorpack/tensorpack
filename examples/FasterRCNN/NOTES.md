@@ -58,18 +58,19 @@ This is a minimal implementation that simply contains these files:
 
 Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100s:
 
-| Implementation                                                                                                                                   | Throughput (img/s) |
-|--------------------------------------------------------------------------------------------------------------------------------------------------|:------------------:|
-| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/blob/master/MODEL_ZOO.md#end-to-end-faster-and-mask-r-cnn-baselines) | 51                 |
-| tensorpack                                                                                                                                       | 50                 |
-| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn)                                                | 41                 |
-| [Detectron](https://github.com/facebookresearch/Detectron)                                                                                       | 19                 |
-| [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                                                                 | 14                 |
+| Implementation                                                                                    | Throughput (img/s) |
+|---------------------------------------------------------------------------------------------------|:------------------:|
+| [Detectron2](https://github.com/facebookresearch/detectron2)                                      | 60                 |
+| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/)                     | 51                 |
+| tensorpack                                                                                        | 50                 |
+| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn) | 41                 |
+| [Detectron](https://github.com/facebookresearch/Detectron)                                        | 19                 |
+| [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                  | 14                 |
 
 1. This implementation does not use specialized CUDA ops (e.g. ROIAlign),
    and does not use batch of images.
    Therefore it might be slower than other highly-optimized implementations.
-   Our number in the table above uses TF 1.15.0rc2 and `TRAINER=horovod`.
+	 For details of the benchmark, see [detectron2 benchmarks](https://detectron2.readthedocs.io/notes/benchmarks.html).
 
 1. If CuDNN warmup is on, the training will start very slowly, until about
    10k steps (or more if scale augmentation is used) to reach a maximum speed.
