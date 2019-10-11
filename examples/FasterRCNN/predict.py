@@ -120,8 +120,8 @@ if __name__ == '__main__':
     parser.add_argument('--benchmark', action='store_true', help="Benchmark the speed of the model + postprocessing")
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py",
                         nargs='+')
-    parser.add_argument('--compact', help='Save a model to .pb')
-    parser.add_argument('--serving', help='Save a model to serving file')
+    parser.add_argument('--output-pb', help='Save a model to .pb')
+    parser.add_argument('--output-serving', help='Save a model to serving file')
 
     args = parser.parse_args()
     if args.config:
@@ -150,10 +150,10 @@ if __name__ == '__main__':
             input_names=MODEL.get_inference_tensor_names()[0],
             output_names=MODEL.get_inference_tensor_names()[1])
 
-        if args.compact:
-            ModelExporter(predcfg).export_compact(args.compact, optimize=False)
-        elif args.serving:
-            ModelExporter(predcfg).export_serving(args.serving, optimize=False)
+        if args.output_pb:
+            ModelExporter(predcfg).export_compact(args.output_pb, optimize=False)
+        elif args.output_serving:
+            ModelExporter(predcfg).export_serving(args.output_serving, optimize=False)
 
         if args.predict:
             predictor = OfflinePredictor(predcfg)
