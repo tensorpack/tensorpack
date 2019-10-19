@@ -99,7 +99,8 @@ class TrainingDataPreprocessor:
         points = tfms.apply_coords(points)
         boxes = point8_to_box(points)
         if len(boxes):
-            assert klass.max() <= cfg.DATA.NUM_CATEGORY, "Invalid category {}!".format(klass.max())
+            assert klass.max() <= self.cfg.DATA.NUM_CATEGORY, \
+                "Invalid category {}!".format(klass.max())
             assert np.min(np_area(boxes)) > 0, "Some boxes have zero area!"
 
         ret = {"image": im}
