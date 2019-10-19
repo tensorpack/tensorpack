@@ -79,8 +79,6 @@ def convert_weights(d, cfg):
     _convert_conv("proposal_generator.rpn_head.objectness_logits", "rpn/class")
     _convert_conv("proposal_generator.rpn_head.anchor_deltas", "rpn/box")
 
-
-    # bbox predictor
     def _convert_box_predictor(src, dst):
         if cfg.MODEL.ROI_BOX_HEAD.CLS_AGNOSTIC_BBOX_REG:
             _convert_fc(src + ".bbox_pred", dst + "/box")
