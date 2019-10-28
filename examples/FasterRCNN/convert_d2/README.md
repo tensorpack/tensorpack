@@ -18,13 +18,13 @@ It currently supports ResNet{50,101}-{C4,FPN}-{Faster,Mask,Cascade} R-CNN models
 
 $ python convert_d2.py --d2-config detectron2/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml --d2-pkl model_final_f10217.pkl --output R50FPN-d2-converted.npz
 # the script will print tensorpack configs
-'MODE_MASK=True' 'MODE_FPN=False' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
+'MODE_MASK=True' 'MODE_FPN=True' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
 
 # 3. Use the above configs to verify the conversion is correct:
-$ ./predict.py --evaluate out.json --load R50FPN-d2-converted.npz  --config DATA.BASEDIR=~/data/coco 'MODE_MASK=True' 'MODE_FPN=False' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
+$ ./predict.py --evaluate out.json --load R50FPN-d2-converted.npz  --config DATA.BASEDIR=~/data/coco 'MODE_MASK=True' 'MODE_FPN=True' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
 
 # 4. Naively convert the model to a frozen pb file:
-$ ./predict.py --output-pb out.pb --load R50FPN-d2-converted.npz  --config DATA.BASEDIR=~/data/coco 'MODE_MASK=True' 'MODE_FPN=False' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
+$ ./predict.py --output-pb out.pb --load R50FPN-d2-converted.npz  --config DATA.BASEDIR=~/data/coco 'MODE_MASK=True' 'MODE_FPN=True' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
 ```
 
 Note: this script does not support arbitrary detectron2 config.
