@@ -24,7 +24,7 @@ class DatasetSplit():
         boxes: numpy array of kx4 floats, each row is [x1, y1, x2, y2]
         class: numpy array of k integers, in the range of [1, #categories], NOT [0, #categories)
         is_crowd: k booleans. Use k False if you don't know what it means.
-        segmentation: k lists of numpy arrays (one for each instance).
+        segmentation: k lists of numpy arrays.
             Each list of numpy arrays corresponds to the mask for one instance.
             Each numpy array in the list is a polygon of shape Nx2,
             because one mask can be represented by N polygons.

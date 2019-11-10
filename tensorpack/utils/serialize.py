@@ -4,6 +4,7 @@
 import os
 
 import pickle
+from multiprocessing.reduction import ForkingPickler
 import msgpack
 import msgpack_numpy
 
@@ -92,6 +93,7 @@ class PickleSerializer(object):
         return pickle.loads(buf)
 
 
+# Define the default serializer to be used that dumps data to bytes
 _DEFAULT_S = os.environ.get('TENSORPACK_SERIALIZE', 'msgpack')
 
 if _DEFAULT_S == "pyarrow":
@@ -103,3 +105,18 @@ elif _DEFAULT_S == "pickle":
 else:
     dumps = MsgpackSerializer.dumps
     loads = MsgpackSerializer.loads
+
+# Define the default serializer to be used for passing data
+# among a pair of peers. In this case the deserialization is
+# known to happen only once
+_DEFAULT_S = os.environ.get('TENSORPACK_ONCE_SERIALIZE', 'pickle')
+
+if _DEFAULT_S == "pyarrow":
+    dumps_once = PyarrowSerializer.dumps
+    loads_once = PyarrowSerializer.loads
+elif _DEFAULT_S == "pickle":
+    dumps_once = ForkingPickler.dumps
+    loads_once = ForkingPickler.loads
+else:
+    dumps_once = MsgpackSerializer.dumps
+    loads_once = MsgpackSerializer.loads
