@@ -14,14 +14,10 @@ import weakref
 from contextlib import contextmanager
 import six
 from six.moves import queue
+import subprocess
 
 from . import logger
 from .argtools import log_once
-
-if six.PY2:
-    import subprocess32 as subprocess
-else:
-    import subprocess
 
 
 __all__ = ['StoppableThread', 'LoopThread', 'ShareSessionThread',

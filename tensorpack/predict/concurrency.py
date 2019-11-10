@@ -4,7 +4,7 @@
 
 import multiprocessing
 import numpy as np
-import six
+from concurrent.futures import Future
 import tensorflow as tf
 from six.moves import queue, range
 
@@ -154,12 +154,6 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
                 self.input_queue, f, id, batch_size=batch_size)
             for id, f in enumerate(predictors)]
 
-        if six.PY2:
-            # TODO XXX set logging here to avoid affecting TF logging
-            import tornado.options as options
-            options.parse_command_line(['--logging=debug'])
-            logger.warn("MultiThreadAsyncPredictor is inefficient in Python 2! Switch to Python 3 instead.")
-
     def start(self):
         if self._need_default_sess:
             assert tfv1.get_default_session() is not None, \
@@ -183,13 +177,3 @@ class MultiThreadAsyncPredictor(AsyncPredictorBase):
             f.add_done_callback(callback)
         self.input_queue.put((dp, f))
         return f
-
-
-try:
-    if six.PY2:
-        from tornado.concurrent import Future
-    else:
-        from concurrent.futures import Future
-except ImportError:
-    from ..utils.develop import create_dummy_class
-    MultiThreadAsyncPredictor = create_dummy_class('MultiThreadAsyncPredictor', 'tornado.concurrent')  # noqa

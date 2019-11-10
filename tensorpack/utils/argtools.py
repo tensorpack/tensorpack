@@ -3,14 +3,9 @@
 
 
 import inspect
-import six
+import functools
 
 from . import logger
-
-if six.PY2:
-    import functools32 as functools
-else:
-    import functools
 
 __all__ = ['map_arg', 'memoized', 'memoized_method', 'graph_memoized', 'shape2d', 'shape4d',
            'memoized_ignoreargs', 'log_once']
@@ -26,13 +21,10 @@ def map_arg(**maps):
     def deco(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if six.PY2:
-                argmap = inspect.getcallargs(func, *args, **kwargs)
-            else:
-                # getcallargs was deprecated since 3.5
-                sig = inspect.signature(func)
-                argmap = sig.bind_partial(*args, **kwargs).arguments
-            for k, map_func in six.iteritems(maps):
+            # getcallargs was deprecated since 3.5
+            sig = inspect.signature(func)
+            argmap = sig.bind_partial(*args, **kwargs).arguments
+            for k, map_func in maps.items():
                 if k in argmap:
                     argmap[k] = map_func(argmap[k])
             return func(**argmap)

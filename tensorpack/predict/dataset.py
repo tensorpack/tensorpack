@@ -6,7 +6,6 @@ import multiprocessing
 import os
 from abc import ABCMeta, abstractmethod
 import six
-from six.moves import range, zip
 
 from ..dataflow import DataFlow
 from ..dataflow.remote import dump_dataflow_to_process_queue

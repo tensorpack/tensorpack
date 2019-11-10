@@ -9,11 +9,13 @@ import gym
 import multiprocessing as mp
 import numpy as np
 import os
-import six
 import sys
 import uuid
 import tensorflow as tf
 from six.moves import queue
+from concurrent import futures
+CancelledError = futures.CancelledError
+
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import MapGradient, SummaryGradient
@@ -24,12 +26,6 @@ from tensorpack.utils.serialize import dumps
 from atari_wrapper import FireResetEnv, FrameStack, LimitLength, MapState
 from common import Evaluator, eval_model_multithread, play_n_episodes
 from simulator import SimulatorMaster, SimulatorProcess, TransitionExperience
-
-if six.PY3:
-    from concurrent import futures
-    CancelledError = futures.CancelledError
-else:
-    CancelledError = Exception
 
 IMAGE_SIZE = (84, 84)
 FRAME_HISTORY = 4

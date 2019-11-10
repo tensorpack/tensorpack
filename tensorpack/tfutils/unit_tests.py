@@ -1,6 +1,5 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
-import six
 import unittest
 import tensorflow as tf
 
@@ -21,7 +20,6 @@ class ScopeUtilsTest(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self._f()  # name conflict
 
-    @unittest.skipIf(six.PY2, "assertLogs not supported in Python 2")
     def test_under_name_scope_warning(self):
         x = tf.placeholder(tf.float32, [3])
         tf.nn.relu(x, name='s')

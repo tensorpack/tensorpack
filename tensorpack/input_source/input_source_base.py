@@ -6,7 +6,6 @@ from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 import six
 import tensorflow as tf
-from six.moves import zip
 
 from ..callbacks.base import CallbackFactory
 from ..tfutils.common import get_op_tensor_name

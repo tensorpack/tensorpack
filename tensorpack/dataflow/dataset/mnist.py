@@ -5,7 +5,6 @@
 import gzip
 import numpy
 import os
-from six.moves import range
 
 from ...utils import logger
 from ...utils.fs import download, get_dataset_path

@@ -3,7 +3,6 @@
 # Author: Yuxin Wu
 
 import numpy as np
-from six.moves import range
 
 from tensorpack import ProxyDataFlow
 

@@ -8,7 +8,6 @@ from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 import six
 import tensorflow as tf
-from six.moves import range, zip
 
 from ..compat import tfv1
 from ..tfutils.common import get_tf_version_tuple

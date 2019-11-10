@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import unittest
 import tensorflow as tf
-import six
 
 from ..utils import logger
 from ..train.trainers import NoOpTrainer
@@ -74,7 +73,6 @@ class ScheduledHyperParamSetterTest(unittest.TestCase):
         history = self._create_trainer_with_scheduler(scheduler, 1, 92, starting_epoch=90)
         self.assertEqual(len(history), 0)
 
-    @unittest.skipIf(six.PY2, "assertLogs not supported in Python 2")
     def testWarningStartInTheMiddle(self):
         scheduler = ScheduledHyperParamSetter(
             ObjAttrParam(self._param_obj, ParamObject.PARAM_NAME),
@@ -82,7 +80,6 @@ class ScheduledHyperParamSetterTest(unittest.TestCase):
         with self.assertLogs(logger=logger._logger, level='WARNING'):
             self._create_trainer_with_scheduler(scheduler, 1, 21, starting_epoch=20)
 
-    @unittest.skipIf(six.PY2, "unittest.mock not available in Python 2")
     def testNoWarningStartInTheMiddle(self):
         scheduler = ScheduledHyperParamSetter(
             ObjAttrParam(self._param_obj, ParamObject.PARAM_NAME),

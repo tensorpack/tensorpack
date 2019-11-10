@@ -71,7 +71,6 @@ class AsyncPredictorBase(PredictorBase):
         """ Start workers """
 
     def _do_call(self, dp):
-        assert six.PY3, "With Python2, sync methods not available for async predictor"
         fut = self.put_task(dp)
         # in Tornado, Future.result() doesn't wait
         return fut.result()

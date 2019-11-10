@@ -5,14 +5,10 @@
 import atexit
 from collections import defaultdict
 from contextlib import contextmanager
-from time import time as timer
-import six
+from time import perf_counter as timer  # noqa
 
 from . import logger
 from .stats import StatCounter
-
-if six.PY3:
-    from time import perf_counter as timer  # noqa
 
 
 __all__ = ['timed_operation', 'IterSpeedCounter', 'Timer']
@@ -68,7 +64,7 @@ def print_total_timer():
     """
     if len(_TOTAL_TIMER_DATA) == 0:
         return
-    for k, v in six.iteritems(_TOTAL_TIMER_DATA):
+    for k, v in _TOTAL_TIMER_DATA.items():
         logger.info("Total Time: {} -> {:.2f} sec, {} times, {:.3g} sec/time".format(
             k, v.sum, v.count, v.average))
 

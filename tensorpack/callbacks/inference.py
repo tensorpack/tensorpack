@@ -5,7 +5,6 @@
 import numpy as np
 from abc import ABCMeta
 import six
-from six.moves import zip
 
 from ..tfutils.common import get_op_tensor_name
 from ..utils import logger

@@ -66,7 +66,7 @@ demonstrating its __flexibility__ for actual research.
 
 Dependencies:
 
-+ Python 2.7 or 3.3+. Python 2.7 is supported until [it retires in 2020](https://pythonclock.org/).
++ Python 3.3+.
 + Python bindings for OpenCV. (Optional, but required by a lot of features)
 + TensorFlow ≥ 1.3, < 2. (Not required if you only want to use `tensorpack.dataflow` alone as a data processing library)
 ```

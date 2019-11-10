@@ -9,9 +9,7 @@ import operator
 import os
 import sys
 from collections import Counter
-import six
 import tensorflow as tf
-from six.moves import range
 
 from tensorpack import *
 from tensorpack.tfutils import optimizer, summary
@@ -44,8 +42,6 @@ class CharRNNData(RNGDataFlow):
         # preprocess data
         with open(input_file, 'rb') as f:
             data = f.read()
-        if six.PY2:
-            data = bytearray(data)
         data = [chr(c) for c in data if c < 128]
         counter = Counter(data)
         char_cnt = sorted(counter.items(), key=operator.itemgetter(1), reverse=True)

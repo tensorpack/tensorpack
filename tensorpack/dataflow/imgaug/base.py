@@ -6,7 +6,6 @@ import inspect
 import pprint
 from collections import namedtuple
 import weakref
-import six
 
 from ...utils.argtools import log_once
 from ...utils.utils import get_rng
@@ -34,32 +33,21 @@ def _default_repr(self):
     It assumes that the instance `self` contains attributes that match its constructor.
     """
     classname = type(self).__name__
-    if six.PY2:
-        argspec = inspect.getargspec(self.__init__)
-        assert argspec.varargs is None, "The default __repr__ in {} doesn't work for varargs!".format(classname)
-        assert argspec.keywords is None, "The default __repr__ in {} doesn't work for kwargs!".format(classname)
-        fields = argspec.args[1:]
-        defaults = {}
-        defaults_list = argspec.defaults
-        if defaults_list is not None:
-            for f, d in zip(fields[::-1], defaults_list[::-1]):
-                defaults[f] = d
-    else:
-        argspec = inspect.getfullargspec(self.__init__)
-        assert argspec.varargs is None, "The default __repr__ in {} doesn't work for varargs!".format(classname)
-        assert argspec.varkw is None, "The default __repr__ in {} doesn't work for kwargs!".format(classname)
-        defaults = {}
+    argspec = inspect.getfullargspec(self.__init__)
+    assert argspec.varargs is None, "The default __repr__ in {} doesn't work for varargs!".format(classname)
+    assert argspec.varkw is None, "The default __repr__ in {} doesn't work for kwargs!".format(classname)
+    defaults = {}
 
-        fields = argspec.args[1:]
-        defaults_pos = argspec.defaults
-        if defaults_pos is not None:
-            for f, d in zip(fields[::-1], defaults_pos[::-1]):
-                defaults[f] = d
+    fields = argspec.args[1:]
+    defaults_pos = argspec.defaults
+    if defaults_pos is not None:
+        for f, d in zip(fields[::-1], defaults_pos[::-1]):
+            defaults[f] = d
 
-        for k in argspec.kwonlyargs:
-            fields.append(k)
-            if k in argspec.kwonlydefaults:
-                defaults[k] = argspec.kwonlydefaults[k]
+    for k in argspec.kwonlyargs:
+        fields.append(k)
+        if k in argspec.kwonlydefaults:
+            defaults[k] = argspec.kwonlydefaults[k]
 
     argstr = []
     for idx, f in enumerate(fields):

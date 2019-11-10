@@ -11,7 +11,6 @@ import six
 from atari_py.ale_python_interface import ALEInterface
 from gym import spaces
 from gym.envs.atari.atari_env import ACTION_MEANING
-from six.moves import range
 
 from tensorpack.utils import logger, execute_only_once, get_rng
 from tensorpack.utils.fs import get_dataset_path

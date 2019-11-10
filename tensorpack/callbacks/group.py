@@ -4,17 +4,13 @@
 
 import traceback
 from contextlib import contextmanager
-from time import time as timer
-import six
+from time import perf_counter as timer  # noqa
 from ..compat import tfv1 as tf
 
 from ..utils import logger
 from ..utils.utils import humanize_time_delta
 from .base import Callback
 from .hooks import CallbackToHook
-
-if six.PY3:
-    from time import perf_counter as timer  # noqa
 
 __all__ = ['Callbacks']
 

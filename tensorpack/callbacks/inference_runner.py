@@ -6,7 +6,6 @@ import itertools
 import sys
 from contextlib import contextmanager
 import tqdm
-from six.moves import range
 from tensorflow.python.training.monitored_session import _HookedSession as HookedSession
 
 from ..compat import tfv1 as tf

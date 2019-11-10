@@ -3,7 +3,6 @@
 
 
 import re
-import six
 from ..compat import tfv1 as tf  # this should be avoided first in model code
 from tensorflow.python.training import moving_averages
 
@@ -292,7 +291,7 @@ def BatchNorm(inputs, axis=None, training=None, momentum=0.9, epsilon=1e-5,
             if num_dev == 1:
                 logger.warn("BatchNorm(sync_statistics='nccl') is used with only one tower!")
             else:
-                assert six.PY2 or TF_version >= (1, 10), \
+                assert TF_version >= (1, 10), \
                     "Cross-GPU BatchNorm is only supported in TF>=1.10 ." \
                     "Upgrade TF or apply this patch manually: https://github.com/tensorflow/tensorflow/pull/20360"
 

@@ -7,8 +7,6 @@ import numpy as np
 import os
 import pickle
 import tarfile
-import six
-from six.moves import range
 
 from ...utils import logger
 from ...utils.fs import download, get_dataset_path
@@ -44,10 +42,7 @@ def read_cifar(filenames, cifar_classnum):
     ret = []
     for fname in filenames:
         fo = open(fname, 'rb')
-        if six.PY3:
-            dic = pickle.load(fo, encoding='bytes')
-        else:
-            dic = pickle.load(fo)
+        dic = pickle.load(fo, encoding='bytes')
         data = dic[b'data']
         if cifar_classnum == 10:
             label = dic[b'labels']

@@ -3,8 +3,6 @@
 # File: train.py
 
 import argparse
-import six
-assert six.PY3, "This example requires Python 3!"
 
 from tensorpack import *
 from tensorpack.tfutils import collect_env_info

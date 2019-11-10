@@ -4,9 +4,7 @@
 import copy
 import time
 import weakref
-import six
 import tensorflow as tf
-from six.moves import range
 
 from ..compat import tfv1
 from ..callbacks import Callback, Callbacks, Monitors, MonitorBase
@@ -360,11 +358,10 @@ def _get_property(name):
     """
     ret = property(
         lambda self: getattr(self.loop, name))
-    if six.PY3:     # __doc__ is readonly in Py2
-        try:
-            ret.__doc__ = getattr(TrainLoop, name).__doc__
-        except AttributeError:
-            pass
+    try:
+        ret.__doc__ = getattr(TrainLoop, name).__doc__
+    except AttributeError:
+        pass
     return ret
 
 

@@ -5,7 +5,6 @@
 import numpy as np
 import os
 import six
-from six.moves import range
 
 from ..utils import logger
 from ..utils.argtools import log_once

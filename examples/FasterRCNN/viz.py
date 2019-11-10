@@ -2,7 +2,6 @@
 # File: viz.py
 
 import numpy as np
-from six.moves import zip
 
 from tensorpack.utils import viz
 from tensorpack.utils.palette import PALETTE_RGB

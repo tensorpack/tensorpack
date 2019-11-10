@@ -9,7 +9,6 @@ from collections import defaultdict, deque
 from copy import copy
 import six
 import tqdm
-from six.moves import map, range
 from termcolor import colored
 
 from ..utils import logger

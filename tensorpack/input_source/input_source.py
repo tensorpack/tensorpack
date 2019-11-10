@@ -6,7 +6,6 @@ import threading
 from contextlib import contextmanager
 from itertools import chain
 import tensorflow as tf
-from six.moves import range, zip
 
 from ..compat import tfv1
 from ..callbacks.base import Callback, CallbackFactory

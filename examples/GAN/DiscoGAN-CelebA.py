@@ -7,7 +7,6 @@ import argparse
 import numpy as np
 import os
 import tensorflow as tf
-from six.moves import map, zip
 
 from tensorpack import *
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope

@@ -6,7 +6,6 @@ import multiprocessing as mp
 import time
 from collections import deque
 import tqdm
-from six.moves import range
 
 from ..utils import logger
 from ..utils.concurrency import DIE

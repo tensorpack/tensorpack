@@ -6,7 +6,6 @@
 import argparse
 import os
 import tensorflow as tf
-from six.moves import range
 
 from tensorpack import *
 from tensorpack.tfutils.gradproc import GlobalNormClip, SummaryGradient

@@ -61,14 +61,11 @@ setup(
         "msgpack-numpy>=0.4.4.2",
         "pyzmq>=16",
         "psutil>=5",
-        "subprocess32; python_version < '3.0'",
-        "functools32; python_version < '3.0'",
     ],
     tests_require=['flake8', 'scikit-image'],
     extras_require={
         'all': ['scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'],
         'all: "linux" in sys_platform': ['python-prctl'],
-        'all: python_version < "3.0"': ['tornado'],
     },
 
     # https://packaging.python.org/guides/distributing-packages-using-setuptools/#universal-wheels

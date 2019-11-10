@@ -8,7 +8,6 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from scipy.signal import convolve2d
-from six.moves import range, zip
 
 from tensorpack import *
 from tensorpack.dataflow import dataset

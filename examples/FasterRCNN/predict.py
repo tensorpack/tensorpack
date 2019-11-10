@@ -7,10 +7,7 @@ import os
 import shutil
 import tensorflow as tf
 import cv2
-import six
 import tqdm
-
-assert six.PY3, "This example requires Python 3!"
 
 import tensorpack.utils.viz as tpviz
 from tensorpack.predict import MultiTowerOfflinePredictor, OfflinePredictor, PredictConfig

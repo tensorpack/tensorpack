@@ -3,7 +3,6 @@
 
 import re
 import tensorflow as tf
-from six.moves import range
 
 from ..tfutils.common import get_global_step_var, get_op_tensor_name
 from ..utils import logger

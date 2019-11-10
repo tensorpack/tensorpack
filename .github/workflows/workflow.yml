@@ -7,7 +7,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [2.7, 3.6, 3.7]
+        python-version: [3.6, 3.7]
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
@@ -21,13 +21,6 @@ jobs:
           flake8 --version
       - name: Lint
         run: |
-          flake8 .
-
-      - name: Lint Examples
-        # some examples are py3 only
-        if: matrix.python-version != 2.7
-        run: |
-          cd examples
           flake8 .
 
   unittest:

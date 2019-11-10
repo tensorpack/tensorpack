@@ -6,7 +6,6 @@
 
 import numpy as np
 import os
-from six.moves import zip
 
 from ..compat import tfv1 as tf
 from ..tfutils.common import get_op_tensor_name
