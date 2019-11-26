@@ -46,7 +46,9 @@ class _MyFormatter(logging.Formatter):
 
 
 def _getlogger():
-    logger = logging.getLogger('tensorpack')
+    # this file is synced to "dataflow" package as well
+    package_name = "dataflow" if __name__.startswith("dataflow") else "tensorpack"
+    logger = logging.getLogger(package_name)
     logger.propagate = False
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(sys.stdout)

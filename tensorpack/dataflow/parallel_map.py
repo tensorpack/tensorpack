@@ -85,11 +85,9 @@ class _ParallelMapData(ProxyDataFlow):
 
     def __iter__(self):
         if self._strict:
-            for dp in self.get_data_strict():
-                yield dp
+            yield from self.get_data_strict()
         else:
-            for dp in self.get_data_non_strict():
-                yield dp
+            yield from self.get_data_non_strict()
 
 
 class MultiThreadMapData(_ParallelMapData):
@@ -205,8 +203,7 @@ class MultiThreadMapData(_ParallelMapData):
 
     def __iter__(self):
         with self._guard:
-            for dp in super(MultiThreadMapData, self).__iter__():
-                yield dp
+            yield from super(MultiThreadMapData, self).__iter__()
 
     def __del__(self):
         if self._evt is not None:
@@ -320,8 +317,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
 
     def __iter__(self):
         with self._guard, _zmq_catch_error(type(self).__name__):
-            for dp in super(MultiProcessMapDataZMQ, self).__iter__():
-                yield dp
+            yield from super(MultiProcessMapDataZMQ, self).__iter__()
 
 
 class MultiProcessMapAndBatchDataZMQ(_MultiProcessZMQDataFlow):

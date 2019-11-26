@@ -48,7 +48,7 @@ If you expect the model to work better, only in one of the two conditions can we
 (1) You're unable to reproduce the results documented in tensorpack examples.
 (2) It appears to be a tensorpack bug.
 
-Otherwise, how to train a good model on your task or your 
+Otherwise, how to train a good model on your task or your
 modifications is a machine learning question.
 We do not answer machine learning questions and it is your responsibility to
 figure out how to make your models more accurate.
@@ -60,7 +60,7 @@ If this command failed, tell us your version of Python/TF/tensorpack.
 
 Note that:
 
-  + You can install Tensorpack master by `pip install -U git+https://github.com/ppwwyyxx/tensorpack.git`
+  + You can install Tensorpack master by `pip install -U git+https://github.com/tensorpack/tensorpack.git`
     and see if your issue is already solved.
   + If you're not using tensorpack under a normal command line shell (e.g.,
     using an IDE or jupyter notebook), please retry under a normal command line shell.

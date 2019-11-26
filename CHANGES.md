@@ -8,6 +8,7 @@ so you don't need to look at here very often.
 Here are a list of things that were changed, starting from an early version.
 TensorFlow itself also changes API and those are not listed here.
 
++ 2019/11/10. Drop Python 2 support.
 + [2019/03/20](https://github.com/tensorpack/tensorpack/commit/b8a50d72a7c655b6dc6facb17efd74069ba7f86c).
   The concept of `InputDesc` was replaced by its equivalent in TF:
   `tf.TensorSpec`. This may be a breaking change if you have customized

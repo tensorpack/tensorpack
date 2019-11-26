@@ -85,8 +85,7 @@ class DataFromList(RNGDataFlow):
 
     def __iter__(self):
         if not self.shuffle:
-            for k in self.lst:
-                yield k
+            yield from self.lst
         else:
             idxs = np.arange(len(self.lst))
             self.rng.shuffle(idxs)
@@ -110,9 +109,7 @@ class DataFromGenerator(DataFlow):
             self._gen = gen
 
     def __iter__(self):
-        # yield from
-        for dp in self._gen():
-            yield dp
+        yield from self._gen()
 
 
 class DataFromIterable(DataFlow):
@@ -129,5 +126,4 @@ class DataFromIterable(DataFlow):
         return self._len
 
     def __iter__(self):
-        for dp in self._itr:
-            yield dp
+        yield from self._itr

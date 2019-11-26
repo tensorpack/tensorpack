@@ -48,8 +48,7 @@ class _ExceptionWrapper:
 
 def _repeat_iter(get_itr):
     while True:
-        for x in get_itr():
-            yield x
+        yield from get_itr()
 
 
 def _bind_guard(sock, name):

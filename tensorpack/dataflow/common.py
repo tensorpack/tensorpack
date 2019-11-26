@@ -48,8 +48,7 @@ class TestDataSpeed(ProxyDataFlow):
     def __iter__(self):
         """ Will run testing at the beginning, then produce data normally. """
         self.start()
-        for dp in self.ds:
-            yield dp
+        yield from self.ds
 
     def start(self):
         """
@@ -387,12 +386,10 @@ class RepeatedData(ProxyDataFlow):
     def __iter__(self):
         if self.num == -1:
             while True:
-                for dp in self.ds:
-                    yield dp
+                yield from self.ds
         else:
             for _ in range(self.num):
-                for dp in self.ds:
-                    yield dp
+                yield from self.ds
 
 
 class RepeatedDataPoint(ProxyDataFlow):
@@ -519,8 +516,7 @@ class ConcatData(DataFlow):
 
     def __iter__(self):
         for d in self.df_lists:
-            for dp in d.__iter__():
-                yield dp
+            yield from d
 
 
 class JoinData(DataFlow):
@@ -702,8 +698,7 @@ class CacheData(ProxyDataFlow):
             if len(self.buffer):
                 if self.shuffle:
                     self.rng.shuffle(self.buffer)
-                for dp in self.buffer:
-                    yield dp
+                yield from self.buffer
             else:
                 for dp in self.ds:
                     yield dp
