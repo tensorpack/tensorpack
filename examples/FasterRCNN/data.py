@@ -18,8 +18,8 @@ from tensorpack.utils.argtools import log_once
 from modeling.model_rpn import get_all_anchors
 from modeling.model_fpn import get_all_anchors_fpn
 from common import (
-    CustomResize, DataFromListOfDict, box_to_point8,
-    filter_boxes_inside_shape, np_iou, point8_to_box, polygons_to_mask,
+    CustomResize, DataFromListOfDict, box_to_point4,
+    filter_boxes_inside_shape, np_iou, point4_to_box, polygons_to_mask,
 )
 from config import config as cfg
 from dataset import DatasetRegistry, register_coco
@@ -95,9 +95,9 @@ class TrainingDataPreprocessor:
         # augmentation:
         tfms = self.aug.get_transform(im)
         im = tfms.apply_image(im)
-        points = box_to_point8(boxes)
+        points = box_to_point4(boxes)
         points = tfms.apply_coords(points)
-        boxes = point8_to_box(points)
+        boxes = point4_to_box(points)
         if len(boxes):
             assert klass.max() <= self.cfg.DATA.NUM_CATEGORY, \
                 "Invalid category {}!".format(klass.max())

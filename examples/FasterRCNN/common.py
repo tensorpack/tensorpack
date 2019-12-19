@@ -62,8 +62,10 @@ class CustomResize(ImageAugmentor):
         return ResizeTransform(h, w, newh, neww, self.interp)
 
 
-def box_to_point8(boxes):
+def box_to_point4(boxes):
     """
+    Convert boxes to its corner points.
+
     Args:
         boxes: nx4
 
@@ -75,7 +77,7 @@ def box_to_point8(boxes):
     return b
 
 
-def point8_to_box(points):
+def point4_to_box(points):
     """
     Args:
         points: (nx4)x2
