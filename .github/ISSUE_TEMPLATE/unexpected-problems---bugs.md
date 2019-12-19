@@ -26,6 +26,9 @@ feel free to delete everything in this template.
 ### 2. What you observed:
 
 (1) **Include the ENTIRE logs here:**
+```
+<paste logs here>
+```
 
 It's always better to copy-paste what you observed instead of describing them.
 
@@ -44,14 +47,10 @@ If you expect higher speed, please read
 http://tensorpack.readthedocs.io/tutorial/performance-tuning.html
 before posting.
 
-If you expect the model to work better, only in one of the two conditions can we help with it:
+If you expect the model to converge / work better, note that we do not help you on how to train a new model.
+Only in one of the two conditions can we help with it:
 (1) You're unable to reproduce the results documented in tensorpack examples.
 (2) It appears to be a tensorpack bug.
-
-Otherwise, how to train a good model on your task or your
-modifications is a machine learning question.
-We do not answer machine learning questions and it is your responsibility to
-figure out how to make your models more accurate.
 
 ### 4. Your environment:
 
