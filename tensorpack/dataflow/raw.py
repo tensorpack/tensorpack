@@ -103,13 +103,13 @@ class DataFromGenerator(DataFlow):
         Args:
             gen: iterable, or a callable that returns an iterable
         """
-        if not callable(gen):
-            self._gen = lambda: gen
-        else:
-            self._gen = gen
+        self._gen = gen
 
     def __iter__(self):
-        yield from self._gen()
+        if not callable(self._gen):
+            yield from self._gen
+        else:
+            yield from self._gen()
 
 
 class DataFromIterable(DataFlow):
@@ -117,12 +117,17 @@ class DataFromIterable(DataFlow):
     def __init__(self, iterable):
         """
         Args:
-            iterable: an iterable object with length
+            iterable: an iterable object
         """
         self._itr = iterable
-        self._len = len(iterable)
+        try:
+            self._len = len(iterable)
+        except Exception:
+            self._len = None
 
     def __len__(self):
+        if self._len is None:
+            raise NotImplementedError
         return self._len
 
     def __iter__(self):

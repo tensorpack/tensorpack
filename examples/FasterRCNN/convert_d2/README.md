@@ -9,6 +9,7 @@ It produces a corresponding tensorpack configs, as well as a tensorpack-compatib
 
 It currently supports ResNet{50,101}-{C4,FPN}-{Faster,Mask,Cascade} R-CNN models in
 [detectron2 model zoo](https://github.com/facebookresearch/detectron2/blob/master/MODEL_ZOO.md).
+You may add new architectures in `../modeling` to support more models.
 
 ### Usage:
 
@@ -27,12 +28,17 @@ $ ./predict.py --evaluate out.json --load R50FPN-d2-converted.npz  --config DATA
 $ ./predict.py --output-pb out.pb --load R50FPN-d2-converted.npz  --config DATA.BASEDIR=~/data/coco 'MODE_MASK=True' 'MODE_FPN=True' 'BACKBONE.STRIDE_1X1=True' 'PREPROC.PIXEL_MEAN=[123.675,116.28,103.53]' 'PREPROC.PIXEL_STD=[1.0,1.0,1.0]'
 ```
 
-Note: this script does not support arbitrary detectron2 config.
-When run against an unsupported config, it may fail silently and produce
-erroneous models.
+Note:
 
-For models in detectron2 model zoo, there is a small incompatibility:
+1. This script does not support arbitrary detectron2 config.
+   When run against an unsupported config, it may fail silently and produce
+   erroneous models.
 
-* `POOLER_SAMPLING_RATIO=0` in RoIAlign: there is no equivalence in TensorFlow.
-	Our RoIAlign only implements `POOLER_SAMPLING_RATIO=2`.
-	The results are quite similar, and the final AP may be different by <0.5.
+2. The above steps produces a TensorFlow's pb file without any inference-time optimization (such as fusion).
+   Tensorpack is a training framework so it does not provide any such tools.
+	 It's up to the user to further optimize the final graph.
+
+3. There could be a small incompatibility for converted models.
+	 For the implementation of RoIAlign,  there is no equivalence of `POOLER_SAMPLING_RATIO=0` in tensorpack or TensorFlow.
+	 Our RoIAlign only implements `POOLER_SAMPLING_RATIO=2`.
+	 The results are quite similar, and the final AP may be different by <0.5.
