@@ -19,7 +19,7 @@ from ..utils import logger
 from ..utils.develop import log_deprecated
 from ..utils.concurrency import (
     StoppableThread, enable_death_signal, ensure_proc_terminate, start_proc_mask_signal)
-from ..utils.serialize import dumps, loads
+from ..utils.serialize import dumps_once as dumps, loads_once as loads
 from .base import DataFlow, DataFlowReentrantGuard, DataFlowTerminated, ProxyDataFlow
 
 __all__ = ['PrefetchData', 'MultiProcessPrefetchData',

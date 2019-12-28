@@ -94,7 +94,7 @@ class PickleSerializer(object):
 
 
 # Define the default serializer to be used that dumps data to bytes
-_DEFAULT_S = os.environ.get('TENSORPACK_SERIALIZE', 'msgpack')
+_DEFAULT_S = os.environ.get('TENSORPACK_SERIALIZE', 'pickle')
 
 if _DEFAULT_S == "pyarrow":
     dumps = PyarrowSerializer.dumps_bytes

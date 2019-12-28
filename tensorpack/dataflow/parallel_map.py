@@ -9,7 +9,7 @@ import zmq
 from six.moves import queue
 
 from ..utils.concurrency import StoppableThread, enable_death_signal
-from ..utils.serialize import dumps, loads
+from ..utils.serialize import dumps_once as dumps, loads_once as loads
 from ..utils.develop import log_deprecated
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow
 from .common import RepeatedData, BatchData
