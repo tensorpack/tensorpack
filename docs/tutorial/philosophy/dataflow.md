@@ -87,7 +87,7 @@ On the other hand, DataFlow is:
    used for training. No need for intermediate format when you don't.
 1. **Flexible**: Since it is in pure Python, you can use any data format.
    When you need, you can still easily serialize your dataflow to a single-file
-   format with 
+   format with
    [a few lines of code](../../modules/dataflow.html#tensorpack.dataflow.LMDBSerializer).
 
 
@@ -152,6 +152,7 @@ or when you need to filter your data on the fly.
    1. You do batch training
    1. You use a constant batch size
    1. Indices are sufficient to determine which samples to batch together
+   1. Multiprocessing is a better parallelization strategy than multithreading.
 
    None of these are necessarily true.
 
@@ -170,7 +171,7 @@ On the other hand, DataFlow:
 ```eval_rst
 .. note:: An iterator interface is more generic than ``__getitem__``?
 
-	DataFlow's iterator interface can perfectly simulate the behavior of indexing interface like this:
+   DataFlow's iterator interface can perfectly simulate the behavior of indexing interface like this:
 
     .. code-block:: python
 

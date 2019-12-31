@@ -179,6 +179,7 @@ class ILSVRC12Files(RNGDataFlow):
 class ILSVRC12(ILSVRC12Files):
     """
     Produces uint8 ILSVRC12 images of shape [h, w, 3(BGR)], and a label between [0, 999].
+    The label map follows the synsets.txt file in http://dl.caffe.berkeleyvision.org/caffe_ilsvrc12.tar.gz.
     """
     def __init__(self, dir, name, meta_dir=None,
                  shuffle=None, dir_structure=None):
