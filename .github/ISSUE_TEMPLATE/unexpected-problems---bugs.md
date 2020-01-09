@@ -59,7 +59,7 @@ If this command failed, tell us your version of Python/TF/tensorpack.
 
 Note that:
 
-  + You can install Tensorpack master by `pip install -U git+https://github.com/tensorpack/tensorpack.git`
+  + You can install tensorpack master by `pip install -U git+https://github.com/tensorpack/tensorpack.git`
     and see if your issue is already solved.
   + If you're not using tensorpack under a normal command line shell (e.g.,
     using an IDE or jupyter notebook), please retry under a normal command line shell.

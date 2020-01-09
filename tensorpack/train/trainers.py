@@ -157,9 +157,8 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             are supposed to be in-sync).
             But this cheap operation may help prevent
             certain numerical issues in practice.
+            Note that in cases such as BatchNorm, the variables may not be in sync.
     """
-
-    BROADCAST_EVERY_EPOCH = False
 
     @map_arg(gpus=_int_to_range)
     def __init__(self, gpus, average=True, mode=None):
@@ -180,6 +179,8 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
         mode = mode.lower()
 
         self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, mode)
+        self.BROADCAST_EVERY_EPOCH = True
+
         super(SyncMultiGPUTrainerReplicated, self).__init__()
 
     def _setup_graph(self, input, get_cost_fn, get_opt_fn):
@@ -384,8 +385,8 @@ class HorovodTrainer(SingleCostTrainer):
             Whether to broadcast the variables every epoch.
             Theoretically this is a no-op (because the variables
             are supposed to be in-sync).
-            But this cheap operation may help prevent
-            certain numerical issues in practice.
+            But this cheap operation may help prevent certain numerical issues in practice.
+            Note that in cases such as BatchNorm, the variables may not be in sync.
     """
 
     def __init__(self, average=True, compression=None):
@@ -413,7 +414,7 @@ class HorovodTrainer(SingleCostTrainer):
         logger.info("[HorovodTrainer] local rank={}".format(self._local_rank))
         super(HorovodTrainer, self).__init__()
 
-        self.BROADCAST_EVERY_EPOCH = False
+        self.BROADCAST_EVERY_EPOCH = True
 
     def mpi_enabled(self):
         """
