@@ -261,7 +261,7 @@ def find_library_full_path(name):
                     if 'lib' + name + '.so' in basename:
                         if os.path.isfile(sofile):
                             return os.path.realpath(sofile)
-        except (OSError, IOError):
+        except IOError:
             # can fail in certain environment (e.g. chroot)
             # if the pids are incorrectly mapped
             pass

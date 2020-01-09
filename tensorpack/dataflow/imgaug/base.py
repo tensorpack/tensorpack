@@ -50,7 +50,7 @@ def _default_repr(self):
             defaults[k] = argspec.kwonlydefaults[k]
 
     argstr = []
-    for idx, f in enumerate(fields):
+    for f in fields:
         assert hasattr(self, f), \
             "Attribute {} in {} not found! Default __repr__ only works if " \
             "the instance has attributes that match the constructor.".format(f, classname)

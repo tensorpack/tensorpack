@@ -244,7 +244,7 @@ class GPUMemoryTracker(Callback):
 
     _chief_only = False
 
-    def __init__(self, devices=[0]):
+    def __init__(self, devices=(0,)):
         """
         Args:
             devices([int] or [str]): list of GPU devices to track memory on.

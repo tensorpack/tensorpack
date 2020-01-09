@@ -80,7 +80,7 @@ class CollectionGuard(object):
     original = None
 
     def __init__(self, name, check_diff,
-                 freeze_keys=[],
+                 freeze_keys=(),
                  diff_whitelist=None):
         """
         Args:

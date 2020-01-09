@@ -145,7 +145,7 @@ class LMDBData(RNGDataFlow):
         with self._guard:
             if not self._shuffle:
                 c = self._txn.cursor()
-                while c.next():
+                while next(c):
                     k, v = c.item()
                     if k != b'__keys__':
                         yield [k, v]

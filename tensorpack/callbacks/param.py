@@ -55,11 +55,11 @@ class HyperParam(object):
 class GraphVarParam(HyperParam):
     """ A variable in the graph (e.g. learning_rate) can be a hyperparam."""
 
-    def __init__(self, name, shape=[]):
+    def __init__(self, name, shape=()):
         """
         Args:
             name(str): name of the variable.
-            shape(list): shape of the variable.
+            shape(tuple): shape of the variable.
         """
         self.name = name
         self.shape = shape

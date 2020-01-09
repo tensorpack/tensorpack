@@ -51,10 +51,10 @@ class ProgressBar(Callback):
 
     _chief_only = False
 
-    def __init__(self, names=[]):
+    def __init__(self, names=()):
         """
         Args:
-            names(list): list of string, the names of the tensors to monitor
+            names(tuple[str]): the names of the tensors to monitor
                 on the progress bar.
         """
         super(ProgressBar, self).__init__()

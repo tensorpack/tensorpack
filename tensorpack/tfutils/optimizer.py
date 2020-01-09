@@ -236,7 +236,7 @@ if __name__ == '__main__':
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
     with sess.as_default():
-        for k in range(20):
+        for _ in range(20):
             min_op.run()
             print(x.eval())
         print(tf.train.get_or_create_global_step().eval())

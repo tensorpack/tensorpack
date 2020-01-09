@@ -90,7 +90,7 @@ if __name__ == '__main__':
                 op_name = e.args[0]
                 _import_external_ops(op_name)
             except tf.errors.NotFoundError as e:
-                _import_external_ops(e.message)
+                _import_external_ops(str(e))
             else:
                 break
 

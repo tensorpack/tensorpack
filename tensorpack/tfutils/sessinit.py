@@ -91,12 +91,12 @@ class SaverRestore(SessionInit):
     """
     Restore a tensorflow checkpoint saved by :class:`tf.train.Saver` or :class:`ModelSaver`.
     """
-    def __init__(self, model_path, prefix=None, ignore=[]):
+    def __init__(self, model_path, prefix=None, ignore=()):
         """
         Args:
             model_path (str): a model name (model-xxxx) or a ``checkpoint`` file.
             prefix (str): during restore, add a ``prefix/`` for every variable in this checkpoint.
-            ignore (list[str]): list of tensor names that should be ignored during loading, e.g. learning-rate
+            ignore (tuple[str]): tensor names that should be ignored during loading, e.g. learning-rate
         """
         if model_path.endswith('.npy') or model_path.endswith('.npz'):
             logger.warn("SaverRestore expect a TF checkpoint, but got a model path '{}'.".format(model_path) +

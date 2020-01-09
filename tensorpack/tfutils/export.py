@@ -89,7 +89,7 @@ class ModelExporter(object):
                 logger.info("Output graph written to {}.".format(filename))
 
     def export_serving(self, filename,
-                       tags=[tf.saved_model.SERVING if is_tfv2() else tf.saved_model.tag_constants.SERVING],
+                       tags=(tf.saved_model.SERVING if is_tfv2() else tf.saved_model.tag_constants.SERVING,),
                        signature_name='prediction_pipeline'):
         """
         Converts a checkpoint and graph to a servable for TensorFlow Serving.
@@ -97,7 +97,7 @@ class ModelExporter(object):
 
         Args:
             filename (str): path for export directory
-            tags (list): list of user specified tags
+            tags (tuple): tuple of user specified tags
             signature_name (str): name of signature for prediction
 
         Note:
@@ -140,7 +140,7 @@ class ModelExporter(object):
                 method_name=tfv1.saved_model.signature_constants.PREDICT_METHOD_NAME)
 
             builder.add_meta_graph_and_variables(
-                sess, tags,
+                sess, list(tags),
                 signature_def_map={signature_name: prediction_signature})
             builder.save()
             logger.info("SavedModel created at {}.".format(filename))

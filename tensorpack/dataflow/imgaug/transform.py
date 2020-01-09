@@ -375,7 +375,7 @@ if __name__ == '__main__':
     draw_points(orig_image, coords)
     print(coords)
 
-    for k in range(1):
+    for _ in range(1):
         coords = trans.apply_coords(coords)
         image = trans.apply_image(image)
     print(coords)

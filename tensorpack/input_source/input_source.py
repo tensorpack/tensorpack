@@ -570,7 +570,7 @@ class StagingInput(FeedfreeInput):
 
         def _prefill(self, sess):
             logger.info("Pre-filling StagingArea ...")
-            for k in range(self.nr_stage):
+            for _ in range(self.nr_stage):
                 self.stage_op.run(session=sess)
             logger.info("{} element{} put into StagingArea on each tower.".format(
                 self.nr_stage, "s were" if self.nr_stage > 1 else " was"))

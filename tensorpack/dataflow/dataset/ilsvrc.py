@@ -300,7 +300,7 @@ if __name__ == '__main__':
     ds = ILSVRC12('/home/wyx/data/fake_ilsvrc/', 'train', shuffle=False)
     ds.reset_state()
 
-    for k in ds:
+    for _ in ds:
         from IPython import embed
         embed()
         break
