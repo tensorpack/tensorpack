@@ -42,14 +42,14 @@ def describe_trainable_vars():
         data.append([get_op_tensor_name(v.name)[0], shape, ele, v.device, v.dtype.base_dtype.name])
     headers = ['name', 'shape', '#elements', 'device', 'dtype']
 
-    dtypes = list(set([x[4] for x in data]))
+    dtypes = list({x[4] for x in data})
     if len(dtypes) == 1 and dtypes[0] == "float32":
         # don't log the dtype if all vars are float32 (default dtype)
         for x in data:
             del x[4]
         del headers[4]
 
-    devices = set([x[3] for x in data])
+    devices = {x[3] for x in data}
     if len(devices) == 1:
         # don't log the device if all vars on the same device
         for x in data:

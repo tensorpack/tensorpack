@@ -45,7 +45,7 @@ class HDF5Data(RNGDataFlow):
         logger.info("Loading {} to memory...".format(filename))
         self.dps = [self.f[k].value for k in data_paths]
         lens = [len(k) for k in self.dps]
-        assert all([k == lens[0] for k in lens])
+        assert all(k == lens[0] for k in lens)
         self._size = lens[0]
         self.shuffle = shuffle
 

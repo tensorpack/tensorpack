@@ -39,11 +39,11 @@ def benchmark_serializer(dumps, loads, data, num):
 
 def display_results(name, results):
     logger.info("Encoding benchmark for {}:".format(name))
-    data = sorted([(x, y[0]) for x, y in results], key=operator.itemgetter(1))
+    data = sorted(((x, y[0]) for x, y in results), key=operator.itemgetter(1))
     print(tabulate(data, floatfmt='.5f'))
 
     logger.info("Decoding benchmark for {}:".format(name))
-    data = sorted([(x, y[1]) for x, y in results], key=operator.itemgetter(1))
+    data = sorted(((x, y[1]) for x, y in results), key=operator.itemgetter(1))
     print(tabulate(data, floatfmt='.5f'))
 
 
@@ -64,8 +64,8 @@ def fake_json_data():
             pellentesque quis sollicitudin id, adipiscing.
             """ * 100,
         'list': list(range(100)) * 500,
-        'dict': dict((str(i), 'a') for i in range(50000)),
-        'dict2': dict((i, 'a') for i in range(50000)),
+        'dict': {str(i): 'a' for i in range(50000)},
+        'dict2': {i: 'a' for i in range(50000)},
         'int': 3000,
         'float': 100.123456
     }

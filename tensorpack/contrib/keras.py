@@ -49,12 +49,12 @@ class KerasModelCaller(object):
         """
         reuse = tf.get_variable_scope().reuse
 
-        old_trainable_names = set([x.name for x in tf.trainable_variables()])
+        old_trainable_names = {x.name for x in tf.trainable_variables()}
         trainable_backup = backup_collection([tf.GraphKeys.TRAINABLE_VARIABLES])
         update_ops_backup = backup_collection([tf.GraphKeys.UPDATE_OPS])
 
         def post_process_model(model):
-            added_trainable_names = set([x.name for x in tf.trainable_variables()])
+            added_trainable_names = {x.name for x in tf.trainable_variables()}
             restore_collection(trainable_backup)
 
             for v in model.weights:
@@ -62,7 +62,7 @@ class KerasModelCaller(object):
                 # We put M.weights into the collection instead.
                 if v.name not in old_trainable_names and v.name in added_trainable_names:
                     tf.add_to_collection(tf.GraphKeys.TRAINABLE_VARIABLES, v)
-            new_trainable_names = set([x.name for x in tf.trainable_variables()])
+            new_trainable_names = {x.name for x in tf.trainable_variables()}
 
             for n in added_trainable_names:
                 if n not in new_trainable_names:

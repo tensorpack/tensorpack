@@ -431,7 +431,7 @@ class RandomChooseData(RNGDataFlow):
         """
         super(RandomChooseData, self).__init__()
         if isinstance(df_lists[0], (tuple, list)):
-            assert sum([v[1] for v in df_lists]) == 1.0
+            assert sum(v[1] for v in df_lists) == 1.0
             self.df_lists = df_lists
         else:
             prob = 1.0 / len(df_lists)
@@ -512,7 +512,7 @@ class ConcatData(DataFlow):
             d.reset_state()
 
     def __len__(self):
-        return sum([len(x) for x in self.df_lists])
+        return sum(len(x) for x in self.df_lists)
 
     def __iter__(self):
         for d in self.df_lists:
@@ -565,7 +565,7 @@ class JoinData(DataFlow):
         """
         Return the minimum size among all.
         """
-        return min([len(k) for k in self.df_lists])
+        return min(len(k) for k in self.df_lists)
 
     def __iter__(self):
         itrs = [k.__iter__() for k in self.df_lists]

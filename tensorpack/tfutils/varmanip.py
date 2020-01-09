@@ -150,7 +150,7 @@ def dump_session_params(path):
     var.extend(tf.get_collection(tf.GraphKeys.MODEL_VARIABLES))
     # TODO dedup
     assert len(set(var)) == len(var), "TRAINABLE and MODEL variables have duplication!"
-    gvars = set([k.name for k in tf.global_variables()])
+    gvars = {k.name for k in tf.global_variables()}
     var = [v for v in var if v.name in gvars]
     result = {}
     for v in var:
@@ -167,7 +167,7 @@ def save_chkpt_vars(dic, path):
         path: save as npz if the name ends with '.npz', otherwise save as a checkpoint.
     """
     logger.info("Variables to save to {}:".format(path))
-    keys = sorted(list(dic.keys()))
+    keys = sorted(dic.keys())
     logger.info(pprint.pformat(keys))
 
     assert not path.endswith('.npy')

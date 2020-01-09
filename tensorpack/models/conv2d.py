@@ -100,7 +100,7 @@ def Conv2D(
         filter_shape = kernel_shape + [in_channel / split, out_channel]
         stride = shape4d(strides, data_format=data_format)
 
-        kwargs = dict(data_format=data_format)
+        kwargs = {"data_format": data_format}
         if get_tf_version_tuple() >= (1, 5):
             kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 

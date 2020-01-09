@@ -25,7 +25,7 @@ def _replace_global_by_local(kwargs):
     if 'collections' in kwargs:
         collections = kwargs['collections']
     if not collections:
-        collections = set([tf.GraphKeys.GLOBAL_VARIABLES])
+        collections = set(tf.GraphKeys.GLOBAL_VARIABLES)
     else:
         collections = set(collections.copy())
     collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -343,7 +343,7 @@ class GradientPacker(object):
             logger.info("Skip GradientPacker due to too few gradients.")
             return False
         # should have the same dtype
-        dtypes = set([g.dtype for g in grads])
+        dtypes = {g.dtype for g in grads}
         if len(dtypes) != 1:
             logger.info("Skip GradientPacker due to inconsistent gradient types.")
             return False

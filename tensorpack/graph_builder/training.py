@@ -63,7 +63,7 @@ class DataParallelBuilder(GraphBuilder):
             return re.sub('tower[0-9]+/', '', x.op.name)
 
         if len(set(nvars)) != 1:
-            names_per_gpu = [set([basename(k[1]) for k in grad_and_vars]) for grad_and_vars in grad_list]
+            names_per_gpu = [{basename(k[1]) for k in grad_and_vars} for grad_and_vars in grad_list]
             inters = copy.copy(names_per_gpu[0])
             for s in names_per_gpu:
                 inters &= s
@@ -247,11 +247,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
 
         DataParallelBuilder._check_grad_list(grad_list)
 
-        dtypes = set([x[0].dtype.base_dtype for x in grad_list[0]])
+        dtypes = {x[0].dtype.base_dtype for x in grad_list[0]}
         dtypes_nccl_supported = [tf.float32, tf.float64]
         if get_tf_version_tuple() >= (1, 8):
             dtypes_nccl_supported.append(tf.float16)
-        valid_for_nccl = all([k in dtypes_nccl_supported for k in dtypes])
+        valid_for_nccl = all(k in dtypes_nccl_supported for k in dtypes)
         if self._mode == 'nccl' and not valid_for_nccl:
             logger.warn("Cannot use mode='nccl' because some gradients have unsupported types. Fallback to mode='cpu'")
             self._mode = 'cpu'
@@ -314,8 +314,8 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         """
         # literally all variables, because it's better to sync optimizer-internal variables as well
         all_vars = tf.global_variables() + tf.local_variables()
-        var_by_name = dict([(v.name, v) for v in all_vars])
-        trainable_names = set([x.name for x in tf.trainable_variables()])
+        var_by_name = {v.name: v for v in all_vars}
+        trainable_names = {x.name for x in tf.trainable_variables()}
         post_init_ops = []
 
         def log_failure(name, reason):

@@ -91,8 +91,8 @@ def _pad_patch_list(plist, bgcolor):
 
     plist = _pad_channel(plist)
     shapes = [x.shape for x in plist]
-    ph = max([s[0] for s in shapes])
-    pw = max([s[1] for s in shapes])
+    ph = max(s[0] for s in shapes)
+    pw = max(s[1] for s in shapes)
 
     ret = np.zeros((len(plist), ph, pw, 3), dtype=plist[0].dtype)
     ret[:, :, :] = bgcolor

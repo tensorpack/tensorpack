@@ -108,8 +108,8 @@ if __name__ == '__main__':
         if len(set(var_to_dump)) != len(var_to_dump):
             logger.warn("TRAINABLE and MODEL variables have duplication!")
         var_to_dump = list(set(var_to_dump))
-        globvarname = set([k.name for k in tf.global_variables()])
-        var_to_dump = set([k.name for k in var_to_dump if k.name in globvarname])
+        globvarname = {k.name for k in tf.global_variables()}
+        var_to_dump = {k.name for k in var_to_dump if k.name in globvarname}
 
         for name in var_to_dump:
             assert name in dic, "Variable {} not found in the model!".format(name)

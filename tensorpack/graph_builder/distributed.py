@@ -230,7 +230,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
             list of (shadow_model_var, local_model_var) used for syncing.
         """
         G = tf.get_default_graph()
-        curr_shadow_vars = set([v.name for v in shadow_vars])
+        curr_shadow_vars = {v.name for v in shadow_vars}
         model_vars = tf.model_variables()
         shadow_model_vars = []
         for v in model_vars:
@@ -346,7 +346,7 @@ class DistributedReplicatedBuilder(DataParallelBuilder, DistributedBuilderBase):
                 return s[:-2]
             return s
         local_vars = tf.local_variables()
-        local_var_by_name = dict([(strip_port(v.name), v) for v in local_vars])
+        local_var_by_name = {strip_port(v.name): v for v in local_vars}
         ops = []
         nr_shadow_vars = len(self._shadow_vars)
         for v in self._shadow_vars:

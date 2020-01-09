@@ -425,7 +425,7 @@ class ScalarPrinter(MonitorBase):
         def compile_regex(rs):
             if rs is None:
                 return None
-            rs = set([re.compile(r) for r in rs])
+            rs = {re.compile(r) for r in rs}
             return rs
 
         self._whitelist = compile_regex(whitelist)
