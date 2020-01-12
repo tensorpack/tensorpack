@@ -25,7 +25,7 @@ def _replace_global_by_local(kwargs):
     if 'collections' in kwargs:
         collections = kwargs['collections']
     if not collections:
-        collections = set(tf.GraphKeys.GLOBAL_VARIABLES)
+        collections = {tf.GraphKeys.GLOBAL_VARIABLES}
     else:
         collections = set(collections.copy())
     collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
