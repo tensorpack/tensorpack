@@ -7,13 +7,13 @@ There are two ways to do inference during training.
 
 1. The easiest way is to write a callback, and use
   [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
-	to get a callable under inference mode.
-	See [Write a Callback](extend/callback.html).
+  to get a callable under inference mode.
+  See [Write a Callback](extend/callback.html).
 
 2. If your inference follows the paradigm of:
-	"evaluate some tensors for each input, and aggregate the results in the end".
-	You can use the `InferenceRunner` interface with some `Inferencer`.
-	This will further support prefetch & data-parallel inference.
+  "evaluate some tensors for each input, and aggregate the results in the end".
+  You can use the `InferenceRunner` interface with some `Inferencer`.
+  This will further support prefetch & data-parallel inference.
 
     Currently this lacks documentation, but you can refer to examples
     that uses `InferenceRunner` or custom `Inferencer` to learn more.
@@ -133,29 +133,29 @@ tensorpack's `ModelDesc`, you can also build it like this:
 a, b = tf.placeholder(...), tf.placeholder(...)
 # call ANY symbolic functions on a, b. e.g.:
 with TowerContext('', is_training=False):
-	model.build_graph(a, b)
+  model.build_graph(a, b)
 ```
 
 ```eval_rst
 .. note:: **Do not use metagraph for inference!**
 
-	Tensorpack saves a metagraph during training. Users should not try to load it for inference.
+  Tensorpack saves a metagraph during training. Users should not try to load it for inference.
 
-	Metagraph is the wrong abstraction for a "model".
-	It stores the entire graph which contains not only the mathematical model, but also all the
-	training settings (queues, iterators, summaries, evaluations, multi-gpu replications).
-	Therefore it is usually wrong to import a training metagraph for inference.
+  Metagraph is the wrong abstraction for a "model".
+  It stores the entire graph which contains not only the mathematical model, but also all the
+  training settings (queues, iterators, summaries, evaluations, multi-gpu replications).
+  Therefore it is usually wrong to import a training metagraph for inference.
 
   It's especially error-prone to load a metagraph on top of a non-empty graph.
   The potential name conflicts between the current graph and the nodes in the
   metagraph can lead to esoteric bugs or sometimes completely ruin the model.
 
-	It's also very common to change the graph for inference.
-	For example, you may need a different data layout for CPU inference,
-	or you may need placeholders in the inference graph (which may not even exist in
-	the training graph). However metagraph is not designed to be easily modified at all.
+  It's also very common to change the graph for inference.
+  For example, you may need a different data layout for CPU inference,
+  or you may need placeholders in the inference graph (which may not even exist in
+  the training graph). However metagraph is not designed to be easily modified at all.
 
-	Due to the above reasons, to do inference, it's best to recreate a clean graph (and save it if needed) by yourself.
+  Due to the above reasons, to do inference, it's best to recreate a clean graph (and save it if needed) by yourself.
 ```
 
 ### Step 2: load the checkpoint
