@@ -243,30 +243,33 @@ def remap_input_source(input, names):
     except that the corresponding ones are replaced with the tensor produced
     by the given :class:`InputSource`.
 
-    Args:
-        input(InputSource): a :class:`InputSource`, whose tensors will get mapped.
-        names(list[str]): list of input names corresponding to the tensors
-            produced by ``input``.
-
-    Returns:
-        InputSource:
-
     Example:
 
     .. code-block:: python
 
         input1 = QueueInput(ds)
-        # assume ds produces 'image' and 'label', but the graph takes more
-        # inputs for some reasons, or takes inputs of a different order:
-        input_signature = [tf.TensorSpec((None,10), tf.float32, 'score'),
-                           tf.TensorSpec((None,20,20,3), tf.float32, 'label'),
-                           tf.TensorSpec((None,), tf.int32, 'image') ]
+        # assume ds produces data that should be fed to 'image' and 'label',
+        # but the graph takes more inputs for some reasons, or takes inputs
+        # of a different order, for example like the following:
+
+        # input_signature = [tf.TensorSpec((None,10), tf.float32, 'score'),
+        #                    tf.TensorSpec((None,20,20,3), tf.float32, 'label'),
+        #                    tf.TensorSpec((None,), tf.int32, 'image') ]
+
         input2 = remap_input_source(input1, ['image', 'label'])
-        input2.setup(input_signature)
-        # now, input2.get_input_tensors() will return a placeholder for 'score',
-        # plus the tensors returned by input1.get_input_tensors()
+        # now, if input2 is used with the above input_signature, it will return a
+        # placeholder for 'score', plus the tensors returned by input1
     """
     def __init__(self, input, names):
+        """
+        Args:
+            input(InputSource): a :class:`InputSource`, whose tensors will get mapped.
+            names(list[str]): list of input names corresponding to the tensors
+                produced by ``input``.
+
+        Returns:
+            InputSource:
+        """
         ProxyInputSource.__init__(self, input)
         assert isinstance(names, (list, tuple)), names
         self._names = tuple(names)
