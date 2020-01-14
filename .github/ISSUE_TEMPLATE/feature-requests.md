@@ -1,6 +1,9 @@
 ---
 name: Feature Requests
 about: Suggest an idea for Tensorpack
+title: ''
+labels: ''
+assignees: ''
 
 ---
 

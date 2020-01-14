@@ -1,6 +1,9 @@
 ---
 name: Using/Understanding Tensorpack
 about: More general questions about Tensorpack.
+title: ''
+labels: ''
+assignees: ''
 
 ---
 

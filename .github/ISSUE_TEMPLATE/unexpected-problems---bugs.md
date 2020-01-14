@@ -1,6 +1,9 @@
 ---
 name: Unexpected Problems / Bugs
 about: Report unexpected problems about Tensorpack or its examples.
+title: Please read & provide the following information
+labels: ''
+assignees: ''
 
 ---
 
