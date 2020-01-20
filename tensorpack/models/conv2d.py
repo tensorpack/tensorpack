@@ -240,9 +240,10 @@ def Conv2DTranspose(
                               None if shape_sta[2] is None else shape_sta[2] * strides2d[1] + shape_res2d[1],
                               filters]
 
-        W = tf.get_variable('W', kernel_shape + [filters, channels_in], initializer=kernel_initializer)
+        input_dtype = inputs.dtype
+        W = tf.get_variable('W', kernel_shape + [filters, channels_in], dtype=inputs_dtype, initializer=kernel_initializer)
         if use_bias:
-            b = tf.get_variable('b', [filters], initializer=bias_initializer)
+            b = tf.get_variable('b', [filters], dtype=inputs_dtype, initializer=bias_initializer)
         conv = tf.nn.conv2d_transpose(
             inputs, W, out_shape_dyn,
             shape4d(strides, data_format=data_format),
