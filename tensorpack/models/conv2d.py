@@ -104,11 +104,13 @@ def Conv2D(
         if get_tf_version_tuple() >= (1, 5):
             kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
+        # matching input dtype (ex. tf.float16) since the default dtype of variable if tf.float32
+        input_dtype = inputs.dtype
         W = tf.get_variable(
-            'W', filter_shape, initializer=kernel_initializer)
+            'W', filter_shape, dtype=input_dtype, initializer=kernel_initializer)
 
         if use_bias:
-            b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
+            b = tf.get_variable('b', [out_channel], dtype=inputs_dtype, initializer=bias_initializer)
 
         if split == 1:
             conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
