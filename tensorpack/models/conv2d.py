@@ -241,7 +241,7 @@ def Conv2DTranspose(
                               filters]
 
         inputs_dtype = inputs.dtype
-        W = tf.get_variable('W', kernel_shape + [filters, channels_in], 
+        W = tf.get_variable('W', kernel_shape + [filters, channels_in],
                             dtype=inputs_dtype, initializer=kernel_initializer)
         if use_bias:
             b = tf.get_variable('b', [filters], dtype=inputs_dtype, initializer=bias_initializer)
