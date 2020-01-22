@@ -104,11 +104,13 @@ def Conv2D(
         if get_tf_version_tuple() >= (1, 5):
             kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
+        # matching input dtype (ex. tf.float16) since the default dtype of variable if tf.float32
+        inputs_dtype = inputs.dtype
         W = tf.get_variable(
-            'W', filter_shape, initializer=kernel_initializer)
+            'W', filter_shape, dtype=inputs_dtype, initializer=kernel_initializer)
 
         if use_bias:
-            b = tf.get_variable('b', [out_channel], initializer=bias_initializer)
+            b = tf.get_variable('b', [out_channel], dtype=inputs_dtype, initializer=bias_initializer)
 
         if split == 1:
             conv = tf.nn.conv2d(inputs, W, stride, padding.upper(), **kwargs)
@@ -238,9 +240,11 @@ def Conv2DTranspose(
                               None if shape_sta[2] is None else shape_sta[2] * strides2d[1] + shape_res2d[1],
                               filters]
 
-        W = tf.get_variable('W', kernel_shape + [filters, channels_in], initializer=kernel_initializer)
+        inputs_dtype = inputs.dtype
+        W = tf.get_variable('W', kernel_shape + [filters, channels_in],
+                            dtype=inputs_dtype, initializer=kernel_initializer)
         if use_bias:
-            b = tf.get_variable('b', [filters], initializer=bias_initializer)
+            b = tf.get_variable('b', [filters], dtype=inputs_dtype, initializer=bias_initializer)
         conv = tf.nn.conv2d_transpose(
             inputs, W, out_shape_dyn,
             shape4d(strides, data_format=data_format),
