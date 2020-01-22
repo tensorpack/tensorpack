@@ -105,9 +105,9 @@ def Conv2D(
             kwargs['dilations'] = shape4d(dilation_rate, data_format=data_format)
 
         # matching input dtype (ex. tf.float16) since the default dtype of variable if tf.float32
-        input_dtype = inputs.dtype
+        inputs_dtype = inputs.dtype
         W = tf.get_variable(
-            'W', filter_shape, dtype=input_dtype, initializer=kernel_initializer)
+            'W', filter_shape, dtype=inputs_dtype, initializer=kernel_initializer)
 
         if use_bias:
             b = tf.get_variable('b', [out_channel], dtype=inputs_dtype, initializer=bias_initializer)
@@ -240,7 +240,7 @@ def Conv2DTranspose(
                               None if shape_sta[2] is None else shape_sta[2] * strides2d[1] + shape_res2d[1],
                               filters]
 
-        input_dtype = inputs.dtype
+        inputs_dtype = inputs.dtype
         W = tf.get_variable('W', kernel_shape + [filters, channels_in], dtype=inputs_dtype, initializer=kernel_initializer)
         if use_bias:
             b = tf.get_variable('b', [filters], dtype=inputs_dtype, initializer=bias_initializer)
