@@ -109,10 +109,11 @@ def convert_weights(d, cfg):
         _convert_box_predictor("roi_heads.box_predictor", "fastrcnn/outputs" if has_fpn else "fastrcnn")
 
     # mask head
-    for fcn in range(cfg.MODEL.ROI_MASK_HEAD.NUM_CONV):
-        _convert_conv(f"roi_heads.mask_head.mask_fcn{fcn+1}", f"maskrcnn/fcn{fcn}")
-    _convert_conv("roi_heads.mask_head.deconv", "maskrcnn/deconv")
-    _convert_conv("roi_heads.mask_head.predictor", "maskrcnn/conv")
+    if cfg.MODEL.MASK_ON:
+        for fcn in range(cfg.MODEL.ROI_MASK_HEAD.NUM_CONV):
+            _convert_conv(f"roi_heads.mask_head.mask_fcn{fcn+1}", f"maskrcnn/fcn{fcn}")
+        _convert_conv("roi_heads.mask_head.deconv", "maskrcnn/deconv")
+        _convert_conv("roi_heads.mask_head.predictor", "maskrcnn/conv")
 
     for k in list(d.keys()):
         if "cell_anchors" in k:
