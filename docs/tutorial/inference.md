@@ -24,7 +24,7 @@ You can use this predicate to choose a different code path in inference mode.
 
 ## Inference After Training: What Tensorpack Does
 
-Tensorpack provides some small tools to do the most basic types of inference for demo purposes.
+Tensorpack only provides some small tools to do the most basic types of inference for demo purposes.
 You can use them but
 __these approaches are often suboptimal and may fail__.
 They may often be inefficient or lack functionalities you need.

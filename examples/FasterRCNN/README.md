@@ -125,6 +125,6 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
  Note that our training strategy is slightly different: we enable cascade throughout the entire training.
  As far as I know, this model is the __best open source TF model__ on COCO dataset.
 
-## Other Datasets / Implementation Details / Speed:
+## Use Custom Datasets / Implementation Details / Speed:
 
 See [BALLOON.md](BALLOON.md) and [NOTES.md](NOTES.md) for more details.

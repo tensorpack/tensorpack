@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import tempfile
 import numpy as np
 import os
 import unittest
@@ -60,29 +61,41 @@ class SerializerTest(unittest.TestCase):
             print(error_msg)
 
     def test_lmdb(self):
-        self.run_write_read_test('test.lmdb', LMDBSerializer,
-                                 {}, {},
-                                 {}, {'shuffle': False},
-                                 'Skip test_lmdb, no lmdb available')
+        with tempfile.TemporaryDirectory() as f:
+            self.run_write_read_test(
+                os.path.join(f, 'test.lmdb'),
+                LMDBSerializer,
+                {}, {},
+                {}, {'shuffle': False},
+                'Skip test_lmdb, no lmdb available')
 
     def test_tfrecord(self):
-        self.run_write_read_test('test.tfrecord', TFRecordSerializer,
-                                 {}, {},
-                                 {}, {'size': 32},
-                                 'Skip test_tfrecord, no tensorflow available')
+        with tempfile.TemporaryDirectory() as f:
+            self.run_write_read_test(
+                os.path.join(f, 'test.tfrecord'),
+                TFRecordSerializer,
+                {}, {},
+                {}, {'size': 32},
+                'Skip test_tfrecord, no tensorflow available')
 
     def test_numpy(self):
-        self.run_write_read_test('test.npz', NumpySerializer,
-                                 {}, {},
-                                 {}, {'shuffle': False},
-                                 'Skip test_numpy, no numpy available')
+        with tempfile.TemporaryDirectory() as f:
+            self.run_write_read_test(
+                os.path.join(f, 'test.npz'),
+                NumpySerializer,
+                {}, {},
+                {}, {'shuffle': False},
+                'Skip test_numpy, no numpy available')
 
     def test_hdf5(self):
         args = [['label', 'image']]
-        self.run_write_read_test('test.h5', HDF5Serializer,
-                                 args, {},
-                                 args, {'shuffle': False},
-                                 'Skip test_hdf5, no h5py available')
+        with tempfile.TemporaryDirectory() as f:
+            self.run_write_read_test(
+                os.path.join(f, 'test.h5'),
+                HDF5Serializer,
+                args, {},
+                args, {'shuffle': False},
+                'Skip test_hdf5, no h5py available')
 
 
 if __name__ == '__main__':
