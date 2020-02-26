@@ -13,6 +13,7 @@ if STATICA_HACK:
     from .parallel import *
     from .raw import *
     from .remote import *
+    from .serialize import *
     from . import imgaug
     from . import dataset
 
