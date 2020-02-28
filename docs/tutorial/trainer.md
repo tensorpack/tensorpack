@@ -67,7 +67,7 @@ All it does is building your model (which you have to provide) once
 
 For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
 implement different distribution strategies.
-They take care of device placement, gradient averaging and synchronoization
+They take care of device placement, gradient averaging and synchronization
 in the efficient way, which is why multi-GPU training in tensorpack
 is up to 
 [5x faster than Keras](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers).
