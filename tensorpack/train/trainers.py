@@ -396,8 +396,7 @@ class HorovodTrainer(SingleCostTrainer):
             compression: `hvd.Compression.fp16` or `hvd.Compression.none`
         """
         if 'pyarrow' in sys.modules:
-            logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs. "
-                        "Uninstall pyarrow and use msgpack instead.")
+            logger.warn("Horovod and pyarrow may conflict due to pyarrow bugs.")
         # lazy import
         import horovod.tensorflow as hvd
         import horovod

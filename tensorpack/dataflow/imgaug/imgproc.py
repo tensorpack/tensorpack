@@ -18,7 +18,8 @@ class Hue(PhotometricAugmentor):
     def __init__(self, range=(0, 180), rgb=True):
         """
         Args:
-            range(list or tuple): range from which the applied hue offset is selected (maximum [-90,90] or [0,180])
+            range(list or tuple): range from which the applied hue offset is selected
+                (maximum range can be [-90,90] for both uint8 and float32)
             rgb (bool): whether input is RGB or BGR.
         """
         super(Hue, self).__init__()

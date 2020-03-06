@@ -7,7 +7,7 @@ import six
 import tensorflow as tf
 
 from ..input_source import PlaceholderInput
-from ..tfutils.common import get_tensors_by_names
+from ..tfutils.common import get_tensors_by_names, get_op_tensor_name
 from ..tfutils.tower import PredictTowerContext
 
 __all__ = ['PredictorBase',
@@ -34,6 +34,9 @@ class PredictorBase(object):
             .. code-block:: python
 
                 predictor(e1, e2)
+
+        Returns:
+            list[array]: list of outputs
         """
         output = self._do_call(dp)
         if self.return_input:
@@ -98,9 +101,14 @@ class OnlinePredictor(PredictorBase):
                 will use the default session at the first call.
                 Note that in TensorFlow, default session is thread-local.
         """
+        def normalize_name(t):
+            if isinstance(t, six.string_types):
+                return get_op_tensor_name(t)[1]
+            return t
+
         self.return_input = return_input
-        self.input_tensors = input_tensors
-        self.output_tensors = output_tensors
+        self.input_tensors = [normalize_name(x) for x in input_tensors]
+        self.output_tensors = [normalize_name(x) for x in output_tensors]
         self.sess = sess
 
         if sess is not None:
