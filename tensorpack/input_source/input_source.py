@@ -134,7 +134,7 @@ class FeedfreeInput(InputSource):
 class EnqueueThread(ShareSessionThread):
     def __init__(self, queue, ds, placehdrs):
         super(EnqueueThread, self).__init__()
-        self.name = 'EnqueueThread ' + queue.name
+        self.name = 'EnqueueThread: enqueue dataflow to TF queue "{}"'.format(queue.name)
         self.daemon = True
         self.dataflow = ds
         self.queue = queue

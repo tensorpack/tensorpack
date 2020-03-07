@@ -152,8 +152,9 @@ with TowerContext('', is_training=False):
 
   It's also very common to change the graph for inference.
   For example, you may need a different data layout for CPU inference,
-  or you may need placeholders in the inference graph (which may not even exist in
-  the training graph). However metagraph is not designed to be easily modified at all.
+  you may need placeholders in the inference graph (which may not even exist in
+  the training graph), you may add/remove static shapes for inference, etc.
+  However metagraph is not designed to be easily modified at all.
 
   Due to the above reasons, to do inference, it's best to recreate a clean graph (and save it if needed) by yourself.
 ```

@@ -44,7 +44,7 @@ class Grayscale(ColorSpace):
 
 
 class ToUint8(PhotometricAugmentor):
-    """ Convert image to uint8. Useful to reduce communication overhead. """
+    """ Clip and convert image to uint8. Useful to reduce communication overhead. """
     def _augment(self, img, _):
         return np.clip(img, 0, 255).astype(np.uint8)
 

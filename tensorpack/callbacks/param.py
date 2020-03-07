@@ -77,6 +77,10 @@ class GraphVarParam(HyperParam):
 
     def set_value(self, v):
         """ Assign the variable a new value. """
+        if not self.var.dtype.is_floating and isinstance(v, float):
+            raise ValueError(
+                "HyperParam {} has type '{}'. Cannot update it using float values.".format(
+                    self.name, self.var.dtype))
         self.var.load(v)
 
     def get_value(self):
