@@ -411,13 +411,13 @@ class MultiProcessMapAndBatchDataZMQ(_MultiProcessZMQDataFlow):
 
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.PULL)
-        self.socket.set_hwm(self.buffer_size * 2 // self.batch_size)
+        self.socket.set_hwm(max(5, self.buffer_size * 2 // self.batch_size))
         _bind_guard(self.socket, result_pipe)
 
         dispatcher = MultiProcessMapAndBatchDataZMQ._Dispatcher(self.ds, job_pipe, self.buffer_size)
 
         self._proc_ids = [u'{}'.format(k).encode('utf-8') for k in range(self.num_proc)]
-        worker_hwm = int(self.buffer_size * 2 // self.num_proc)
+        worker_hwm = max(3, self.buffer_size * 2 // self.num_proc // self.batch_size)
         self._procs = [MultiProcessMapAndBatchDataZMQ._Worker(
             self._proc_ids[k], self.map_func, job_pipe, result_pipe, worker_hwm, self.batch_size)
             for k in range(self.num_proc)]
