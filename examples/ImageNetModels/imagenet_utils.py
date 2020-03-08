@@ -37,12 +37,13 @@ def fbresnet_augmentor(isTrain):
     if isTrain:
         augmentors = [
             imgaug.GoogleNetRandomCropAndResize(interp=interpolation),
+            imgaug.ToFloat32(),  # avoid frequent casting in each color augmentation
             # It's OK to remove the following augs if your CPU is not fast enough.
             # Removing brightness/contrast/saturation does not have a significant effect on accuracy.
             # Removing lighting leads to a tiny drop in accuracy.
             imgaug.RandomOrderAug(
-                [imgaug.BrightnessScale((0.6, 1.4), clip=False),
-                 imgaug.Contrast((0.6, 1.4), rgb=False, clip=False),
+                [imgaug.BrightnessScale((0.6, 1.4)),
+                 imgaug.Contrast((0.6, 1.4), rgb=False),
                  imgaug.Saturation(0.4, rgb=False),
                  # rgb-bgr conversion for the constants copied from fb.resnet.torch
                  imgaug.Lighting(0.1,
@@ -54,6 +55,7 @@ def fbresnet_augmentor(isTrain):
                                       [-0.5836, -0.6948, 0.4203]],
                                      dtype='float32')[::-1, ::-1]
                                  )]),
+            imgaug.ToUint8(),
             imgaug.Flip(horiz=True),
         ]
     else:

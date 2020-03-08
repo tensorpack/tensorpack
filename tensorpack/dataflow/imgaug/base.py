@@ -113,7 +113,7 @@ class ImageAugmentor(object):
             low, high = 0, low
         if size is None:
             size = []
-        return self.rng.uniform(low, high, size)
+        return self.rng.uniform(low, high, size).astype("float32")
 
     def __str__(self):
         try:
