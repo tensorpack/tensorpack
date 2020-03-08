@@ -471,6 +471,8 @@ class TFDatasetInput(FeedfreeInput):
         self._spec = input_signature
         if self._dataset is not None:
             types = self._dataset.output_types
+            if len(types) == 1:
+                types = (types,)
             spec_types = tuple(k.dtype for k in input_signature)
             assert len(types) == len(spec_types), \
                 "Dataset and input signature have different length! {} != {}".format(
