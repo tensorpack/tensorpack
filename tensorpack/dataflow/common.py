@@ -13,7 +13,6 @@ from termcolor import colored
 
 from ..utils import logger
 from ..utils.utils import get_rng, get_tqdm, get_tqdm_kwargs
-from ..utils.develop import log_deprecated
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow, RNGDataFlow
 
 try:
@@ -622,7 +621,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
         because it does not make sense to stop the iteration anywhere.
     """
 
-    def __init__(self, ds, buffer_size, num_reuse=1, shuffle_interval=None, nr_reuse=None):
+    def __init__(self, ds, buffer_size, num_reuse=1, shuffle_interval=None):
         """
         Args:
             ds (DataFlow): input DataFlow.
@@ -633,11 +632,7 @@ class LocallyShuffleData(ProxyDataFlow, RNGDataFlow):
                 datapoints were produced from the given dataflow. Frequent shuffle on large buffer
                 may affect speed, but infrequent shuffle may not provide enough randomness.
                 Defaults to buffer_size / 3
-            nr_reuse: deprecated name for num_reuse
         """
-        if nr_reuse is not None:
-            log_deprecated("LocallyShuffleData(nr_reuse=...)", "Renamed to 'num_reuse'.", "2020-01-01")
-            num_reuse = nr_reuse
         ProxyDataFlow.__init__(self, ds)
         self.q = deque(maxlen=buffer_size)
         if shuffle_interval is None:

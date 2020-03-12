@@ -12,7 +12,7 @@ from ..tfutils.gradproc import FilterNoneGrad
 from ..tfutils.tower import PredictTowerContext, TowerFunc, get_current_tower_context
 from ..utils import logger
 from ..utils.argtools import call_only_once, memoized
-from ..utils.develop import HIDE_DOC, log_deprecated
+from ..utils.develop import HIDE_DOC
 from .base import Trainer
 
 __all__ = ['SingleCostTrainer', 'TowerTrainer']
@@ -55,11 +55,6 @@ class TowerTrainer(Trainer):
     @tower_func.setter
     def tower_func(self, val):
         self._set_tower_func(val)
-
-    @property
-    def inputs_desc(self):
-        log_deprecated("TowerTrainer.inputs_desc", "Use .input_signature instead!", "2020-03-01")
-        return self.input_signature
 
     @property
     def input_signature(self):

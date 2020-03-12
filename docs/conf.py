@@ -377,8 +377,6 @@ _DEPRECATED_NAMES = set([
     'dump_dataflow_to_process_queue',
     'DistributedTrainerReplicated',
     'DistributedTrainerParameterServer',
-    'InputDesc',
-    'inputs_desc',
     'Augmentor',
     "get_model_loader",
 

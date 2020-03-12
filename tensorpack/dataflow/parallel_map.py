@@ -10,7 +10,6 @@ from six.moves import queue
 
 from ..utils.concurrency import StoppableThread, enable_death_signal
 from ..utils.serialize import dumps_once as dumps, loads_once as loads
-from ..utils.develop import log_deprecated
 from .base import DataFlow, DataFlowReentrantGuard, ProxyDataFlow
 from .common import RepeatedData, BatchData
 from .parallel import _bind_guard, _get_pipe_name, _MultiProcessZMQDataFlow, _repeat_iter, _zmq_catch_error
@@ -143,7 +142,7 @@ class MultiThreadMapData(_ParallelMapData):
             finally:
                 self.stop()
 
-    def __init__(self, ds, num_thread=None, map_func=None, buffer_size=200, strict=False, nr_thread=None):
+    def __init__(self, ds, num_thread=None, map_func=None, *, buffer_size=200, strict=False):
         """
         Args:
             ds (DataFlow): the dataflow to map
@@ -152,12 +151,7 @@ class MultiThreadMapData(_ParallelMapData):
                 discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
-            nr_thread: deprecated name
         """
-        if nr_thread is not None:
-            log_deprecated("MultiThreadMapData(nr_thread)", "Renamed to 'num_thread'", "2020-01-01")
-            num_thread = nr_thread
-
         if strict:
             # In strict mode, buffer size cannot be larger than the total number of datapoints
             try:
@@ -255,7 +249,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
                 dp = self.map_func(dp)
                 socket.send(dumps(dp), copy=False)
 
-    def __init__(self, ds, num_proc=None, map_func=None, buffer_size=200, strict=False, nr_proc=None):
+    def __init__(self, ds, num_proc=None, map_func=None, *, buffer_size=200, strict=False):
         """
         Args:
             ds (DataFlow): the dataflow to map
@@ -264,11 +258,7 @@ class MultiProcessMapDataZMQ(_ParallelMapData, _MultiProcessZMQDataFlow):
                 discard/skip the datapoint.
             buffer_size (int): number of datapoints in the buffer
             strict (bool): use "strict mode", see notes above.
-            nr_proc: deprecated name
         """
-        if nr_proc is not None:
-            log_deprecated("MultiProcessMapDataZMQ(nr_proc)", "Renamed to 'num_proc'", "2020-01-01")
-            num_proc = nr_proc
         if strict:
             # In strict mode, buffer size cannot be larger than the total number of datapoints
             try:

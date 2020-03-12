@@ -10,7 +10,6 @@ from ..tfutils.sessinit import JustCurrentSession, SessionInit
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TowerFunc
 from ..utils import logger
-from ..utils.develop import log_deprecated
 
 __all__ = ['PredictConfig']
 
@@ -28,7 +27,6 @@ class PredictConfig(object):
                  session_init=None,
                  return_input=False,
                  create_graph=True,
-                 inputs_desc=None
                  ):
         """
         Users need to provide enough arguments to create a tower function,
@@ -69,17 +67,11 @@ class PredictConfig(object):
             return_input (bool): same as in :attr:`PredictorBase.return_input`.
             create_graph (bool): create a new graph, or use the default graph
                 when predictor is first initialized.
-            inputs_desc (list[tf.TensorSpec]): old (deprecated) name for `input_signature`.
         """
         def assert_type(v, tp, name):
             assert isinstance(v, tp), \
                 "Argument '{}' has to be type '{}', but an object of type '{}' found.".format(
                     name, tp.__name__, v.__class__.__name__)
-
-        if inputs_desc is not None:
-            log_deprecated("PredictConfig(inputs_desc)", "Use input_signature instead!", "2020-03-01")
-            assert input_signature is None, "Cannot set both inputs_desc and input_signature!"
-            input_signature = inputs_desc
 
         if model is not None:
             assert_type(model, ModelDescBase, 'model')
@@ -119,8 +111,6 @@ class PredictConfig(object):
 
         self.return_input = bool(return_input)
         self.create_graph = bool(create_graph)
-
-        self.inputs_desc = input_signature  # TODO a little bit of compatibility
 
     def _maybe_create_graph(self):
         if self.create_graph:

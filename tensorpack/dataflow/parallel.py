@@ -16,7 +16,6 @@ import zmq
 from six.moves import queue, range
 
 from ..utils import logger
-from ..utils.develop import log_deprecated
 from ..utils.concurrency import (
     StoppableThread, enable_death_signal, ensure_proc_terminate, start_proc_mask_signal)
 from ..utils.serialize import dumps_once as dumps, loads_once as loads
@@ -193,24 +192,14 @@ class MultiProcessRunner(ProxyDataFlow):
                 for dp in self.ds:
                     self.queue.put(dp)
 
-    def __init__(self, ds, num_prefetch=None, num_proc=None, nr_prefetch=None, nr_proc=None):
+    def __init__(self, ds, num_prefetch, num_proc):
         """
         Args:
             ds (DataFlow): input DataFlow.
             num_prefetch (int): size of the queue to hold prefetched datapoints.
                 Required.
             num_proc (int): number of processes to use. Required.
-            nr_prefetch, nr_proc: deprecated argument names
         """
-        if nr_prefetch is not None:
-            log_deprecated("MultiProcessRunner(nr_prefetch)", "Renamed to 'num_prefetch'", "2020-01-01")
-            num_prefetch = nr_prefetch
-        if nr_proc is not None:
-            log_deprecated("MultiProcessRunner(nr_proc)", "Renamed to 'num_proc'", "2020-01-01")
-            num_proc = nr_proc
-        if num_prefetch is None or num_proc is None:
-            raise TypeError("Missing argument num_prefetch or num_proc in MultiProcessRunner!")
-
         # https://docs.python.org/3.6/library/multiprocessing.html?highlight=process#the-spawn-and-forkserver-start-methods
         if os.name == 'nt':
             logger.warn("MultiProcessRunner does support Windows. \
@@ -333,17 +322,13 @@ class MultiProcessRunnerZMQ(_MultiProcessZMQDataFlow):
                 socket.close(0)
                 context.destroy(0)
 
-    def __init__(self, ds, num_proc=1, hwm=50, nr_proc=None):
+    def __init__(self, ds, num_proc=1, hwm=50):
         """
         Args:
             ds (DataFlow): input DataFlow.
             num_proc (int): number of processes to use.
             hwm (int): the zmq "high-water mark" (queue size) for both sender and receiver.
-            nr_proc: deprecated
         """
-        if nr_proc is not None:
-            log_deprecated("MultiProcessRunnerZMQ(nr_proc)", "Renamed to 'num_proc'", "2020-01-01")
-            num_proc = nr_proc
         super(MultiProcessRunnerZMQ, self).__init__()
 
         self.ds = ds
@@ -443,7 +428,7 @@ class MultiThreadRunner(DataFlow):
             finally:
                 self.stop()
 
-    def __init__(self, get_df, num_prefetch=None, num_thread=None, nr_prefetch=None, nr_thread=None):
+    def __init__(self, get_df, num_prefetch, num_thread):
         """
         Args:
             get_df ( -> DataFlow): a callable which returns a DataFlow.
@@ -452,17 +437,7 @@ class MultiThreadRunner(DataFlow):
                 unless your dataflow is stateless.
             num_prefetch (int): size of the queue
             num_thread (int): number of threads
-            nr_prefetch, nr_thread: deprecated names
         """
-        if nr_prefetch is not None:
-            log_deprecated("MultiThreadRunner(nr_prefetch)", "Renamed to 'num_prefetch'", "2020-01-01")
-            num_prefetch = nr_prefetch
-        if nr_thread is not None:
-            log_deprecated("MultiThreadRunner(nr_thread)", "Renamed to 'num_thread'", "2020-01-01")
-            num_thread = nr_thread
-        if num_prefetch is None or num_thread is None:
-            raise TypeError("Missing argument num_prefetch or num_thread in MultiThreadRunner!")
-
         assert num_thread > 0, num_thread
         assert num_prefetch > 0, num_prefetch
         self.num_thread = num_thread

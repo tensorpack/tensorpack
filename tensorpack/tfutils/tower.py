@@ -8,7 +8,7 @@ import six
 from ..compat import tfv1 as tf
 from ..utils import logger
 from ..utils.argtools import call_only_once
-from ..utils.develop import HIDE_DOC, log_deprecated
+from ..utils.develop import HIDE_DOC
 from ..utils.naming import MOVING_SUMMARY_OPS_KEY
 from .collection import CollectionGuard
 from .common import get_op_or_tensor_by_name, get_op_tensor_name
@@ -303,11 +303,6 @@ class TowerFunc(object):
 
     @property
     def input_signature(self):
-        return self._input_signature
-
-    @property
-    def inputs_desc(self):
-        log_deprecated("TowerFunc.inputs_desc", "Use .input_signature instead", "2020-03-01")
         return self._input_signature
 
 

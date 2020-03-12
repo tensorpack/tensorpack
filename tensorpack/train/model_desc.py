@@ -4,7 +4,6 @@
 
 import tensorflow as tf
 
-from ..utils.develop import log_deprecated, HIDE_DOC
 from ..utils.argtools import memoized_method
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
@@ -26,11 +25,6 @@ class ModelDescBase(object):
     Subclass is expected to implement :meth:`inputs` and :meth:`build_graph`, as they
     together define a tower function.
     """
-
-    @HIDE_DOC
-    def get_inputs_desc(self):
-        log_deprecated("ModelDesc.get_inputs_desc", "Use get_input_signature instead!", "2020-03-01")
-        return self.get_input_signature()
 
     @memoized_method
     def get_input_signature(self):
