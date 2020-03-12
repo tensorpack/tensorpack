@@ -441,6 +441,31 @@ class ZMQInput(TensorInput):
             hwm=self._hwm,
             bind=self._bind)
 
+    def to_dataset(self, input_signature):
+        """
+        Convert to a TF dataset.
+
+        Args:
+            input_signature (list[InputSpec]):
+
+        Returns:
+            tf.data.Dataset
+        """
+        import zmq_ops
+        zmq_pull_socket = zmq_ops.ZMQPullSocket(
+            self._end_point, [x.dtype for x in input_signature],
+            hwm=self._hwm, bind=self._bind)
+
+        def mapper(_):
+            inputs = list(zmq_pull_socket.pull())
+            for v, sig in zip(inputs, input_signature):
+                v.set_shape(sig.shape)
+            return inputs
+
+        # Is there a better way to construct from stateful tensor?
+        dataset = tf.data.Dataset.from_tensors([1])  # just a placeholder
+        return dataset.map(mapper)
+
 
 class TFDatasetInput(FeedfreeInput):
     """
