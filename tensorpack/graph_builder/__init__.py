@@ -10,7 +10,7 @@ if STATICA_HACK:
     from .distributed import *
     from .utils import *
 
-from .model_desc import InputDesc, ModelDesc, ModelDescBase  # kept for BC # noqa
+from .model_desc import ModelDesc, ModelDescBase
 
 from pkgutil import iter_modules
 import os

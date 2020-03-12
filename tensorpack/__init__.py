@@ -19,6 +19,5 @@ if STATICA_HACK:
     from tensorpack.tfutils import *
 
     from tensorpack.train import *
-    from tensorpack.graph_builder import InputDesc  # kept for BC
     from tensorpack.input_source import *
     from tensorpack.predict import *
