@@ -12,6 +12,7 @@ from scipy.signal import convolve2d
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.utils import logger
+from tensorpack.utils.gpu import change_gpu
 from tensorpack.utils.argtools import shape2d, shape4d
 from tensorpack.utils.viz import *
 
