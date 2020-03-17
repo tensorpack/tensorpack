@@ -260,7 +260,7 @@ class ChainInit(SessionInit):
             i._run_init(sess)
 
 
-def SmartInit(obj, ignore_mismatch=False):
+def SmartInit(obj, *, ignore_mismatch=False):
     """
     Create a :class:`SessionInit` to be loaded to a session,
     automatically from any supported objects, with some smart heuristics.

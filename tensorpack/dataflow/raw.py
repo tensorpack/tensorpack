@@ -111,6 +111,9 @@ class DataFromGenerator(DataFlow):
         else:
             yield from self._gen()
 
+    def __len__(self):
+        return len(self._gen)
+
 
 class DataFromIterable(DataFlow):
     """ Wrap an iterable of datapoints to a DataFlow"""
