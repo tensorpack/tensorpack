@@ -333,7 +333,7 @@ def BatchNorm(inputs, axis=None, *, training=None, momentum=0.9, epsilon=1e-5,
 
         if sync_statistics is not None:
             # sync bn
-            batch_mean, batch_var = get_sync_bn_mean_var(inputs, red_axis)
+            batch_mean, batch_var = get_sync_bn_mean_var(inputs, red_axis, sync_statistics)
             batch_mean_vec = batch_mean
             batch_var_vec = batch_var
 
