@@ -287,8 +287,7 @@ def BatchNorm(inputs, axis=None, *, training=None, momentum=0.9, epsilon=1e-5,
                 center=center, scale=scale,
                 beta_initializer=beta_initializer,
                 gamma_initializer=gamma_initializer,
-                # https://github.com/tensorflow/tensorflow/issues/10857#issuecomment-410185429
-                fused=(ndims == 4 and axis in [1, 3] and not freeze_bn_backward),
+                fused=(ndims == 4 and axis in [1, 3]),
                 _reuse=tf.get_variable_scope().reuse)
             use_fp16 = inputs.dtype == tf.float16
             if use_fp16:
