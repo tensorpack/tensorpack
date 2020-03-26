@@ -201,7 +201,7 @@ def collect_env_info():
         # List devices with NVML
         data.append(
             ("CUDA_VISIBLE_DEVICES",
-             os.environ.get("CUDA_VISIBLE_DEVICES", str(None))))
+             os.environ.get("CUDA_VISIBLE_DEVICES", "Unspecified")))
         try:
             devs = defaultdict(list)
             with NVMLContext() as ctx:

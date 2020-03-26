@@ -1,3 +1,4 @@
+# Copyright (c) Tensorpack Contributors. All Rights Reserved
 # -*- coding: utf-8 -*-
 # File: batch_norm.py
 
