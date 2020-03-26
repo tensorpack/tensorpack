@@ -306,12 +306,14 @@ class JSONWriter(MonitorBase):
             return NoOpMonitor("JSONWriter")
 
     @staticmethod
-    def load_existing_json():
+    def load_existing_json(dir=None):
         """
-        Look for an existing json under :meth:`logger.get_logger_dir()` named "stats.json",
+        Look for an existing json under dir (defaults to
+        :meth:`logger.get_logger_dir()`) named "stats.json",
         and return the loaded list of statistics if found. Returns None otherwise.
         """
-        dir = logger.get_logger_dir()
+        if dir is None:
+            dir = logger.get_logger_dir()
         fname = os.path.join(dir, JSONWriter.FILENAME)
         if tf.gfile.Exists(fname):
             with open(fname) as f:
@@ -321,12 +323,12 @@ class JSONWriter(MonitorBase):
         return None
 
     @staticmethod
-    def load_existing_epoch_number():
+    def load_existing_epoch_number(dir=None):
         """
         Try to load the latest epoch number from an existing json stats file (if any).
         Returns None if not found.
         """
-        stats = JSONWriter.load_existing_json()
+        stats = JSONWriter.load_existing_json(dir)
         try:
             return int(stats[-1]['epoch_num'])
         except Exception:

@@ -37,6 +37,10 @@ def _import_external_ops(message):
         else:
             from tensorflow.python.ops import gen_nccl_ops  # noqa
         return
+    if 'ZMQConnection' in message:
+        import zmq_ops
+        return
+    logger.error("Unhandled error: " + message)
 
 
 def guess_inputs(input_dir):

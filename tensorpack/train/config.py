@@ -206,7 +206,7 @@ class AutoResumeTrainConfig(TrainConfig):
         """
         found_sessinit = False
         if always_resume or 'session_init' not in kwargs:
-            sessinit = self._get_sessinit_resume()
+            sessinit = self.get_sessinit_resume()
             if sessinit is not None:
                 found_sessinit = True
                 path = sessinit.path
@@ -219,7 +219,7 @@ class AutoResumeTrainConfig(TrainConfig):
 
         found_last_epoch = False
         if always_resume or 'starting_epoch' not in kwargs:
-            last_epoch = self._get_last_epoch()
+            last_epoch = JSONWriter.load_existing_epoch_number()
             if last_epoch is not None:
                 found_last_epoch = True
                 now_epoch = last_epoch + 1
@@ -231,14 +231,13 @@ class AutoResumeTrainConfig(TrainConfig):
 
         super(AutoResumeTrainConfig, self).__init__(**kwargs)
 
-    def _get_sessinit_resume(self):
-        logdir = logger.get_logger_dir()
-        if not logdir:
+    @staticmethod
+    def get_sessinit_resume(dir=None):
+        if dir is None:
+            dir = logger.get_logger_dir()
+        if not dir:
             return None
-        path = os.path.join(logdir, 'checkpoint')
+        path = os.path.join(dir, 'checkpoint')
         if not tf.gfile.Exists(path):
             return None
         return SaverRestore(path)
-
-    def _get_last_epoch(self):
-        return JSONWriter.load_existing_epoch_number()
