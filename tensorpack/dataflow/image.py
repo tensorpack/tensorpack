@@ -196,32 +196,34 @@ class AugmentImageComponents(MapData):
         else:
             self.augs = AugmentorList(augmentors)
         self.ds = ds
+        self._exception_handler = ExceptionHandler(catch_exceptions)
+        self._copy = copy
+        self._index = index
+        self._coords_index = coords_index
 
-        exception_handler = ExceptionHandler(catch_exceptions)
-
-        def func(dp):
-            dp = copy_mod.copy(dp)  # always do a shallow copy, make sure the list is intact
-            copy_func = copy_mod.deepcopy if copy else lambda x: x  # noqa
-            with exception_handler.catch():
-                major_image = index[0]  # image to be used to get params. TODO better design?
-                im = copy_func(dp[major_image])
-                check_dtype(im)
-                tfms = self.augs.get_transform(im)
-                dp[major_image] = tfms.apply_image(im)
-                for idx in index[1:]:
-                    check_dtype(dp[idx])
-                    dp[idx] = tfms.apply_image(copy_func(dp[idx]))
-                for idx in coords_index:
-                    coords = copy_func(dp[idx])
-                    validate_coords(coords)
-                    dp[idx] = tfms.apply_coords(coords)
-                return dp
-
-        super(AugmentImageComponents, self).__init__(ds, func)
+        super(AugmentImageComponents, self).__init__(ds, self._aug_mapper)
 
     def reset_state(self):
         self.ds.reset_state()
         self.augs.reset_state()
+
+    def _aug_mapper(self, dp):
+        dp = copy_mod.copy(dp)  # always do a shallow copy, make sure the list is intact
+        copy_func = copy_mod.deepcopy if self._copy else lambda x: x  # noqa
+        with self._exception_handler.catch():
+            major_image = self._index[0]  # image to be used to get params. TODO better design?
+            im = copy_func(dp[major_image])
+            check_dtype(im)
+            tfms = self.augs.get_transform(im)
+            dp[major_image] = tfms.apply_image(im)
+            for idx in self._index[1:]:
+                check_dtype(dp[idx])
+                dp[idx] = tfms.apply_image(copy_func(dp[idx]))
+            for idx in self._coords_index:
+                coords = copy_func(dp[idx])
+                validate_coords(coords)
+                dp[idx] = tfms.apply_coords(coords)
+            return dp
 
 
 try:

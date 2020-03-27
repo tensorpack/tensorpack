@@ -4,6 +4,7 @@
 # Author: Yuxin Wu
 
 import argparse
+import functools
 import glob
 import numpy as np
 import os
@@ -146,7 +147,7 @@ class Model(GANModelDesc):
         return tf.train.AdamOptimizer(lr, beta1=0.5, epsilon=1e-3)
 
 
-def split_input(dp):
+def split_input(mode, dp):
     """
     dp: the datapoint. first component is an RGB image of shape (s, 2s, 3).
     :return: [input, output]
@@ -156,7 +157,7 @@ def split_input(dp):
     s = img.shape[0]
     assert img.shape[1] == 2 * s
     input, output = img[:, :s, :], img[:, s:, :]
-    if args.mode == 'BtoA':
+    if mode == 'BtoA':
         input, output = output, input
     if IN_CH == 1:
         input = cv2.cvtColor(input, cv2.COLOR_RGB2GRAY)[:, :, np.newaxis]
@@ -165,12 +166,12 @@ def split_input(dp):
     return [input, output]
 
 
-def get_data():
+def get_data(args):
     datadir = args.data
     imgs = glob.glob(os.path.join(datadir, '*.jpg'))
     ds = ImageFromFile(imgs, channel=3, shuffle=True)
 
-    ds = MapData(ds, split_input)
+    ds = MapData(ds, functools.partial(split_input, args.mode))
     augs = [imgaug.Resize(286), imgaug.RandomCrop(256)]
     ds = AugmentImageComponents(ds, augs, (0, 1))
     ds = BatchData(ds, BATCH)
@@ -217,7 +218,7 @@ if __name__ == '__main__':
     else:
         logger.auto_set_dir()
 
-        data = QueueInput(get_data())
+        data = QueueInput(get_data(args))
         trainer = GANTrainer(data, Model(), get_num_gpu())
 
         trainer.train_with_defaults(
