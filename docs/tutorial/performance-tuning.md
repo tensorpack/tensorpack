@@ -1,7 +1,7 @@
 
 # Performance Tuning
 
-__We do not know why your training is slow__ 
+__We do not know why your training is slow__
 (and most of the times it's not due to tensorpack),
 unless we can reproduce the slowness with your instsructions.
 
@@ -50,7 +50,7 @@ A benchmark will give you more precise information about which part you should i
 
 ## Investigate DataFlow
 
-Understand the [Efficient DataFlow](efficient-dataflow.html) tutorial, so you know what your DataFlow is doing.
+Understand the [Efficient DataFlow](./efficient-dataflow.md) tutorial, so you know what your DataFlow is doing.
 Then, make modifications and benchmark your modifications to understand which
 part in the data pipeline is your bottleneck.
 Do __NOT__ look at training speed when you benchmark a DataFlow. Only look at the output of `TestDataSpeed`.
@@ -67,14 +67,14 @@ dataflow, you can usually do the following:
    includes both reading cost and the multiprocess communication cost.
    You can now let your reader produce only a single integer after reading a large
    amount of data, so that the pipeline contains only parallel reading cost, but negligible
-   communication cost any more. 
-   
+   communication cost any more.
+
    If this becomes fast enough, it means that communication is the bottleneck.
    If pure parallel reading is still not fast enough, it means your raw reader is the bottleneck.
 1. In practice the dataflow can be more complicated and you'll need to design
    your own strategies to understand its performance.
-   
-Once you've understood which part is the bottleneck, 
+
+Once you've understood which part is the bottleneck,
 you can start optimizing the specific part by methods such as:
 
 1. Use single-file database to avoid random read on hard disk.
@@ -85,7 +85,7 @@ you can start optimizing the specific part by methods such as:
 
 ## Investigate TensorFlow
 
-When you're sure that data is not a bottleneck (e.g. when the logs show that queue is almost full), 
+When you're sure that data is not a bottleneck (e.g. when the logs show that queue is almost full),
 you can investigate and optimize the model.
 
 A naive but effective way is to remove ops from your model to understand how much time they cost.

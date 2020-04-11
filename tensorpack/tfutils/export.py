@@ -12,7 +12,7 @@ from tensorflow.python.framework import graph_util
 from tensorflow.python.platform import gfile
 from tensorflow.python.tools import optimize_for_inference_lib
 
-from ..compat import is_tfv2, tfv1
+from ..compat import tfv1
 from ..input_source import PlaceholderInput
 from ..tfutils.common import get_tensors_by_names, get_tf_version_tuple
 from ..tfutils.tower import PredictTowerContext
@@ -89,7 +89,7 @@ class ModelExporter(object):
                 logger.info("Output graph written to {}.".format(filename))
 
     def export_serving(self, filename,
-                       tags=(tf.saved_model.SERVING if is_tfv2() else tf.saved_model.tag_constants.SERVING,),
+                       tags=None,
                        signature_name='prediction_pipeline'):
         """
         Converts a checkpoint and graph to a servable for TensorFlow Serving.
@@ -97,7 +97,7 @@ class ModelExporter(object):
 
         Args:
             filename (str): path for export directory
-            tags (tuple): tuple of user specified tags
+            tags (tuple): tuple of user specified tags. Defaults to "SERVING".
             signature_name (str): name of signature for prediction
 
         Note:
@@ -113,6 +113,9 @@ class ModelExporter(object):
             Currently, we only support a single signature, which is the general PredictSignatureDef:
             https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/signature_defs.md
         """
+        if tags is None:
+            tags = (tf.saved_model.SERVING if get_tf_version_tuple() >= (1, 12)
+                    else tf.saved_model.tag_constants.SERVING)
 
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():

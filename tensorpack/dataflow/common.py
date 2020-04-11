@@ -164,7 +164,8 @@ class BatchData(ProxyDataFlow):
             use_list (bool): whether to batch data into a list or a numpy array.
 
         Returns:
-            dp: either a list or a dict, depend on the inputs.
+            dp:
+                either a list or a dict, depend on the inputs.
                 Each item is a batched version of the corresponding inputs.
         """
         first_dp = data_holder[0]

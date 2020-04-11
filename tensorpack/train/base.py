@@ -126,7 +126,7 @@ class Trainer(object):
     2. Increase the global_step
     3. Evaluate some summaries
 
-    Typically you __should not__ use ``hooked_sess.run`` in callbacks,
+    Typically you **should not** use ``hooked_sess.run`` in callbacks,
     because it is for the "training iteration". If you just want to evaluate
     some tensors, use ``sess.run`` if the tensors does not depend on the inputs,
     or more generally, use `before_run/after_run` to evaluate the tensors **along with**

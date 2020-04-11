@@ -4,7 +4,7 @@
 
 The first thing to note: __you never have to write an augmentor__.
 An augmentor is a part of the DataFlow, so you can always
-[write a DataFlow](dataflow.html)
+[write a DataFlow](./dataflow.md)
 to do whatever operations to your data, rather than writing an augmentor.
 
 Augmentor makes things easier when what you want fits its design.
@@ -28,7 +28,7 @@ To do custom augmentation, you can implement one yourself.
 
 #### The Design of imgaug Module
 
-The [imgaug module](../../modules/dataflow.imgaug.html) is designed to allow the following usage:
+The [imgaug module](../../modules/dataflow.imgaug) is designed to allow the following usage:
 
 * Factor out randomness and determinism.
   An augmentor often contains randomized policy, e.g., it randomly perturbs each image differently.
@@ -43,13 +43,13 @@ new_img2 = tfm.apply_image(img2)
 new_coords = tfm.apply_coords(coords)
 ```
 
-  Due to this design, it can augment images together with its annotations 
+  Due to this design, it can augment images together with its annotations
   (e.g., segmentation masks, bounding boxes, keypoints).
   Our coordinate augmentation enforces floating points coordinates
   to avoid quantization error.
-  
+
   When you don't need to re-apply the same transformation, you can also just call
-  
+
 ```python
 new_img = augmentor.augment(img)
 ```
@@ -57,8 +57,8 @@ new_img = augmentor.augment(img)
 * Reset random seed. Random seed can be reset by
   [reset_state](../../modules/dataflow.imgaug.html#tensorpack.dataflow.imgaug.ImageAugmentor.reset_state).
   This is important for multi-process data loading, to make sure different
-  processes get different seeds. 
-  The reset method is called automatically if you use tensorpack's 
+  processes get different seeds.
+  The reset method is called automatically if you use tensorpack's
   [image augmentation dataflow](../../modules/dataflow.html#tensorpack.dataflow.AugmentImageComponent)
   or if you use Python 3.7+.
   Otherwise, **you are responsible** for calling it by yourself in subprocesses.
@@ -77,7 +77,7 @@ class MyAug(imgaug.ImageAugmentor):
     # Randomly generate a deterministic transformation, to be applied on img
     x = random_parameters()
     return MyTransform(x)
-    
+
 class MyTransform(imgaug.Transform):
   def apply_image(self, img):
     return new_img

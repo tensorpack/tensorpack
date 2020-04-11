@@ -33,7 +33,7 @@ class MyModel(ModelDesc):
 
 You can use any symbolic functions in `build_graph`, including TensorFlow core library
 functions and other symbolic libraries.
-`build_graph` will be the tower function, so you need to follow [some rules](trainer.md#tower-trainer).
+`build_graph` will be the tower function, so you need to follow [some rules](trainer.html#tower-trainer).
 Because this interface is specialized for single-cost training, you need to return the cost tensor.
 
 After defining such a model, use it with `TrainConfig` and `launch_train_with_config`:
@@ -84,7 +84,7 @@ The function `launch_train_with_config` exists mainly for historical reasons.
 ### Keras Interface
 
 Some wrappers were made on top of tensorpack trainers, to create a Keras-like interface.
-See [Tensorpack+Keras examples](../examples/keras) for details.
+See the experimental [Tensorpack+Keras examples](../../examples/keras) for details.
 
 ### Raw Trainer Interface
 
@@ -102,5 +102,5 @@ training, or call
 which applies some defaults options for common use cases.
 
 Read their API documentation and the
-[advanced trainer tutorial](extend/trainer.html)
+[advanced trainer tutorial](./extend/trainer.md)
 for more details.

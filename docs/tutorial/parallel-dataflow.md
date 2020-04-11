@@ -66,7 +66,7 @@ to learn more details.
 
 ## Threads & Processes
 
-Both the above two patterns can be used with 
+Both the above two patterns can be used with
 __either multi-threading or multi-processing__, with the following builtin DataFlows:
 
 * [MultiProcessRunnerZMQ](../modules/dataflow.html#tensorpack.dataflow.MultiProcessRunnerZMQ)
@@ -95,9 +95,9 @@ __zero Python threads__: this is a key implementation detail that makes tensorpa
 faster than the alternatives in Keras or PyTorch.
 
 For a new task, you often need to do a quick benchmark to choose the best pattern.
-See [Performance Tuning Tutorial](performance-tuning.html)
+See [Performance Tuning Tutorial](./performance-tuning.md)
 on how to effectively understand the performance of a DataFlow.
 
-See also [Efficient DataFlow](efficient-dataflow.html)
+See also [Efficient DataFlow](./efficient-dataflow.md)
 for real examples using the above DataFlows.
 

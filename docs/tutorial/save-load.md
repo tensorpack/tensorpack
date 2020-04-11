@@ -14,7 +14,7 @@ Tensorpack also provides a small tool to load checkpoints, see
 [load_chkpt_vars](../modules/tfutils.html#tensorpack.tfutils.varmanip.load_chkpt_vars)
 for details.
 
-[scripts/ls-checkpoint.py](../scripts/ls-checkpoint.py)
+[scripts/ls-checkpoint.py](../../scripts/ls-checkpoint.py)
 demos how to print all variables and their shapes in a checkpoint.
 
 Tensorpack includes another tool to save variables to TF checkpoint, see
@@ -26,7 +26,7 @@ Most models provided by tensorpack are in npz (dictionary) format,
 because it's easy to use without TF dependency.
 You can read/write them with `np.load` and `np.savez`.
 
-[scripts/dump-model-params.py](../scripts/dump-model-params.py) can be used to remove unnecessary variables in a checkpoint
+[scripts/dump-model-params.py](../../scripts/dump-model-params.py) can be used to remove unnecessary variables in a checkpoint
 and save results to a npz.
 It takes a metagraph file (which is also saved by `ModelSaver`) and only saves variables that the model needs at inference time.
 It dumps the model to a `var-name: value` dict saved in npz format.
@@ -46,7 +46,7 @@ session_init=SmartInit(["path1", dict2])  # load them sequentially
 ```
 
 [SmartInit](../modules/tfutils.html#tensorpack.tfutils.sessinit.SmartInit)
-is in fact a small helper which uses some heuristics to return you one of 
+is in fact a small helper which uses some heuristics to return you one of
 [SaverRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.SaverRestore) or
 [DictRestore](../modules/tfutils.html#tensorpack.tfutils.sessinit.DictRestore).
 They are responsible for the actual initialization work.
@@ -58,7 +58,7 @@ Whatever you use in `session_init`, this is what happens during the initializati
 * Variables that appear in only one side will be printed as warning.
 * Variables of the same name but incompatible shapes will cause exceptions.
   If you set `ignore_mismatch=True`, then such errors will only be printed as warnings.
-  
+
 You can also use `SmartInit` to load a model to a session manually,
 without involving the rest of the tensorpack, by `SmartInit(...).init(session)`.
 

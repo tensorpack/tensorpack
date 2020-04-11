@@ -211,7 +211,8 @@ def add_moving_summary(*args, **kwargs):
             summary op. Default is TF's default (`tf.GraphKeys.SUMMARIES`).
 
     Returns:
-        [tf.Tensor]: list of tensors returned by assign_moving_average,
+        [tf.Tensor]:
+            list of tensors returned by assign_moving_average,
             which can be used to maintain the EMA.
     """
     decay = kwargs.pop('decay', 0.95)

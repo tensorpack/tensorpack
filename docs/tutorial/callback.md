@@ -80,7 +80,7 @@ These features are not always necessary, but think about how messy the main loop
 were to write these logic together with the loops, and how easy your life will be if you could enable
 these features with just one line when you need them.
 
-See [list of callbacks](../modules/callbacks.html)
+See [list of callbacks](../modules/callbacks)
 for a long list of tensorpack builtin callbacks.
-See [Write a callback](extend/callback.html)
+See [Write a callback](extend/callback.md)
 for details on how callbacks work, what they can do, and how to write them.

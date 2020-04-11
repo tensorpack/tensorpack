@@ -34,7 +34,7 @@ Then it is a good time to open an issue.
 3. The [ProgressBar](../modules/callbacks.html#tensorpack.callbacks.ProgressBar)
 	 callback can print some scalar statistics, though not enabled by default.
 
-4. Read [Summary and Logging](summary.html) for more options on logging.
+4. Read [Summary and Logging](./summary.md) for more options on logging.
 
 ## How to freeze some variables in training
 
@@ -62,4 +62,4 @@ In general, you need to implement the model in a way your version of TensorFlow 
 
 ## My training seems slow. Why?
 
-Checkout the [Performance Tuning tutorial](performance-tuning.html)
+Checkout the [Performance Tuning tutorial](./performance-tuning.md)

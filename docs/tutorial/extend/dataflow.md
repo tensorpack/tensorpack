@@ -32,21 +32,21 @@ class MyDataFlow(DataFlow):
       digit = np.random.rand(28, 28)
       label = np.random.randint(10)
       yield [digit, label]
-      
+
 df = MyDataFlow()
 df.reset_state()
 for datapoint in df:
     print(datapoint[0], datapoint[1])
 ```
 
-Optionally, you can implement the `__len__` and `reset_state` method. 
-The detailed semantics of these three methods are explained 
+Optionally, you can implement the `__len__` and `reset_state` method.
+The detailed semantics of these three methods are explained
 in the [API documentation](../../modules/dataflow.html#tensorpack.dataflow.DataFlow).
 If you're writing a complicated DataFlow, make sure to read the API documentation
 for the semantics.
 
 DataFlow implementations for several well-known datasets are provided in the
-[dataflow.dataset](../../modules/dataflow.dataset.html)
+[dataflow.dataset](../../modules/dataflow.dataset)
 module. You can take them as examples.
 
 #### More Data Processing
@@ -58,7 +58,7 @@ processing on top of the source DataFlow, e.g.:
 class ProcessingDataFlow(DataFlow):
   def __init__(self, ds):
     self.ds = ds
-    
+
   def reset_state(self):
     self.ds.reset_state()
 
@@ -69,6 +69,6 @@ class ProcessingDataFlow(DataFlow):
 ```
 
 Some built-in dataflows, e.g.
-[MapData](../../modules/dataflow.html#tensorpack.dataflow.MapData) and 
+[MapData](../../modules/dataflow.html#tensorpack.dataflow.MapData) and
 [MapDataComponent](../../modules/dataflow.html#tensorpack.dataflow.MapDataComponent)
 can do common types of data processing for you.

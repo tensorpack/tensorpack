@@ -7,7 +7,7 @@ Tensorpack provides some trainer implementations for such tasks.
 These trainers will take care help you define the graph, with the following arguments:
 
 1. Some `tf.TensorSpec`, the signature of the input.
-2. An `InputSource`, where the input come from. See [Input Pipeline](input-source.html).
+2. An `InputSource`, where the input come from. See [Input Pipeline](./input-source.md).
 3. A function which takes input tensors and returns the cost.
 4. A function which returns an optimizer.
 
@@ -114,5 +114,5 @@ You will need to do two things for a new Trainer:
        (global steps, StagingArea, summaries) are maintained through `before_run`/`after_run`.
 
 If you want to write a new trainer,
-Tensorpack examples include several different 
+Tensorpack examples include several different
 [GAN trainers](../../examples/GAN/GAN.py) for a reference.

@@ -80,11 +80,11 @@ You can overwrite any of the following methods in the new callback:
   ```
 
   The training loops would become equivalent to `sess.run([training_op, my_op])`.
-  
+
   However, if you write `my_op.run()` in `_trigger_step`, the training loop would become
   `sess.run(training_op); sess.run(my_op);`.
   Usually the difference matters, please choose carefully.
-  
+
   If you want to run ops that depend on your inputs, it's better to run it
   __along with__ the training iteration, to avoid wasting a datapoint and avoid
   messing up hooks of the `InputSource`.
@@ -114,7 +114,7 @@ You can overwrite any of the following methods in the new callback:
 * Access the current graph and session by `self.trainer.graph` and
   `self.trainer.sess`, `self.trainer.hooked_sess`.
   Note that calling `(hooked_)sess.run` to evaluate tensors may have unexpected
-  effect in certain scenarios. 
+  effect in certain scenarios.
   In general, use `sess.run` to evaluate tensors that do not depend on the inputs.
   And use `_{before,after}_run` to evaluate tensors together with inputs if the
   tensors depend on the inputs.
@@ -141,5 +141,5 @@ You can overwrite any of the following methods in the new callback:
 
 ### Examples
 
-Check source code of the [existing tensorpack callbacks](../../modules/callbacks.html). 
+Check source code of the [existing tensorpack callbacks](../../modules/callbacks.md).
 Or grep 'Callback' in tensorpack examples for those implemented as extensions.

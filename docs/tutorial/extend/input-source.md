@@ -39,7 +39,7 @@ This is one of the reasons why tensorpack is [faster](https://github.com/tensorp
 The above discussion is valid regardless of what you use to load/preprocess data,
 either Python code or TensorFlow operators, or a mix of two.
 Both are supported in tensorpack, while we recommend using Python.
-See more discussions at [Why DataFlow?](/tutorial/philosophy/dataflow.html)
+See more discussions at [Why DataFlow?](../philosophy/dataflow.md)
 
 ## InputSource
 
@@ -75,7 +75,7 @@ Refer to the documentation of these `InputSource` for more details.
 
     `tensorpack.dataflow` is a pure Python library for efficient data loading which can be used
     independently without TensorFlow or tensorpack trainers.
-    
+
     However, the `InputSource` interface does require tensorpack and cannot be
     used without tensorpack trainers.
     Without tensorpack trainers, you'll have to optimize the copy latency by yourself.

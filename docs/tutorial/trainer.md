@@ -24,7 +24,7 @@ by exploiting some universal patterns.
 
 In research we do training of various kind.
 Tensorpack trainers avoid making assumptions on what type of training
-you want to do. For example, unlike Keras, tensorpack does not wrongly assume that: 
+you want to do. For example, unlike Keras, tensorpack does not wrongly assume that:
 1. Your training data is batched
 2. Your training is gradient-based optimization
 3. Your data has `X`(inputs) and `y`(outputs)
@@ -45,7 +45,7 @@ Users or derived trainers should implement __what the iterations are__.
 
 2. The concept of __"epoch"__, i.e. we assume that the iterations run in nested for-loops.
 In fact, the steps per epoch can be any number
-and it only affects the [schedule of callbacks](callback.html).
+and it only affects the [schedule of callbacks](./callback.md).
 In other words, an "epoch" in tensorpack is the __default period to run
 callbacks__ (validation, summary, checkpoint, etc.).
 So this assumption effectively puts no extra constraints.
@@ -56,20 +56,20 @@ So this assumption effectively puts no extra constraints.
 Tensorpack implements a few builtin trainers for __single-cost gradient-based optimization__,
 as this is the most common type of task.
 If your training follows this pattern, you only need to __select a trainer__,
-and use it with its [training interface](training-interface.html).
+and use it with its [training interface](./training-interface.md).
 
 The simplest example of such a trainer is
 [SimpleTrainer](../modules/train.html#tensorpack.train.SimpleTrainer).
-All it does is building your model (which you have to provide) once 
+All it does is building your model (which you have to provide) once
 (or twice if inference is needed by callbacks) and minimizing its cost.
 
 ### Multi-GPU Trainers
 
-For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train.html)
+For data-parallel multi-GPU training, different [multi-GPU trainers](../modules/train)
 implement different distribution strategies.
 They take care of device placement, gradient averaging and synchronization
 in the efficient way, which is why multi-GPU training in tensorpack
-is up to 
+is up to
 [5x faster than Keras](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers).
 It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTrainerReplicated(...)`.
 

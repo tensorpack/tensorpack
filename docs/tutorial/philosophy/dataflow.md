@@ -12,7 +12,7 @@ Your data pipeline **only needs to be fast enough**.
 In practice, you should always first make sure your data pipeline runs
 asynchronously with your training.
 The method to do so is different in each training framework,
-and in tensorpack this is automatically done by the [InputSource](/tutorial/extend/input-source.html)
+and in tensorpack this is automatically done by the [InputSource](../extend/input-source.md)
 interface.
 
 Once you make sure the data pipeline runs async with your training,
@@ -29,7 +29,7 @@ DataFlow is fast enough for you unless you use
 8 V100s with both FP16 and XLA enabled, which most people don't.
 For tasks that are less data-hungry (e.g., object detection, or most NLP tasks),
 DataFlow is already an overkill.
-See the [Efficient DataFlow](/tutorial/efficient-dataflow.html) tutorial on how
+See the [Efficient DataFlow](../efficient-dataflow.md) tutorial on how
 to build a fast Python loader with DataFlow.
 
 There is no reason to try a more complicated solution,

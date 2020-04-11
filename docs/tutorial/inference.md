@@ -8,7 +8,7 @@ There are two ways to do inference during training.
 1. The easiest way is to write a callback, and use
   [self.trainer.get_predictor()](../modules/train.html#tensorpack.train.TowerTrainer.get_predictor)
   to get a callable under inference mode.
-  See [Write a Callback](extend/callback.html).
+  See [Write a Callback](./extend/callback.md).
 
 2. If your inference follows the paradigm of:
   "evaluate some tensors for each input, and aggregate the results in the end".
@@ -58,7 +58,7 @@ output1_array, output2_array = predictor(input1_array, input2_array)
 It's __common to use a different graph for inference__,
 e.g., use NHWC format, support encoded image format, etc.
 You can make these changes inside the `model` or `tower_func` in your `PredictConfig`.
-The example in [examples/basics/export-model.py](../examples/basics/export-model.py) demonstrates such an altered inference graph.
+The example in [examples/basics/export-model.py](../../examples/basics/export-model.py) demonstrates such an altered inference graph.
 
 OfflinePredictor is only for quick demo purposes.
 It runs inference on numpy arrays, therefore may not be the most efficient way.
@@ -98,7 +98,7 @@ you can also save your models into other formats after training, so it may be mo
    tf.import_graph_def(graph_def)
    ```
 
-[examples/basics/export-model.py](../examples/basics/export-model.py)
+[examples/basics/export-model.py](../../examples/basics/export-model.py)
 demonstrates the usage of such a frozen/pruned graph.
 Again, you may often want to use a different graph for inference and you can
 do so by the arguments of `PredictConfig`.

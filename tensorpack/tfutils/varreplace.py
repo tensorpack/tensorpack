@@ -95,8 +95,8 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
         1. If a variable is created, or reused outside of the context, it can still contribute to the
            gradient of other tensors.
         2. If a freezed variable is accessed by other approaches (e.g., by names, by collections),
-          it can still contribute to the gradient of other tensors.
-          For example, weight decay cannot be stopped by a `stop_gradient` context.
+           it can still contribute to the gradient of other tensors.
+           For example, weight decay cannot be stopped by a `stop_gradient` context.
 
     `skip_collection` has to be used the first time the variable is created.
     Once `skip_collection` is used, the variable is not a trainable variable anymore,
