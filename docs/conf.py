@@ -37,7 +37,7 @@ class GithubURLDomain(Domain):
                 # bug of recommonmark.
                 # https://github.com/readthedocs/recommonmark/blob/ddd56e7717e9745f11300059e4268e204138a6b1/recommonmark/parser.py#L152-L155
                 github_url += ".md"
-            print(f"Ref {target} resolved to github:{github_url}")
+            print("Ref {} resolved to github:{}".format(target, github_url))
             contnode["refuri"] = self.ROOT + github_url
             return [("githuburl:any", contnode)]
         else:
