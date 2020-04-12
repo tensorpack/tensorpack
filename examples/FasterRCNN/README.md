@@ -1,6 +1,7 @@
 # Faster R-CNN / Mask R-CNN on COCO
 This example provides a minimal (2k lines) and faithful implementation of the
-following object detection / instance segmentation papers:
+following object detection / instance segmentation papers,
+and __reproduce__ expected results:
 
 + [Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks](https://arxiv.org/abs/1506.01497)
 + [Feature Pyramid Networks for Object Detection](https://arxiv.org/abs/1612.03144)
@@ -12,8 +13,6 @@ with the support of:
 + Cross-GPU BatchNorm (aka Sync-BN, from [MegDet: A Large Mini-Batch Object Detector](https://arxiv.org/abs/1711.07240))
 + [Group Normalization](https://arxiv.org/abs/1803.08494)
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))
-
-This is likely the best-performing open source TensorFlow reimplementation of the above papers.
 
 ## Dependencies
 + OpenCV, TensorFlow ≥ 1.6
@@ -123,7 +122,6 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
 
  <a id="ft3">3</a>: This entry does not use ImageNet pre-training. Detectron numbers are taken from Fig. 5 in [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883).
  Note that our training strategy is slightly different: we enable cascade throughout the entire training.
- As far as I know, this model is the __best open source TF model__ on COCO dataset.
 
 ## Use Custom Datasets / Implementation Details / Speed:
 
