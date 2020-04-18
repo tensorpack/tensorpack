@@ -31,16 +31,29 @@ class ColorSpace(PhotometricAugmentor):
 
 
 class Grayscale(ColorSpace):
-    """ Convert image to grayscale.  """
+    """ Convert RGB or BGR image to grayscale. """
 
-    def __init__(self, keepdims=True, rgb=False):
+    def __init__(self, keepdims=True, rgb=False, keepshape=False):
         """
         Args:
             keepdims (bool): return image of shape [H, W, 1] instead of [H, W]
             rgb (bool): interpret input as RGB instead of the default BGR
+            keepshape (bool): whether to duplicate the gray image into 3 channels
+                so the result has the same shape as input.
         """
         mode = cv2.COLOR_RGB2GRAY if rgb else cv2.COLOR_BGR2GRAY
+        if keepshape:
+            assert keepdims, "keepdims must be True when keepshape==True"
         super(Grayscale, self).__init__(mode, keepdims)
+        self.keepshape = keepshape
+        self.rgb = rgb
+
+    def _augment(self, img, _):
+        ret = super()._augment(img, _)
+        if self.keepshape:
+            return np.concatenate([ret] * 3, axis=2)
+        else:
+            return ret
 
 
 class ToUint8(PhotometricAugmentor):
