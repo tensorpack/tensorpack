@@ -31,7 +31,7 @@ class GeneralizedRCNN(ModelDesc):
         return tf.transpose(image, [0, 3, 1, 2])
 
     def optimizer(self):
-        lr = tf.get_variable('learning_rate', initializer=0.003, trainable=False)
+        lr = tf.get_variable('learning_rate', initializer=0., trainable=False)
         tf.summary.scalar('learning_rate-summary', lr)
 
         # The learning rate in the config is set for 8 GPUs, and we use trainers with average=False.

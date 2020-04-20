@@ -43,9 +43,10 @@ Unlike most open source repos which only __implement__ papers,
 demonstrating its __flexibility__ for actual research.
 
 ### Vision:
-+ [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet.
++ [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet
 + [Train Mask/Faster R-CNN on COCO object detection](examples/FasterRCNN)
-+ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN.
++ [Unsupervised learning with Momentum Contrast](https://github.com/ppwwyyxx/moco.tensorflow) (MoCo)
++ [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
