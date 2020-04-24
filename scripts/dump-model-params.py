@@ -38,7 +38,7 @@ def _import_external_ops(message):
             from tensorflow.python.ops import gen_nccl_ops  # noqa
         return
     if 'ZMQConnection' in message:
-        import zmq_ops
+        import zmq_ops  # noqa
         return
     logger.error("Unhandled error: " + message)
 
