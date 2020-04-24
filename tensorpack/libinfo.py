@@ -98,5 +98,5 @@ else:
 
 # These lines will be programatically read/write by setup.py
 # Don't touch them.
-__version__ = '0.10'
+__version__ = '0.10.1'
 __git_version__ = __version__
