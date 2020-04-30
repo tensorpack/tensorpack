@@ -141,5 +141,11 @@ You can overwrite any of the following methods in the new callback:
 
 ### Examples
 
-Check source code of the [existing tensorpack callbacks](../../modules/callbacks.md).
-Or grep 'Callback' in tensorpack examples for those implemented as extensions.
+The builtin callbacks listed in [API docs](../../modules/callbacks.md) and callbacks in tensorpack examples are
+great examples to learn how to write a callback.
+
+Custom callbacks in tensorpack examples can be found by `ack Callback` in the example directory.
+Some interesting ones are:
+* Run inference during training with a predictor:
+  [CycleGAN](../../../examples/GAN/CycleGAN.py), [RCNN](../../../examples/FasterRCNN/eval.py)
+* Run some ops to modify weights during training: [WGAN](../../../examples/GAN/WGAN.py), [MOCO](https://github.com/ppwwyyxx/moco.tensorflow/blob/master/main_moco.py)
