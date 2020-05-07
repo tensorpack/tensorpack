@@ -178,9 +178,10 @@ class TrainTowerContext(BaseTowerContext):
 
         vs = tf.get_variable_scope()
         assert vs.name == '', "Cannot nest TrainTowerContext with an existing variable scope!"
-        if self.has_own_variables:
+        if vs_name:
             assert not vs.reuse, \
-                "Cannot create tower {} under reuse=True!".format(ns_name)
+                "Cannot create tower {} with vs_name={} under reuse=True!".format(ns_name, vs_name)
+        self._original_vs_reuse = vs.reuse
 
     @property
     def is_main_training_tower(self):
@@ -188,6 +189,8 @@ class TrainTowerContext(BaseTowerContext):
 
     @property
     def has_own_variables(self):
+        if self._original_vs_reuse:
+            return False
         return self.index == 0 or len(self._vs_name) > 0
 
     def _keys_to_freeze(self):
