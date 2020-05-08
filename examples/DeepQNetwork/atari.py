@@ -32,7 +32,8 @@ class AtariPlayer(gym.Env):
 
     def __init__(self, rom_file, viz=0,
                  frame_skip=4, nullop_start=30,
-                 live_lost_as_eoe=True, max_num_frames=0):
+                 live_lost_as_eoe=True, max_num_frames=0,
+                 grayscale=True):
         """
         Args:
             rom_file: path to the rom
@@ -44,6 +45,7 @@ class AtariPlayer(gym.Env):
             nullop_start: start with random number of null ops.
             live_losts_as_eoe: consider lost of lives as end of episode. Useful for training.
             max_num_frames: maximum number of frames per episode.
+            grayscale (bool): if True, return 2D image. Otherwise return HWC image.
         """
         super(AtariPlayer, self).__init__()
         if not os.path.isfile(rom_file) and '/' not in rom_file:
@@ -91,8 +93,10 @@ class AtariPlayer(gym.Env):
         self.nullop_start = nullop_start
 
         self.action_space = spaces.Discrete(len(self.actions))
+        self.grayscale = grayscale
+        shape = (self.height, self.width) if grayscale else (self.height, self.width, 3)
         self.observation_space = spaces.Box(
-            low=0, high=255, shape=(self.height, self.width), dtype=np.uint8)
+            low=0, high=255, shape=shape, dtype=np.uint8)
         self._restart_episode()
 
     def get_action_meanings(self):
@@ -116,9 +120,9 @@ class AtariPlayer(gym.Env):
             if isinstance(self.viz, float):
                 cv2.imshow(self.windowname, ret)
                 cv2.waitKey(int(self.viz * 1000))
-        ret = ret.astype('float32')
-        # 0.299,0.587.0.114. same as rgb2y in torch/image
-        ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)[:, :]
+        if self.grayscale:
+            # 0.299,0.587.0.114. same as rgb2y in torch/image
+            ret = cv2.cvtColor(ret, cv2.COLOR_RGB2GRAY)
         return ret.astype('uint8')  # to save some memory
 
     def _restart_episode(self):

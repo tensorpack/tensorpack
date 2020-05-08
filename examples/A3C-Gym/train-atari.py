@@ -46,13 +46,20 @@ ENV_NAME = None
 
 
 def get_player(train=False, dumpdir=None):
-    env = gym.make(ENV_NAME)
+    use_gym = not ENV_NAME.endswith(".bin")
+    if use_gym:
+        env = gym.make(ENV_NAME)
+    else:
+        from atari import AtariPlayer
+        env = AtariPlayer(ENV_NAME, frame_skip=4, viz=False,
+                          live_lost_as_eoe=train, max_num_frames=60000,
+                          grayscale=False)
     if dumpdir:
         env = gym.wrappers.Monitor(env, dumpdir, video_callable=lambda _: True)
     env = FireResetEnv(env)
     env = MapState(env, lambda im: cv2.resize(im, IMAGE_SIZE))
     env = FrameStack(env, 4)
-    if train:
+    if train and use_gym:
         env = LimitLength(env, 60000)
     return env
 
@@ -75,8 +82,9 @@ class Model(ModelDesc):
         assert state.shape.rank == 5  # Batch, H, W, Channel, History
         state = tf.transpose(state, [0, 1, 2, 4, 3])  # swap channel & history, to be compatible with old models
         image = tf.reshape(state, [-1] + list(STATE_SHAPE[:2]) + [STATE_SHAPE[2] * FRAME_HISTORY])
+        image = tf.cast(image, tf.float32)
 
-        image = tf.cast(image, tf.float32) / 255.0
+        image = image / 255.0
         with argscope(Conv2D, activation=tf.nn.relu):
             l = Conv2D('conv0', image, 32, 5)
             l = MaxPooling('pool0', l, 2)
