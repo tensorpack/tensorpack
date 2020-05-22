@@ -142,7 +142,7 @@ _C.TRAIN.NUM_GPUS = None         # by default, will be set from code
 _C.TRAIN.WEIGHT_DECAY = 1e-4
 _C.TRAIN.BASE_LR = 1e-2  # defined for total batch size=8. Otherwise it will be adjusted automatically
 _C.TRAIN.WARMUP = 1000   # in terms of iterations. This is not affected by #GPUs
-_C.TRAIN.WARMUP_INIT_LR = 0.  # defined for total batch size=8. Otherwise it will be adjusted automatically
+_C.TRAIN.WARMUP_INIT_LR = 1e-5  # defined for total batch size=8. Otherwise it will be adjusted automatically
 _C.TRAIN.STEPS_PER_EPOCH = 500
 _C.TRAIN.STARTING_EPOCH = 1  # the first epoch to start with, useful to continue a training
 

@@ -232,8 +232,8 @@ def start_proc_mask_signal(proc):
             if isinstance(p, mp.Process):
                 if sys.version_info < (3, 4) or mp.get_start_method() == 'fork':
                     log_once("""
-Starting a process with 'fork' method is not safe and may consume unnecessary extra CPU memory.
-Use 'forkserver' or 'spawn' method (available after Py3.4) instead if you run into any issues.
+Starting a process with 'fork' method is efficient but not safe and may cause deadlock or crash.
+Use 'forkserver' or 'spawn' method instead if you run into such issues.
 See https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods on how to set them.
 """.replace("\n", ""),
 'warn')  # noqa
