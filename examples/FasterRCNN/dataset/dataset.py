@@ -34,6 +34,9 @@ class DatasetSplit():
             either convert it, or the augmentation will need to be changed or skipped accordingly.
 
             Include this field only if training Mask R-CNN.
+
+        Coordinates in boxes & polygons are absolute coordinates in unit of pixels, unless
+        cfg.DATA.ABSOLUTE_COORD is False.
         """
         raise NotImplementedError()
 
