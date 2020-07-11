@@ -252,9 +252,15 @@ class GPUMemoryTracker(Callback):
         assert isinstance(devices, (list, tuple)), devices
         devices = ['/gpu:{}'.format(x) if isinstance(x, int) else x for x in devices]
         self._devices = devices
+        self._disabled = False
 
     def _setup_graph(self):
-        from tensorflow.contrib.memory_stats import MaxBytesInUse
+        try:
+            from tensorflow.contrib.memory_stats import MaxBytesInUse
+        except ImportError:
+            logger.warning("GPUMemoryTracker is not available in TF2.")
+            self._disabled = True
+            return
         ops = []
         for dev in self._devices:
             with tf.device(dev):
@@ -262,10 +268,12 @@ class GPUMemoryTracker(Callback):
         self._fetches = tf.train.SessionRunArgs(fetches=ops)
 
     def _before_train(self):
-        assert gpu_available_in_session(), "PeakMemoryTracker only supports GPU!"
+        if not gpu_available_in_session():
+            self._disabled = True
+            logger.warning("GPUMemoryTracker only supports GPU!")
 
     def _before_run(self, _):
-        if self.local_step == self.trainer.steps_per_epoch - 1:
+        if not self._disabled and self.local_step == self.trainer.steps_per_epoch - 1:
             return self._fetches
         return None
 
