@@ -84,7 +84,7 @@ if __name__ == '__main__':
         HostMemoryTracker(),
         ThroughputTracker(samples_per_step=cfg.TRAIN.NUM_GPUS),
         EstimatedTimeLeft(median=True),
-        SessionRunTimeout(60000),   # 1 minute timeout
+        SessionRunTimeout(600000),   # 10 minute timeout
         GPUUtilizationTracker()
     ]
     if cfg.TRAIN.EVAL_PERIOD > 0:

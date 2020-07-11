@@ -5,8 +5,8 @@ set -v
 . /workspace/venv/bin/activate
 
 pip install -e .
-pip install tensorflow-gpu==1.14.0
-pip install opencv-python scipy
+pip install tensorflow-gpu==1.15.0
+pip install opencv-python-headless scipy pycocotools>=2.0.1
 
 echo "Extracting ..."
 cd ./.data/vision/coco
