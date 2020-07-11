@@ -29,7 +29,7 @@ jobs:
       max-parallel: 6
       matrix:
         python-version: [3.6]
-        TF-version: [1.5.0, 1.15.0]
+        TF-version: [tensorflow==1.5.0, tensorflow-cpu==1.15.0]
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
@@ -45,12 +45,8 @@ jobs:
           # check that dataflow can be imported alone without tensorflow
           python -c "import cv2; print('OpenCV '+ cv2.__version__)"
       - name: Install TF
-        env:
-          TF_VERSION: ${{ matrix.TF-version }}
-          # compatible with travis scripts
-          TRAVIS_PYTHON_VERSION: ${{ matrix.python-version }}
         run: |
-          ./tests/install-tensorflow.sh
+          python -m pip install ${{ matrix.TF-version }}
           python -c "import tensorflow as tf; print(tf.VERSION, tf.GIT_VERSION)"
 
       - name: Run Tests
