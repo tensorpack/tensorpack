@@ -25,11 +25,11 @@ def _replace_global_by_local(kwargs):
     if 'collections' in kwargs:
         collections = kwargs['collections']
     if not collections:
-        collections = {tf.GraphKeys.GLOBAL_VARIABLES}
+        collections = {tfv1.GraphKeys.GLOBAL_VARIABLES}
     else:
         collections = set(collections.copy())
-    collections.remove(tf.GraphKeys.GLOBAL_VARIABLES)
-    collections.add(tf.GraphKeys.LOCAL_VARIABLES)
+    collections.remove(tfv1.GraphKeys.GLOBAL_VARIABLES)
+    collections.add(tfv1.GraphKeys.LOCAL_VARIABLES)
     kwargs['collections'] = list(collections)
 
 

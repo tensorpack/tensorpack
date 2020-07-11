@@ -74,7 +74,7 @@ def encode_bbox_target(boxes, anchors):
 
     # Note that here not all boxes are valid. Some may be zero
     txty = (xbyb - xaya) / waha
-    twth = tf.log(wbhb / waha)  # may contain -inf for invalid boxes
+    twth = tf.math.log(wbhb / waha)  # may contain -inf for invalid boxes
     encoded = tf.concat([txty, twth], axis=1)  # (-1x2x2)
     return tf.reshape(encoded, tf.shape(boxes))
 

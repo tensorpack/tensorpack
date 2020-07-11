@@ -289,9 +289,9 @@ class SingleCostTrainer(TowerTrainer):
 
                 grads_no_vars = xla.compile(xla_func)
                 if ctx.has_own_variables:
-                    varlist = ctx.get_collection_in_tower(tf.GraphKeys.TRAINABLE_VARIABLES)
+                    varlist = ctx.get_collection_in_tower(tfv1.GraphKeys.TRAINABLE_VARIABLES)
                 else:
-                    varlist = tf.trainable_variables()
+                    varlist = tfv1.trainable_variables()
                 return list(zip(grads_no_vars, varlist))
 
         return get_grad_fn

@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: train.py
 
 import argparse
 
 from tensorpack import *
 from tensorpack.tfutils import collect_env_info
-from tensorpack.tfutils.common import get_tf_version_tuple
 
 from dataset import register_coco, register_balloon
 from config import config as cfg
@@ -33,10 +31,6 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', help='Log directory. Will remove the old one if already exists.',
                         default='train_log/maskrcnn')
     parser.add_argument('--config', help="A list of KEY=VALUE to overwrite those defined in config.py", nargs='+')
-
-    if get_tf_version_tuple() < (1, 6):
-        # https://github.com/tensorflow/tensorflow/issues/14657
-        logger.warn("TF<1.6 has a bug which may lead to crash in FasterRCNN if you're unlucky.")
 
     args = parser.parse_args()
     if args.config:

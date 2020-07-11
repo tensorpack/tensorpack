@@ -84,7 +84,7 @@ def fpn_map_rois_to_levels(boxes):
     """
     sqrtarea = tf.sqrt(tf_area(boxes))
     level = tf.cast(tf.floor(
-        4 + tf.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2))), tf.int32)
+        4 + tf.math.log(sqrtarea * (1. / 224) + 1e-6) * (1.0 / np.log(2))), tf.int32)
 
     # RoI levels range from 2~5 (not 6)
     level_ids = [
@@ -127,7 +127,7 @@ def multilevel_roi_align(features, rcnn_boxes, resolution):
     all_rois = tf.concat(all_rois, axis=0)  # NCHW
     # Unshuffle to the original order, to match the original samples
     level_id_perm = tf.concat(level_ids, axis=0)  # A permutation of 1~N
-    level_id_invert_perm = tf.invert_permutation(level_id_perm)
+    level_id_invert_perm = tf.math.invert_permutation(level_id_perm)
     all_rois = tf.gather(all_rois, level_id_invert_perm, name="output")
     return all_rois
 

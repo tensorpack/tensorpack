@@ -15,7 +15,7 @@ with the support of:
 + Training from scratch (from [Rethinking ImageNet Pre-training](https://arxiv.org/abs/1811.08883))
 
 ## Dependencies
-+ OpenCV, TensorFlow ≥ 1.6
++ OpenCV, TensorFlow ≥ 1.14
 + pycocotools/scipy: `for i in cython 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI' scipy; do pip install $i; done`
 + Pre-trained [ImageNet ResNet model](http://models.tensorpack.com/#FasterRCNN)
   from tensorpack model zoo

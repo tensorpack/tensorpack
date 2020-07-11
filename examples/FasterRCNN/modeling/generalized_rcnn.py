@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # File:
 
-import tensorflow as tf
-
+from tensorpack.compat import tfv1 as tf
 from tensorpack import ModelDesc
 from tensorpack.models import GlobalAvgPooling, l2_regularizer, regularize_cost
 from tensorpack.tfutils import optimizer

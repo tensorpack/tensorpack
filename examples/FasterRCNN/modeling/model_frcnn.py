@@ -5,7 +5,6 @@ import tensorflow as tf
 
 from tensorpack.models import Conv2D, FullyConnected, layer_register
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 from tensorpack.utils.argtools import memoized_method
@@ -74,13 +73,13 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
         num_fg = tf.minimum(int(
             cfg.FRCNN.BATCH_PER_IM * cfg.FRCNN.FG_RATIO),
             tf.size(fg_inds), name='num_fg')
-        fg_inds = tf.random_shuffle(fg_inds)[:num_fg]
+        fg_inds = tf.random.shuffle(fg_inds)[:num_fg]
 
         bg_inds = tf.reshape(tf.where(tf.logical_not(fg_mask)), [-1])
         num_bg = tf.minimum(
             cfg.FRCNN.BATCH_PER_IM - num_fg,
             tf.size(bg_inds), name='num_bg')
-        bg_inds = tf.random_shuffle(bg_inds)[:num_bg]
+        bg_inds = tf.random.shuffle(bg_inds)[:num_bg]
 
         add_moving_summary(num_fg, num_bg)
         return fg_inds, bg_inds
@@ -151,12 +150,8 @@ def fastrcnn_losses(labels, label_logits, fg_boxes, fg_box_logits):
     num_fg = tf.size(fg_inds, out_type=tf.int64)
     empty_fg = tf.equal(num_fg, 0)
     if int(fg_box_logits.shape[1]) > 1:
-        if get_tf_version_tuple() >= (1, 14):
-            fg_labels = tf.expand_dims(fg_labels, axis=1)  # nfg x 1
-            fg_box_logits = tf.gather(fg_box_logits, fg_labels, batch_dims=1)
-        else:
-            indices = tf.stack([tf.range(num_fg), fg_labels], axis=1)  # nfgx2
-            fg_box_logits = tf.gather_nd(fg_box_logits, indices)
+        fg_labels = tf.expand_dims(fg_labels, axis=1)  # nfg x 1
+        fg_box_logits = tf.gather(fg_box_logits, fg_labels, batch_dims=1)
     fg_box_logits = tf.reshape(fg_box_logits, [-1, 4])  # nfg x 4
 
     with tf.name_scope('label_metrics'), tf.device('/cpu:0'):
@@ -253,7 +248,7 @@ def fastrcnn_Xconv1fc_head(feature, num_convs, norm=None):
     with argscope(Conv2D, data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(
                       scale=2.0, mode='fan_out',
-                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal')):
+                      distribution='untruncated_normal')):
         for k in range(num_convs):
             l = Conv2D('conv{}'.format(k), l, cfg.FPN.FRCNN_CONV_HEAD_DIM, 3, activation=tf.nn.relu)
             if norm is not None:

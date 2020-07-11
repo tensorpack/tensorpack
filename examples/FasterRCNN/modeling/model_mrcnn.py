@@ -4,7 +4,6 @@ import tensorflow as tf
 
 from tensorpack.models import Conv2D, Conv2DTranspose, layer_register
 from tensorpack.tfutils.argscope import argscope
-from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.tfutils.scope_utils import under_name_scope
 from tensorpack.tfutils.summary import add_moving_summary
 
@@ -20,14 +19,9 @@ def maskrcnn_loss(mask_logits, fg_labels, fg_target_masks):
         fg_labels: #fg, in 1~#class, int64
         fg_target_masks: #fgxhxw, float32
     """
-    if get_tf_version_tuple() >= (1, 14):
-        mask_logits = tf.gather(
-            mask_logits, tf.reshape(fg_labels - 1, [-1, 1]), batch_dims=1)
-        mask_logits = tf.squeeze(mask_logits, axis=1)
-    else:
-        indices = tf.stack([tf.range(tf.size(fg_labels, out_type=tf.int64)),
-                            fg_labels - 1], axis=1)  # #fgx2
-        mask_logits = tf.gather_nd(mask_logits, indices)  # #fg x h x w
+    mask_logits = tf.gather(
+        mask_logits, tf.reshape(fg_labels - 1, [-1, 1]), batch_dims=1)
+    mask_logits = tf.squeeze(mask_logits, axis=1)
 
     mask_probs = tf.sigmoid(mask_logits)
 
@@ -74,7 +68,7 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
     with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
                   kernel_initializer=tf.variance_scaling_initializer(
                       scale=2.0, mode='fan_out',
-                      distribution='untruncated_normal' if get_tf_version_tuple() >= (1, 12) else 'normal')):
+                      distribution='untruncated_normal')):
         # c2's MSRAFill is fan_out
         for k in range(num_convs):
             l = Conv2D('fcn{}'.format(k), l, cfg.MRCNN.HEAD_DIM, 3, activation=tf.nn.relu)

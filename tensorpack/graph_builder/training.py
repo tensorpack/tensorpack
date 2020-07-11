@@ -316,9 +316,9 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         Copy values of variables on GPU 0 to other GPUs.
         """
         # literally all variables, because it's better to sync optimizer-internal variables as well
-        all_vars = tf.global_variables() + tf.local_variables()
+        all_vars = tfv1.global_variables() + tfv1.local_variables()
         var_by_name = {v.name: v for v in all_vars}
-        trainable_names = {x.name for x in tf.trainable_variables()}
+        trainable_names = {x.name for x in tfv1.trainable_variables()}
         post_init_ops = []
 
         def log_failure(name, reason):
