@@ -134,7 +134,7 @@ class VariableAssignmentOptimizer(PostProcessOptimizer):
             t = func(v)
             if t is None:
                 return t
-            return tf.assign(v, t, use_locking=False).op
+            return tfv1.assign(v, t, use_locking=False).op
         super(VariableAssignmentOptimizer, self).__init__(opt, f)
 
 
@@ -189,7 +189,7 @@ class AccumGradOptimizer(ProxyOptimizer):
             slots = self._create_accum_slots(vs)
             slots_and_vars = [(s, gv[1]) for s, gv in zip(slots, grads_and_vars)]
 
-            with tf.variable_scope(self._name), tf.device('/cpu:0'):
+            with tfv1.variable_scope(self._name), tf.device('/cpu:0'):
                 counter = tf.Variable(
                     0, name="counter", trainable=False, dtype=tf.int32)
 
@@ -198,16 +198,16 @@ class AccumGradOptimizer(ProxyOptimizer):
             for s, gv in zip(slots, grads_and_vars):
                 g, v = gv
                 ops.append(s.assign_add(g))
-            update_counter = tf.assign_add(counter, 1, name='update_counter')
+            update_counter = tfv1.assign_add(counter, 1, name='update_counter')
             update_slot_op = tf.group(update_counter, *ops, name='update_slot')
 
             def update_grad():
                 update_op = self._opt.apply_gradients(slots_and_vars)
                 with tf.control_dependencies([update_op]):
-                    clear_ops = [tf.assign(s, tf.zeros_like(s)) for s in slots]
+                    clear_ops = [tfv1.assign(s, tf.zeros_like(s)) for s in slots]
                 return tf.group(*clear_ops, name='update_grad')
 
-            pred = tf.equal(tf.mod(counter, self._niter), 0)
+            pred = tf.equal(tfv1.mod(counter, self._niter), 0)
             with tf.control_dependencies([update_slot_op]):
                 if name is None:
                     name = 'cond_update_grad'
@@ -217,7 +217,7 @@ class AccumGradOptimizer(ProxyOptimizer):
                 # Tensorpack maintains global_step by other means,
                 # so this option is useless in tensorpack trainers.
                 # But we include the implementation here for completeness
-                global_step_increment = tf.assign_add(global_step, 1)
+                global_step_increment = tfv1.assign_add(global_step, 1)
                 op = tf.group(op, global_step_increment, name=name)
             else:
                 op = tf.identity(op, name=name).op
@@ -227,7 +227,7 @@ class AccumGradOptimizer(ProxyOptimizer):
 if __name__ == '__main__':
     # run it with "python -m tensorpack.tfutils.optimizer"
 
-    x = tf.get_variable('x', shape=[6])
+    x = tfv1.get_variable('x', shape=[6])
     cost = tf.reduce_sum(tf.abs(x), name='cost')
     opt = tf.train.GradientDescentOptimizer(0.01)
     opt = AccumGradOptimizer(opt, 5)

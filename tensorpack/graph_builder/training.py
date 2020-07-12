@@ -32,7 +32,7 @@ class GraphBuilder(object):
 @contextmanager
 def _maybe_reuse_vs(reuse):
     if reuse:
-        with tf.variable_scope(tf.get_variable_scope(), reuse=True):
+        with tfv1.variable_scope(tfv1.get_variable_scope(), reuse=True):
             yield
     else:
         yield
