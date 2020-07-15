@@ -10,6 +10,7 @@ import psutil
 import tensorflow as tf
 import numpy as np
 
+import tensorpack
 from ..compat import tfv1
 from ..utils.argtools import graph_memoized
 from ..utils.utils import find_library_full_path as find_library
@@ -172,10 +173,10 @@ def collect_env_info():
     data = []
     data.append(("sys.platform", sys.platform))
     data.append(("Python", sys.version.replace("\n", "")))
-    data.append(("Tensorpack", __git_version__))
+    data.append(("Tensorpack", __git_version__ + " @" + os.path.dirname(tensorpack.__file__)))
     data.append(("Numpy", np.__version__))
 
-    data.append(("TensorFlow", tfv1.VERSION + "/" + tfv1.GIT_VERSION))
+    data.append(("TensorFlow", tfv1.VERSION + "/" + tfv1.GIT_VERSION + " @" + os.path.dirname(tf.__file__)))
     data.append(("TF Compiler Version", tfv1.COMPILER_VERSION))
     has_cuda = tf.test.is_built_with_cuda()
     data.append(("TF CUDA support", has_cuda))
@@ -221,7 +222,7 @@ def collect_env_info():
     # Other important dependencies:
     try:
         import horovod
-        data.append(("Horovod", horovod.__version__))
+        data.append(("Horovod", horovod.__version__ + " @" + os.path.dirname(horovod.__file__)))
     except ImportError:
         pass
 

@@ -116,7 +116,7 @@ Performance in [Detectron](https://github.com/facebookresearch/Detectron/) can b
  We compare models that have identical training & inference cost between the two implementations.
  Their numbers can be different due to small implementation details.
 
- <a id="ft2">2</a>: Our mAP is __7 point__ better than the official model in
+ <a id="ft2">2</a>: This model has __7 point__ better mAP than the official model in
  [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/releases/tag/v2.0) which has the same architecture.
  Our implementation is also [5x faster](https://github.com/tensorpack/benchmarks/tree/master/MaskRCNN).
 

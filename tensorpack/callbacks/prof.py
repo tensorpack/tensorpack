@@ -124,10 +124,10 @@ class GPUUtilizationTracker(Callback):
         Args:
             devices (list[int])
         """
-        with NVMLContext() as ctx:
-            devices = [ctx.device(i) for i in devices]
-            while True:
-                try:
+        try:
+            with NVMLContext() as ctx:
+                devices = [ctx.device(i) for i in devices]
+                while True:
                     evt.wait()  # start epoch
                     evt.clear()
                     if stop_evt.is_set():   # or on exit
@@ -153,10 +153,10 @@ class GPUUtilizationTracker(Callback):
                                 cnt -= 1
                             rst_queue.put(stats / cnt)
                             break
-                except Exception:
-                    logger.exception("Exception in GPUUtilizationTracker.worker")
-                    rst_queue.put(-1)
-                    return
+        except Exception:
+            logger.exception("Exception in GPUUtilizationTracker.worker")
+            rst_queue.put(-1)
+            return
 
 
 # Can add more features from tfprof

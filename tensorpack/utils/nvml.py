@@ -191,6 +191,8 @@ class NVMLContext(object):
         Returns:
             NvidiaDevice: single GPU device
         """
+        num_dev = self.num_devices()
+        assert idx < num_dev, "Cannot obtain device {}: NVML only found {} devices.".format(idx, num_dev)
 
         class GpuDevice(Structure):
             pass

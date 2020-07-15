@@ -173,7 +173,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
             try:
                 distrib, value = outputs.result()
             except CancelledError:
-                logger.info("Client {} cancelled.".format(client.ident))
+                logger.info("Client {} cancelled.".format(client.ident.decode('utf-8')))
                 return
             assert np.all(np.isfinite(distrib)), distrib
             action = np.random.choice(len(distrib), p=distrib)

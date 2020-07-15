@@ -160,7 +160,8 @@ or when you need to filter your data on the fly.
    but inefficient for generic data type or numpy arrays.
    Also, its implementation [does not always clean up the subprocesses correctly](https://github.com/pytorch/pytorch/issues/16608).
 
-PyTorch starts to improve on these bad assumptions (e.g., with [IterableDataset](https://github.com/pytorch/pytorch/pull/19228)).
+PyTorch starts to improve on bad assumptions 1-3, (e.g., with IterableDataset).
+But the interface still bears the history of these assumptions.
 On the other hand, DataFlow:
 
 1. Is an iterator, not necessarily has a length or can be indexed. This is more generic.
