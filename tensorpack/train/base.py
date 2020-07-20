@@ -290,6 +290,9 @@ class Trainer(object):
             except KeyboardInterrupt:
                 logger.info("Detected Ctrl-C and exiting main loop.")
                 raise
+            except Exception:
+                logger.error("Training failed at global_step=", self.loop.global_step)
+                raise
             finally:
                 self._callbacks.after_train()
                 self.hooked_sess.close()

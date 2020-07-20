@@ -16,7 +16,9 @@ from ..tfutils.tower import TrainTowerContext
 from ..utils import logger
 from ..utils.develop import HIDE_DOC
 from .utils import (
-    GradientPacker, LeastLoadedDeviceSetter, aggregate_grads, allreduce_grads, allreduce_grads_hierarchical,
+    GradientPacker, LeastLoadedDeviceSetter,
+    aggregate_grads_colocate, allreduce_grads_naive,
+    allreduce_grads, allreduce_grads_hierarchical,
     merge_grad_list, override_to_local_variable, split_grad_list)
 
 __all__ = ["DataParallelBuilder"]
@@ -173,12 +175,13 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
         assert len(grad_list) == len(self.towers)
         DataParallelBuilder._check_grad_list(grad_list)
 
-        # debug tower performance (without update):
+        # debug tower performance:
         # ops = [k[0] for k in grad_list[1]] + [k[0] for k in grad_list[0]]
         # self.train_op = tf.group(*ops)
         # return
 
-        self.grads = aggregate_grads(grad_list, colocation=True)
+        self.grads = aggregate_grads_colocate(grad_list)
+        # debug tower performance:
         # grads = grad_list[0]
 
         opt = get_opt_fn()
@@ -204,13 +207,11 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
     def __init__(self, towers, average, mode):
         super(SyncMultiGPUReplicatedBuilder, self).__init__(towers)
         self._average = average
-        assert mode in ['nccl', 'cpu', 'hierarchical'], mode
-        if get_tf_version_tuple() >= (2, 0) and mode == 'cpu':
-            mode = 'nccl'  # cpu mode causes the entire model to get located on cpu
+        assert mode in ['nccl', 'cpu', 'hierarchical', 'gpu', 'collective'], mode
         self._mode = mode
 
         if self._mode == 'hierarchical' and len(towers) != 8:
-            logger.warn("mode='hierarchical' require >= 8 GPUs. Fallback to mode='nccl'.")
+            logger.warn("mode='hierarchical' require 8 GPUs. Fallback to mode='nccl'.")
             self._mode = 'nccl'
 
     def call_for_each_tower(self, tower_fn):
@@ -257,39 +258,38 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         valid_for_nccl = all(k in dtypes_nccl_supported for k in dtypes)
         if self._mode == 'nccl' and not valid_for_nccl:
             logger.warn("Cannot use mode='nccl' because some gradients have unsupported types. Fallback to mode='cpu'")
-            self._mode = 'cpu'
+            self._mode = 'gpu'
 
-        if self._mode in ['nccl', 'hierarchical']:
-            all_grads, all_vars = split_grad_list(grad_list)
+        all_grads, all_vars = split_grad_list(grad_list)
+
+        def do_allreduce(all_grads):
             # use allreduce from tf-benchmarks
             # from .batch_allreduce import AllReduceSpecAlgorithm
             # algo = AllReduceSpecAlgorithm('nccl', list(range(8)), 0, 10)
             # all_grads, warmup_ops = algo.batch_all_reduce(all_grads, 1, True, False)
             # print("WARMUP OPS", warmup_ops)
-
-            if self._mode == 'nccl':
-                all_grads = allreduce_grads(all_grads, average=self._average)  # #gpu x #param
+            if self._mode in ['nccl', 'collective']:
+                # #gpu x #param
+                all_grads = allreduce_grads(all_grads, average=self._average, mode=self._mode)
+            elif self._mode == 'hierarchical':
+                all_grads = allreduce_grads_hierarchical(all_grads, raw_devices, average=self._average)
             else:
-                packer = GradientPacker(len(raw_devices))
-                succ = packer.compute_strategy(all_grads[0])
-                if succ:
-                    packed_grads = packer.pack_all(all_grads, raw_devices)
-                    packed_grads_aggr = allreduce_grads_hierarchical(
-                        packed_grads, raw_devices, average=self._average)
-                    all_grads = packer.unpack_all(packed_grads_aggr, raw_devices)
-                else:
-                    all_grads = allreduce_grads_hierarchical(all_grads, raw_devices, average=self._average)
+                devices = ['/cpu:0'] if self._mode == 'cpu' else raw_devices
+                all_grads = allreduce_grads_naive(all_grads, devices=devices, average=self._average)
+                all_grads = [all_grads] * len(self.towers)
+            return all_grads
 
-            self.grads = merge_grad_list(all_grads, all_vars)
-        elif self._mode == 'cpu':
-            agg_grad_and_vars = aggregate_grads(
-                grad_list, colocation=False,
-                devices=['/cpu:0'], average=self._average)    # #param x 2
-            self.grads = []  # #gpu x #param x 2
-            for grad_and_vars in grad_list:   # grad_and_vars: #paramx2
-                # take v from each tower, and g from average.
-                self.grads.append(
-                    [(g, v) for (_, v), (g, _) in zip(grad_and_vars, agg_grad_and_vars)])
+        use_packer = self._mode in ['hierarchical']
+        if use_packer:
+            packer = GradientPacker(len(raw_devices))
+            use_packer = packer.compute_strategy(all_grads[0])  # may fail to pack
+        if use_packer:
+            all_grads = packer.pack_all(all_grads, raw_devices)
+        all_grads = do_allreduce(all_grads)   # all the work happens here
+        if use_packer:
+            all_grads = packer.unpack_all(all_grads, raw_devices)
+
+        self.grads = merge_grad_list(all_grads, all_vars)
 
         train_ops = []
         opt = get_opt_fn()

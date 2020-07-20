@@ -117,7 +117,7 @@ class ModelDesc(ModelDescBase):
         """
         ret = self.optimizer()
         assert isinstance(ret, tfv1.train.Optimizer), \
-            "ModelDesc.optimizer() must return a tf.train.Optimizer! Got {} instead.".format(str(ret))
+            "ModelDesc.optimizer() must return an instance of tf.train.Optimizer! Got {} instead.".format(str(ret))
         return ret
 
     def optimizer(self):

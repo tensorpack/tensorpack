@@ -13,6 +13,7 @@ from ..graph_builder.training import (
 from ..graph_builder.utils import override_to_local_variable
 from ..input_source import FeedfreeInput, QueueInput
 from ..tfutils import get_global_step_var
+from ..tfutils.common import get_tf_version_tuple
 from ..tfutils.distributed import get_distributed_session_creator
 from ..tfutils.sesscreate import NewSessionCreator
 from ..tfutils.tower import TrainTowerContext
@@ -173,10 +174,26 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
                 "hierarchical" mode was designed for DGX-like 8GPU machines.
         """
         self.devices = gpus
+        if mode is not None:
+            mode = mode.lower()
 
+        # Heuristics about mode selection:
+        if mode == 'hierarchical' and len(gpus) != 8:
+            logger.warn("mode='hierarchical' requires 8 GPUs. Will fallback to default mode.")
+            mode = None
         if mode is None:
-            mode = 'hierarchical' if len(gpus) == 8 else 'nccl'
-        mode = mode.lower()
+            if len(gpus) == 8:
+                mode = 'hierarchical'
+            else:
+                # https://github.com/tensorflow/tensorflow/issues/41539
+                mode = 'nccl' if get_tf_version_tuple() < (1, 15) else 'gpu'
+        if mode == 'cpu' and get_tf_version_tuple() >= (2, 0):
+            # cpu mode causes the entire model to get located on cpu
+            mode = 'gpu'
+        if mode == 'nccl' and get_tf_version_tuple() >= (1, 15):
+            logger.warning(
+                "NCCL in TensorFlow has a serious bug that is likely to trigger in TF>=1.15. "
+                "Try 'mode=None' to use a better default mode.")
 
         self._builder = SyncMultiGPUReplicatedBuilder(gpus, average, mode)
         self.BROADCAST_EVERY_EPOCH = True
