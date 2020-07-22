@@ -178,8 +178,10 @@ def allreduce_grads(all_grads, average, mode="nccl"):
             for t in grads:
                 with tf.device(t.device):
                     t = collective_ops.all_reduce(
-                        t, len(grads), shared_cnt, shared_cnt + 100,
-                        'Add', 'Id')
+                        t, len(grads),
+                        42,   # group key is any fixed integer for a fixed group of devices
+                        shared_cnt + 100,
+                        'Add', 'Id', communication_hint='nccl')
                     summed.append(t)
 
         grads_for_devices = []  # K
