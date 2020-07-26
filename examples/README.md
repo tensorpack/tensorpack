@@ -23,7 +23,7 @@ so you're confident that they are correct.
 ## Getting Started:
 These are the only toy examples in tensorpack. They are supposed to be just demos.
 + [An illustrative MNIST example with explanation of the framework](basics/mnist-convnet.py)
-+ Tensorpack supports any symbolic libraries. See the same MNIST example written with [tf.layers](basics/mnist-tflayers.py), [tf-slim](basics/mnist-tfslim.py), and [with weights visualizations](basics/mnist-visualizations.py)
++ Tensorpack supports any symbolic libraries. See the same MNIST example written with [tf.layers](basics/mnist-tflayers.py), and [with weights visualizations](basics/mnist-visualizations.py)
 + A tiny [Cifar ConvNet](basics/cifar-convnet.py) and [SVHN ConvNet](basics/svhn-digit-convnet.py)
 + If you've used Keras, check out [Keras+Tensorpack examples](keras)
 + [A boilerplate file to start with, for your own tasks](boilerplate.py)

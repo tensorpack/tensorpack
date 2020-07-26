@@ -200,7 +200,7 @@ def multithread_predict_dataflow(dataflows, model_funcs):
         return predict_dataflow(dataflows[0], model_funcs[0])
     kwargs = {'thread_name_prefix': 'EvalWorker'} if sys.version_info.minor >= 6 else {}
     with ThreadPoolExecutor(max_workers=num_worker, **kwargs) as executor, \
-            tqdm.tqdm(total=sum([df.size() for df in dataflows])) as pbar:
+            tqdm.tqdm(total=sum(df.size() for df in dataflows)) as pbar:
         futures = []
         for dataflow, pred in zip(dataflows, model_funcs):
             futures.append(executor.submit(predict_dataflow, dataflow, pred, pbar))

@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-tflayers.py
 
-import tensorflow as tf
-
+from tensorpack.compat import tfv1 as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import summary

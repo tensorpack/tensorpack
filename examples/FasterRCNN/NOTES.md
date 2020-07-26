@@ -44,7 +44,7 @@ This is a minimal implementation that simply contains these files:
 
 <p align="center"> <img src="https://user-images.githubusercontent.com/1381301/31527740-2f1b38ce-af84-11e7-8de1-628e90089826.png"> </p>
 
-2. We use ROIAlign, and `tf.image.crop_and_resize` is __NOT__ ROIAlign.
+2. We use ROIAlign, and `tf.image.crop_and_resize` is [__NOT__](https://github.com/tensorflow/tensorflow/issues/26278) ROIAlign.
 
 3. We currently only support single image per GPU in this example.
 
@@ -60,10 +60,10 @@ Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100
 
 | Implementation                                                                                    | Throughput (img/s) |
 |---------------------------------------------------------------------------------------------------|:------------------:|
-| [Detectron2](https://github.com/facebookresearch/detectron2)                                      | 60                 |
-| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/)                     | 51                 |
+| [Detectron2](https://github.com/facebookresearch/detectron2)                                      | 62                 |
+| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn) | 53                 |
+| [maskrcnn-benchmark](https://github.com/facebookresearch/maskrcnn-benchmark/)                     | 53                 |
 | tensorpack                                                                                        | 50                 |
-| [mmdetection](https://github.com/open-mmlab/mmdetection/blob/master/docs/MODEL_ZOO.md#mask-r-cnn) | 41                 |
 | [Detectron](https://github.com/facebookresearch/Detectron)                                        | 19                 |
 | [matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN/)                                  | 14                 |
 
@@ -92,14 +92,13 @@ Training throughput (larger is better) of standard R50-FPN Mask R-CNN, on 8 V100
 	 in standard format but it does not help you on optimized inference.
 	 In fact, the current implementation uses some slow numpy operations in inference (in `eval.py:_paste_mask`).
 
-Possible Future Enhancements:
+Possible Future Speed Enhancements:
 
 1. Support batch>1 per GPU. Batching with inconsistent shapes is
    non-trivial to implement in TensorFlow.
 
-1. Use dedicated ops to improve speed. (e.g. a TF implementation of ROIAlign op
-   can be found in [light-head RCNN](https://github.com/zengarden/light_head_rcnn/tree/master/lib/lib_kernel))
-
+1. Use dedicated CUDA ops. (e.g. [ROIAlign](https://github.com/zengarden/light_head_rcnn/tree/master/lib/lib_kernel) or
+   `tf.image.generate_bounding_box_proposals`)
 
 ### TensorFlow version notes
 
@@ -118,6 +117,8 @@ Therefore, not every version of TF ≥ 1.6 supports every feature in this implem
 1. TF 1.13: MKL inference will fail ([issue](https://github.com/tensorflow/tensorflow/issues/24650)).
 1. TF > 1.12: Horovod training will fail ([issue](https://github.com/tensorflow/tensorflow/issues/25946)).
    Latest tensorpack will apply a workaround.
+1. TF > 1.14: NCCL produce wrong gradients ([issue](https://github.com/tensorflow/tensorflow/issues/41539)).
+   Latest tensorpack will avoid using NCCL.
 
 This implementation contains workaround for some of these TF bugs.
 However, note that the workaround needs to check your TF version by `tf.VERSION`,

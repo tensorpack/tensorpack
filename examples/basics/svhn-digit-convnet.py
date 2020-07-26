@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# File: svhn-digit-convnet.py
 # Author: Yuxin Wu
 
 import argparse
 import os
-import tensorflow as tf
-
+from tensorpack.compat import tfv1 as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import *

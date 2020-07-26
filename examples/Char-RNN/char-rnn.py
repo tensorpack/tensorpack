@@ -155,7 +155,7 @@ def sample(path, start, length):
     # generate more
     ret = start
     c = start[-1]
-    for k in range(length):
+    for _ in range(length):
         x = np.array([[ds.char2idx[c]]], dtype='int32')
         prob, state = pred(x, state[0, 0], state[0, 1], state[1, 0], state[1, 1])
         c = ds.chars[pick(prob[0])]

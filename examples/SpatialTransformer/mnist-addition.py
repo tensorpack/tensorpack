@@ -211,9 +211,9 @@ def view_warp(modelpath):
                     [WARP_TARGET_SIZE, WARP_TARGET_SIZE, 1],
                     [0, WARP_TARGET_SIZE, 1]], dtype='float32')
 
-    def draw_rect(img, affine, c, offset=[0, 0]):
+    def draw_rect(img, affine, c, offset=(0, 0)):
         a = np.transpose(affine)  # 3x2
-        a = (np.matmul(xys, a) + offset).astype('int32')
+        a = (np.matmul(xys, a) + list(offset)).astype('int32')
         cv2.line(img, tuple(a[0][::-1]), tuple(a[1][::-1]), c)
         cv2.line(img, tuple(a[1][::-1]), tuple(a[2][::-1]), c)
         cv2.line(img, tuple(a[2][::-1]), tuple(a[3][::-1]), c)

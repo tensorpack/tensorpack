@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: load-alexnet.py
 # Author: Yuxin Wu
 

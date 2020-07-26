@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: cifar-convnet.py
 # Author: Yuxin Wu
 import argparse
 import os
-import tensorflow as tf
+from tensorpack.compat import tfv1 as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset

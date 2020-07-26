@@ -11,7 +11,7 @@ __all__ = ['TIMITBatch']
 
 def batch_feature(feats):
     # pad to the longest in the batch
-    maxlen = max([k.shape[0] for k in feats])
+    maxlen = max(k.shape[0] for k in feats)
     bsize = len(feats)
     ret = np.zeros((bsize, maxlen, feats[0].shape[1]))
     for idx, feat in enumerate(feats):
@@ -20,7 +20,7 @@ def batch_feature(feats):
 
 
 def sparse_label(labels):
-    maxlen = max([k.shape[0] for k in labels])
+    maxlen = max(k.shape[0] for k in labels)
     shape = [len(labels), maxlen]   # bxt
     indices = []
     values = []
@@ -47,7 +47,7 @@ class TIMITBatch(ProxyDataFlow):
         for _ in range(self.__len__()):
             feats = []
             labs = []
-            for b in range(self.batch):
+            for _ in range(self.batch):
                 feat, lab = next(itr)
                 feats.append(feat)
                 labs.append(lab)

@@ -59,7 +59,7 @@ class AttrDict():
             keylist = keys.split('.')
 
             dic = self
-            for i, k in enumerate(keylist[:-1]):
+            for k in keylist[:-1]:
                 assert k in dir(dic), "Unknown config key: {}".format(keys)
                 dic = getattr(dic, k)
             key = keylist[-1]

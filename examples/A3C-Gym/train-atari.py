@@ -208,7 +208,7 @@ class MySimulatorMaster(SimulatorMaster, Callback):
 
         mem.reverse()
         R = float(init_r)
-        for idx, k in enumerate(mem):
+        for k in mem:
             R = np.clip(k.reward, -1, 1) + GAMMA * R
             self.queue.put([k.state, k.action, R, k.prob])
 

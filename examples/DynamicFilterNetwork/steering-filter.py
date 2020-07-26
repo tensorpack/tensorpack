@@ -211,7 +211,7 @@ class ThetaImages(ProxyDataFlow, RNGDataFlow):
         RNGDataFlow.reset_state(self)
 
     def __iter__(self):
-        for image, label in self.ds:
+        for image, _ in self.ds:
             theta = self.rng.uniform(0, 2 * np.pi)
             filtered_image, gt_filter = ThetaImages.filter_with_theta(image, theta)
             yield [theta, image, filtered_image, gt_filter]

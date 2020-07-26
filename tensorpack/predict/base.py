@@ -146,10 +146,11 @@ class OfflinePredictor(OnlinePredictor):
 
             config = PredictConfig(model=my_model,
                                    inputs_names=['image'],
+                                   # use names of tensors defined in the model
                                    output_names=['linear/output', 'prediction'])
             predictor = OfflinePredictor(config)
-            batch_image = np.random.rand(1, 100, 100, 3)
-            batch_output, batch_prediction = predictor(batch_image)
+            image = np.random.rand(1, 100, 100, 3)  # the shape of "image" defined in the model
+            linear_output, prediction = predictor(image)
     """
 
     def __init__(self, config):
