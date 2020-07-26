@@ -21,3 +21,5 @@ if STATICA_HACK:
     from tensorpack.train import *
     from tensorpack.input_source import *
     from tensorpack.predict import *
+
+from tensorpack.compat import tfv1

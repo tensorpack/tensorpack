@@ -4,7 +4,7 @@
 
 import argparse
 import os
-import tensorflow as tf
+from tensorpack import tfv1 as tf
 
 from tensorpack import *
 from tensorpack.tfutils import argscope

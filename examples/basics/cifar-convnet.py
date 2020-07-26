@@ -3,7 +3,7 @@
 # Author: Yuxin Wu
 import argparse
 import os
-from tensorpack.compat import tfv1 as tf
+from tensorpack import tfv1 as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset

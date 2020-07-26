@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: mnist-addition.py
 # Author: Yuxin Wu
 
@@ -7,7 +6,7 @@ import argparse
 import numpy as np
 import os
 import cv2
-import tensorflow as tf
+from tensorpack import tfv1 as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset
@@ -194,7 +193,10 @@ def get_data(isTrain):
 
     ds = JoinData([ds, ds])
     # stack the two digits into two channels, and label it with the sum
-    ds = MapData(ds, lambda dp: [np.stack([dp[0], dp[2]], axis=2), dp[1] + dp[3]])
+
+    def mapper(dp):
+        return [np.stack([dp[0], dp[2]], axis=2), dp[1] + dp[3]]
+    ds = MapData(ds, dp)
     ds = BatchData(ds, 128)
     return ds
 

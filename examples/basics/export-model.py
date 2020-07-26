@@ -3,7 +3,7 @@
 
 import argparse
 import cv2
-from tensorpack.compat import tfv1 as tf
+from tensorpack import tfv1 as tf
 from tensorpack import *
 from tensorpack.tfutils.export import ModelExporter
 

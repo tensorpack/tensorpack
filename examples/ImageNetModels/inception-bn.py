@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: inception-bn.py
 # Author: Yuxin Wu
 
 import argparse
 import os
-import tensorflow as tf
+from tensorpack import tfv1 as tf
 
 from tensorpack import *
 from tensorpack.dataflow import dataset

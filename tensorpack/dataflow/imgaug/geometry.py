@@ -80,7 +80,7 @@ class Rotation(ImageAugmentor):
             arr = cv2.warpAffine(arr, mat, arr.shape)
         assert np.all(arr == orig)
         """
-        mat = cv2.getRotationMatrix2D(tuple(center - 0.5), deg, 1)
+        mat = cv2.getRotationMatrix2D(tuple(center - 0.5), float(deg), 1)
         return WarpAffineTransform(
             mat, img.shape[1::-1], interp=self.interp,
             borderMode=self.border, borderValue=self.border_value)
@@ -104,7 +104,7 @@ class RotationAndCropValid(ImageAugmentor):
         deg = self._rand_range(-self.max_deg, self.max_deg)
         if self.step_deg:
             deg = deg // self.step_deg * self.step_deg
-        return deg
+        return float(deg)
 
     def get_transform(self, img):
         deg = self._get_deg(img)

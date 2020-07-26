@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
 # File: imagenet_utils.py
-
 
 import multiprocessing
 import numpy as np
 import os
 from abc import abstractmethod
 import cv2
-import tensorflow as tf
 import tqdm
 
+from tensorpack import tfv1 as tf
 from tensorpack import ModelDesc
 from tensorpack.dataflow import (
     AugmentImageComponent, BatchData, MultiThreadMapData,

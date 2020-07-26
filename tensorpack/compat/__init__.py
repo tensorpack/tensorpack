@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def backport_tensor_spec():
+def _backport_tensor_spec():
     if hasattr(tf, 'TensorSpec'):
         return tf.TensorSpec
     try:
@@ -19,6 +19,9 @@ def backport_tensor_spec():
 
 
 def is_tfv2():
+    """
+    Returns whether tensorflow is operating in V2 mode.
+    """
     try:
         from tensorflow.python import tf2
         return tf2.enabled()

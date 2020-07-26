@@ -7,9 +7,9 @@ import tensorflow as tf
 from ..utils.argtools import memoized_method
 from ..tfutils.common import get_op_tensor_name
 from ..tfutils.tower import get_current_tower_context
-from ..compat import backport_tensor_spec, tfv1
+from ..compat import _backport_tensor_spec, tfv1
 
-TensorSpec = backport_tensor_spec()
+TensorSpec = _backport_tensor_spec()
 
 
 __all__ = ['ModelDesc', 'ModelDescBase']

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # File: alexnet.py
 
 import argparse
 import numpy as np
 import os
 import cv2
-import tensorflow as tf
 
+from tensorpack import tfv1 as tf
 from tensorpack import *
 from tensorpack.dataflow import imgaug
 from tensorpack.tfutils import argscope

@@ -87,17 +87,17 @@ def Conv2D(
         channel_axis = 3 if data_format == 'NHWC' else 1
         in_channel = in_shape[channel_axis]
         assert in_channel is not None, "[Conv2D] Input cannot have unknown channel!"
-        assert in_channel % split == 0
+        assert in_channel % split == 0, in_channel
 
         assert kernel_regularizer is None and bias_regularizer is None and activity_regularizer is None, \
             "Not supported by group conv or dilated conv!"
 
         out_channel = filters
-        assert out_channel % split == 0
+        assert out_channel % split == 0, out_channel
         assert dilation_rate == [1, 1] or get_tf_version_tuple() >= (1, 5), 'TF>=1.5 required for dilated conv.'
 
         kernel_shape = shape2d(kernel_size)
-        filter_shape = kernel_shape + [in_channel / split, out_channel]
+        filter_shape = kernel_shape + [in_channel // split, out_channel]
         stride = shape4d(strides, data_format=data_format)
 
         kwargs = {"data_format": data_format}

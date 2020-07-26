@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # File: mnist-convnet.py
 
-from tensorpack.compat import tfv1 as tf
+from tensorpack import tfv1 as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils import summary

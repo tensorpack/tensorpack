@@ -4,7 +4,6 @@ API Documentation
 .. toctree::
   :maxdepth: 1
 
-
   dataflow
   dataflow.dataset
   dataflow.imgaug
@@ -17,3 +16,4 @@ API Documentation
   tfutils
   utils
   contrib
+  tfv1
