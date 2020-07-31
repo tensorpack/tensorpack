@@ -407,6 +407,8 @@ _DEPRECATED_NAMES = set([
     "get_model_loader",
 
     # renamed items that should not appear in docs
+    'load_chkpt_vars',
+    'save_chkpt_vars',
     'DumpTensor',
     'DumpParamAsImage',
     'get_nr_gpu',
