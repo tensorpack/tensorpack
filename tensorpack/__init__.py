@@ -22,4 +22,4 @@ if STATICA_HACK:
     from tensorpack.input_source import *
     from tensorpack.predict import *
 
-from tensorpack.compat import tfv1
+    from tensorpack.compat import tfv1

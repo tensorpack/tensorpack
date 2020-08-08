@@ -57,8 +57,8 @@ Only in one of the two conditions can we help with it:
 
 ### 4. Your environment:
 
-Paste the output of this command: `python -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
-If this command failed, tell us your version of Python/TF/tensorpack.
+Paste the output of this command: `python -m tensorpack.tfutils.collect_env`
+If this command failed, also tell us your version of Python/TF/tensorpack.
 
 Note that:
 
