@@ -195,7 +195,7 @@ def get_checkpoint_path(path):
     Args:
         path: a user-input path
     Returns:
-        str: the argument that can be passed to NewCheckpointReader
+        str: the argument that can be passed to `tf.train.NewCheckpointReader`
     """
     if os.path.basename(path) == path:
         path = os.path.join('.', path)  # avoid #4921 and #6142

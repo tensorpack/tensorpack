@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # File: common.py
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from six.moves import map
 from tabulate import tabulate
 import os
@@ -165,6 +165,28 @@ def get_tf_version_tuple():
     return tuple(map(int, tf.__version__.split('.')[:2]))
 
 
+def parse_TF_build_info():
+    ret = OrderedDict()
+    from tensorflow.python.platform import build_info
+    try:
+        for k, v in list(build_info.build_info.items()):
+            if k == "cuda_version":
+                ret["TF built with CUDA"] = v
+            elif k == "cudnn_version":
+                ret["TF built with CUDNN"] = v
+            elif k == "cuda_compute_capabilities":
+                ret["TF compute capabilities"] = ",".join([k.replace("compute_", "") for k in v])
+        return ret
+    except AttributeError:
+        pass
+    try:
+        ret["TF built with CUDA"] = build_info.cuda_version_number
+        ret["TF built with CUDNN"] = build_info.cudnn_version_number
+    except AttributeError:
+        pass
+    return ret
+
+
 def collect_env_info():
     """
     Returns:
@@ -195,9 +217,11 @@ def collect_env_info():
 
     if has_cuda:
         data.append(("Nvidia Driver", find_library("nvidia-ml")))
-        data.append(("CUDA", find_library("cudart")))
-        data.append(("CUDNN", find_library("cudnn")))
-        data.append(("NCCL", find_library("nccl")))
+        data.append(("CUDA libs", find_library("cudart")))
+        data.append(("CUDNN libs", find_library("cudnn")))
+        for k, v in parse_TF_build_info().items():
+            data.append((k, v))
+        data.append(("NCCL libs", find_library("nccl")))
 
         # List devices with NVML
         data.append(
