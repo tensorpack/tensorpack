@@ -211,8 +211,7 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         self._mode = mode
 
         if self._mode == 'hierarchical' and len(towers) != 8:
-            logger.warn("mode='hierarchical' require 8 GPUs. Fallback to mode='nccl'.")
-            self._mode = 'nccl'
+            raise ValueError("mode='hierarchical' require 8 GPUs.")
 
     def call_for_each_tower(self, tower_fn):
         """

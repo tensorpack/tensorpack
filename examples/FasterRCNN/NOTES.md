@@ -48,7 +48,7 @@ This is a minimal implementation that simply contains these files:
 
 3. We currently only support single image per GPU in this example.
 
-4. Because of (3), BatchNorm statistics are supposed to be freezed during fine-tuning.
+4. Because of (3), BatchNorm statistics are supposed to be frozen during fine-tuning.
 
 5. An alternative to freezing BatchNorm is to sync BatchNorm statistics across
    GPUs (the `BACKBONE.NORM=SyncBN` option).

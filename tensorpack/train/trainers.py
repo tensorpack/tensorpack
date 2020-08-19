@@ -168,10 +168,10 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             gpus (int or [int]): list of GPU ids.
             average (bool): whether to average or sum gradients.
             mode (str or None): Gradient aggregation mode.
-                Supported values: ['nccl', 'hierarchical', 'cpu'].
+                Supported values: ['nccl', 'hierarchical', 'cpu', 'gpu'].
+                These modes may differ in speed.
                 Default to pick automatically by heuristics.
-                These modes may have slight (within 5%) differences in speed.
-                "hierarchical" mode was designed for DGX-like 8GPU machines.
+                "hierarchical" mode was designed for DGX-like 8-GPU machines.
         """
         self.devices = gpus
         if mode is not None:

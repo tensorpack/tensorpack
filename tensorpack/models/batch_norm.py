@@ -75,6 +75,9 @@ def get_sync_bn_mean_var(inputs, red_axis, sync_statistics):
             assert TF_version >= (1, 10), \
                 "Cross-GPU BatchNorm is only supported in TF>=1.10 ." \
                 "Upgrade TF or apply this patch manually: https://github.com/tensorflow/tensorflow/pull/20360"
+            if TF_version >= (1, 15):
+                logger.warn("BatchNorm(sync_statistics='nccl') may produce incorrect results due "
+                            "to bug in TF>=1.15: https://github.com/tensorflow/tensorflow/issues/41539")
 
             if TF_version <= (1, 12):
                 try:
