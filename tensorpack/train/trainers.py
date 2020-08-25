@@ -474,7 +474,7 @@ class HorovodTrainer(SingleCostTrainer):
         return [cb]
 
     def broadcast(self, _):
-        logger.info("Running broadcast ...")
+        logger.info("Broadcasting {} global variables ...".format(self._num_global_variables))
         # the op will be created in initialize()
         self.sess.run(self._broadcast_op)
 
@@ -483,6 +483,7 @@ class HorovodTrainer(SingleCostTrainer):
         # broadcast_op should be the last setup_graph: it needs to be created
         # "right before" the graph is finalized,
         # because it needs to capture all the variables (which may be created by callbacks).
+        self._num_global_variables = len(tf.global_variables())
         self._broadcast_op = self.hvd.broadcast_global_variables(0)
 
         # it's important that our NewSessionCreator does not finalize the graph
@@ -504,9 +505,10 @@ class HorovodTrainer(SingleCostTrainer):
         # 1. a allgather helper to concat strings
         # 2. check variables on each rank match each other, print warnings, and broadcast the common set.
         if self.is_chief:
-            logger.info("Broadcasting initialized variables ...")
+            logger.info("Broadcasting initialization of {} global variables ...".format(self._num_global_variables))
         else:
-            logger.info("Rank {} waiting for initialization broadcasting ...".format(self._rank))
+            logger.info("Rank {} waiting for initialization of {} variables ...".format(
+                self._rank, self._num_global_variables))
         self.sess.run(self._broadcast_op)
 
 

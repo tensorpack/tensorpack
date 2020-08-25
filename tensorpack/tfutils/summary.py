@@ -245,10 +245,11 @@ def add_moving_summary(*args, **kwargs):
         assert x.get_shape().ndims == 0, \
             "add_moving_summary() only accepts scalar tensor! Got one with {}".format(x.get_shape())
 
+    from ..graph_builder.utils import override_to_local_variable
     ema_ops = []
     for c in args:
         name = re.sub('tower[0-9]+/', '', c.op.name)
-        with tf.name_scope(None):
+        with tf.name_scope(None), override_to_local_variable(True):
             if not c.dtype.is_floating:
                 c = tf.cast(c, tf.float32)
             # assign_moving_average creates variables with op names, therefore clear ns first.
