@@ -70,6 +70,7 @@ class Model(ModelDesc):
                 return l
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='channels_first'), \
+                argscope(BatchNorm, virtual_batch_size=32), \
                 argscope(Conv2D, use_bias=False, kernel_size=3,
                          kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
             l = Conv2D('conv0', image, 16, activation=BNReLU)
@@ -140,17 +141,21 @@ def get_data(train_or_test):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('-n', '--num_units',
+    parser.add_argument('-n', '--num-units',
                         help='number of units in each stage',
-                        type=int, default=18)
+                        type=int, default=5)
     parser.add_argument('--load', help='load model for training')
+    parser.add_argument('--logdir', help='log directory')
     args = parser.parse_args()
     NUM_UNITS = args.num_units
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    logger.auto_set_dir()
+    if args.logdir:
+        logger.set_logger_dir(args.logdir)
+    else:
+        logger.auto_set_dir()
 
     dataset_train = get_data('train')
     dataset_test = get_data('test')
@@ -163,9 +168,13 @@ if __name__ == '__main__':
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError('wrong_vector')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
+                                      [(1, 0.1), (32, 0.01), (48, 0.001)])
         ],
-        max_epoch=400,
+        # models are trained with a mini-batch size of 128 on two GPUs. We
+        # start with a learningrate of 0.1, divide it by 10 at 32k and 48k iterations,
+        # andterminate training at 64k iterations
+        steps_per_epoch=1000,
+        max_epoch=64,
         session_init=SmartInit(args.load),
     )
     num_gpu = max(get_num_gpu(), 1)
