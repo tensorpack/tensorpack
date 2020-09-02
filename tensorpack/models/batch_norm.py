@@ -163,12 +163,12 @@ def BatchNorm(inputs, axis=None, *, training=None, momentum=0.9, epsilon=1e-5,
           * "default": same as "collection". Because this is the default behavior in TensorFlow.
           * "skip": do not update EMA. This can be useful when you reuse a batch norm layer in several places
             but do not want them to all update your EMA.
-          * "collection": Add EMA update ops to collection `tf.GraphKeys.UPDATE_OPS`.
+          * "collection": Add EMA update ops to collection `tf.GraphKeys.UPDATE_OPS` in the first training tower.
             The ops in the collection will be run automatically by the callback :class:`RunUpdateOps`, along with
             your training iterations. This can waste compute if your training iterations do not always depend
             on the BatchNorm layer.
-          * "internal": EMA is updated inside this layer itself by control dependencies.
-            In standard scenarios, it has similar speed to "collection". But it has some more benefits:
+          * "internal": EMA is updated in the first training tower inside this layer itself by control dependencies.
+            In standard scenarios, it has similar speed to "collection". But it supports more scenarios:
 
             1. BatchNorm is used inside dynamic control flow.
                The collection-based update does not support dynamic control flows.

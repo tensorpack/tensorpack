@@ -158,7 +158,11 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             are supposed to be in-sync).
             But this cheap operation may help prevent
             certain numerical issues in practice.
-            Note that in cases such as BatchNorm, the variables may not be in sync.
+
+            Note that in cases such as BatchNorm, the variables may not be in sync:
+            e.g., non-master worker may not maintain EMAs.
+
+            For benchmark, disable this option.
     """
 
     @map_arg(gpus=_int_to_range)
@@ -403,7 +407,11 @@ class HorovodTrainer(SingleCostTrainer):
             Theoretically this is a no-op (because the variables
             are supposed to be in-sync).
             But this cheap operation may help prevent certain numerical issues in practice.
-            Note that in cases such as BatchNorm, the variables may not be in sync.
+
+            Note that in cases such as BatchNorm, the variables may not be in sync:
+            e.g., non-master worker may not maintain EMAs.
+
+            For benchmark, disable this option.
     """
 
     def __init__(self, average=True, compression=None):
