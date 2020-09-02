@@ -13,23 +13,21 @@ from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.utils.gpu import get_num_gpu
 
 """
-CIFAR10 ResNet example. See:
-Deep Residual Learning for Image Recognition, arxiv:1512.03385
-This implementation uses the variants proposed in:
-Identity Mappings in Deep Residual Networks, arxiv:1603.05027
+CIFAR10 ResNet example. Reproduce the 2-GPU settings in:
+"Deep Residual Learning for Image Recognition", with following exceptions:
+* This implementation uses the architecture variant proposed in:
+  "Identity Mappings in Deep Residual Networks"
+* This model uses the whole training set instead of a train-val split.
 
-I can reproduce the results on 2 TitanX for
-n=5, about 7.1% val error after 67k steps (20.4 step/s)
-n=18, about 5.95% val error after 80k steps (5.6 step/s, not converged)
-n=30: a 182-layer network, about 5.6% val error after 51k steps (3.4 step/s)
-This model uses the whole training set instead of a train-val split.
+Results:
+* ResNet-110(n=18): about 5.9% val error after 64k steps (8.3 step/s)
 
 To train:
     ./cifar10-resnet.py --gpu 0,1
 """
 
-BATCH_SIZE = 128
-NUM_UNITS = None
+# paper uses 2 GPU with a total batch size of 128
+BATCH_SIZE = 64  # per-gpu batch size
 
 
 class Model(ModelDesc):
@@ -70,7 +68,6 @@ class Model(ModelDesc):
                 return l
 
         with argscope([Conv2D, AvgPooling, BatchNorm, GlobalAvgPooling], data_format='channels_first'), \
-                argscope(BatchNorm, virtual_batch_size=32), \
                 argscope(Conv2D, use_bias=False, kernel_size=3,
                          kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
             l = Conv2D('conv0', image, 16, activation=BNReLU)
@@ -147,7 +144,6 @@ if __name__ == '__main__':
     parser.add_argument('--load', help='load model for training')
     parser.add_argument('--logdir', help='log directory')
     args = parser.parse_args()
-    NUM_UNITS = args.num_units
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -161,7 +157,7 @@ if __name__ == '__main__':
     dataset_test = get_data('test')
 
     config = TrainConfig(
-        model=Model(n=NUM_UNITS),
+        model=Model(n=args.num_units),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
@@ -170,6 +166,7 @@ if __name__ == '__main__':
             ScheduledHyperParamSetter('learning_rate',
                                       [(1, 0.1), (32, 0.01), (48, 0.001)])
         ],
+        # ResNet Sec. 4.2:
         # models are trained with a mini-batch size of 128 on two GPUs. We
         # start with a learningrate of 0.1, divide it by 10 at 32k and 48k iterations,
         # andterminate training at 64k iterations
