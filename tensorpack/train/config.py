@@ -61,8 +61,7 @@ class TrainConfig(object):
                  model=None,
                  callbacks=None, extra_callbacks=None, monitors=None,
                  session_creator=None, session_config=None, session_init=None,
-                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
-                 **kwargs):
+                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
         """
         Args:
             dataflow (DataFlow):

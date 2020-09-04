@@ -33,7 +33,7 @@ class CallbackTimeLogger(object):
     def log(self):
 
         """ log the time of some heavy callbacks """
-        if self.tot < 3:
+        if self.tot < 2:
             return
         msgs = []
         for name, t in self.times:
