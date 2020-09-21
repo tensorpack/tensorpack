@@ -171,6 +171,10 @@ class SaverRestoreRelaxed(SaverRestore):
 
         Another advantage is that it doesn't add any new ops to the graph.
     """
+    def _setup_graph(self):
+        # no need to setup saver like the parent class
+        pass
+
     def _run_init(self, sess):
         logger.info(
             "Restoring checkpoint from {} ...".format(self.path))
