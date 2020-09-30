@@ -33,13 +33,21 @@ def build_or_reuse_placeholder(tensor_spec):
         assert "Placeholder" in tensor.op.type, "Tensor {} exists but is not a placeholder!".format(name)
         assert tensor_spec.is_compatible_with(tensor), \
             "Tensor {} exists but is not compatible with the signature!".format(tensor)
-        if tensor.shape.as_list() == tensor_spec.shape.as_list():
-            # It might be desirable to use a placeholder of a different shape in some tower
-            # (e.g., a less specific shape)
 
-            # Comparing `tensor.shape` directly doesn't work, because
-            # tensorflow thinks `tf.Dimension(None)` and `tf.Dimension(None)` are not equal.
-            return tensor
+        # It might be desirable to use a placeholder of a different shape in some tower
+        # (e.g., a less specific shape)
+        try:
+            if tensor.shape.as_list() == tensor_spec.shape.as_list():
+                # Comparing `tensor.shape` directly doesn't work in older versions of tensorflow,
+                # because tensorflow thinks `tf.Dimension(None)` and `tf.Dimension(None)` are not
+                # equal. Newer versions of tensorflow, e.g. 2.3, do not support as_list() for
+                # `tf.Dimension(None)` and raise a `ValueError`
+                return tensor
+        except ValueError:
+            if tensor.shape == tensor_spec.shape:
+                # With the newer version of tensorflow, comparing `tensor.shape` directly seems
+                # to work fine.
+                return tensor
     except KeyError:
         pass
     with tfv1.name_scope(None):   # clear any name scope it might get called in
