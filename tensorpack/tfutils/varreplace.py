@@ -4,6 +4,7 @@
 
 from contextlib import contextmanager
 
+from ..utils import logger
 from ..compat import tfv1 as tf
 from .common import get_tf_version_tuple
 
@@ -113,7 +114,15 @@ def freeze_variables(stop_gradient=True, skip_collection=False):
         # do not perform unnecessary changes if it's not originally trainable
         # otherwise the variable may get added to MODEL_VARIABLES twice
         if trainable and skip_collection:
-            tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, v)
+            if isinstance(v, tf.Variable):
+                tf.add_to_collection(tf.GraphKeys.MODEL_VARIABLES, v)
+            else:
+                logger.warning("""
+[freeze_variables] variable getter did not return a Variable, but '{}' instead, likely due to
+another custom getter. freeze_variables() work only if the other custom getter respects the
+`trainable` argument and don't put variables with `trainable=False` into TRAINABLE_VARIABLES
+collection. Please double check if this is true for the custom getter.
+""".format(str(v)).replace("\n", ""))
         if trainable and stop_gradient:
             v = tf.stop_gradient(v, name='freezed_' + name)
         return v

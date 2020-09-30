@@ -146,12 +146,12 @@ class GPUUtilizationTracker(Callback):
                         if evt.is_set():    # stop epoch
                             if stop_evt.is_set():   # or on exit
                                 return
-                            evt.clear()
                             if cnt > 1:
                                 # Ignore the last datapoint. Usually is zero, makes us underestimate the util.
                                 stats -= data
                                 cnt -= 1
                             rst_queue.put(stats / cnt)
+                            evt.clear()
                             break
         except Exception:
             logger.exception("Exception in GPUUtilizationTracker.worker")
