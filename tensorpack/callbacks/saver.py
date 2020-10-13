@@ -81,7 +81,8 @@ class ModelSaver(Callback):
                 write_meta_graph=False)
             logger.info("Model saved to %s." % tf.train.get_checkpoint_state(self.checkpoint_dir).model_checkpoint_path)
         except (IOError, tf.errors.PermissionDeniedError,
-                tf.errors.ResourceExhaustedError):   # disk error sometimes.. just ignore it
+                tf.errors.ResourceExhaustedError,
+                tf.errors.AlreadyExistsError):   # disk error sometimes.. just ignore it
             logger.exception("Exception in ModelSaver!")
 
 
