@@ -192,8 +192,7 @@ class ILSVRC12(ILSVRC12Files):
             dir (str): A directory containing a subdir named ``name``,
                 containing the images in a structure described below.
             name (str): One of 'train' or 'val' or 'test'.
-            shuffle (bool): shuffle the dataset.
-                Defaults to True if name=='train'.
+            shuffle (bool): shuffle the dataset. Defaults to True if name=='train'.
             dir_structure (str): One of 'original' or 'train'.
                 The directory structure for the 'val' directory.
                 'original' means the original decompressed directory, which only has list of image files (as below).
@@ -354,6 +353,7 @@ try:
 except ImportError:
     from ...utils.develop import create_dummy_class
     ILSVRC12 = create_dummy_class('ILSVRC12', 'cv2')  # noqa
+    TinyImageNet = create_dummy_class('TinyImageNet', 'cv2')  # noqa
 
 if __name__ == '__main__':
     meta = ILSVRCMeta()
