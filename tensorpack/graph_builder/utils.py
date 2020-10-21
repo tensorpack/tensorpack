@@ -392,7 +392,10 @@ class GradientPacker(object):
             bool - False if grads cannot be packed due to various reasons.
         """
         for g in grads:
-            assert g.shape.is_fully_defined(), "Shape of {} is {}!".format(g.name, g.shape)
+            if not g.shape.is_fully_defined():
+                logger.warn("Found gradient with incomplete shape: "
+                            "{} has shape {}".format(g.name, g.shape))
+                return False
 
         self._shapes = [g.shape for g in grads]
         self._sizes = [g.shape.num_elements() for g in grads]
