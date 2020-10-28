@@ -29,7 +29,7 @@ baseline and they actually cannot beat this standard ResNet recipe.
 To reproduce training or evaluation in the above table,
 first decompress ImageNet data into [this structure](http://tensorpack.readthedocs.io/modules/dataflow.dataset.html#tensorpack.dataflow.dataset.ILSVRC12), then:
 ```bash
-./imagenet-resnet.py --data /directory/of/ILSVRC -d 50 --batch 512
+./imagenet-resnet.py --data /directory/of/ILSVRC -d 50
 ./imagenet-resnet.py --data /directory/of/ILSVRC -d 50 --load ResNet50.npz --eval
 # See ./imagenet-resnet.py -h for other options.
 ```
