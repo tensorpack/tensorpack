@@ -38,7 +38,7 @@ class Places365Standard(RNGDataFlow):
                 label = line[1]
                 all_files.append((filepath, label))
                 labels.add(label)
-        self._labels = sorted(list(labels))
+        self._labels = sorted(labels)
         # class ids are sorted alphabetically:
         # https://github.com/CSAILVision/places365/blob/master/categories_places365.txt
         labelmap = {label: id for id, label in enumerate(self._labels)}
