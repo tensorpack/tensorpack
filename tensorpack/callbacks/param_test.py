@@ -69,9 +69,16 @@ class ScheduledHyperParamSetterTest(unittest.TestCase):
     def testStartAfterSchedule(self):
         scheduler = ScheduledHyperParamSetter(
             ObjAttrParam(self._param_obj, ParamObject.PARAM_NAME),
-            [(10, 0.3), (20, 0.4), (30, 0.5)])
+            [(10, 0.3), (20, 0.4), (30, 0.5)], set_at_beginning=False)
         history = self._create_trainer_with_scheduler(scheduler, 1, 92, starting_epoch=90)
         self.assertEqual(len(history), 0)
+
+    def testStartAfterSchedule_SetAtBeginning(self):
+        scheduler = ScheduledHyperParamSetter(
+            ObjAttrParam(self._param_obj, ParamObject.PARAM_NAME),
+            [(10, 0.3), (20, 0.4), (30, 0.5)], set_at_beginning=True)
+        history = self._create_trainer_with_scheduler(scheduler, 1, 92, starting_epoch=90)
+        self.assertEqual(history, {0: 0.5})
 
     def testWarningStartInTheMiddle(self):
         scheduler = ScheduledHyperParamSetter(
