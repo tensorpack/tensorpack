@@ -7,4 +7,4 @@ recommonmark==0.6.0
 sphinx_rtd_theme
 mock
 matplotlib
-tensorflow==1.4.0
+tensorflow==2.3.1
