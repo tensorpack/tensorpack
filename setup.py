@@ -64,7 +64,7 @@ setup(
     ],
     tests_require=['flake8', 'scikit-image'],
     extras_require={
-        'all': ['scipy', 'h5py', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'],
+        'all': ['scipy', 'h5py>=2.1', 'lmdb>=0.92', 'matplotlib', 'scikit-learn'],
         'all: "linux" in sys_platform': ['python-prctl'],
     },
 

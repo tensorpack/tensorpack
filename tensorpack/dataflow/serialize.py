@@ -231,7 +231,7 @@ except ImportError:
     LMDBSerializer = create_dummy_class('LMDBSerializer', 'lmdb')   # noqa
 
 try:
-    import tensorflow as tf
+    from tensorpack.compat import tfv1 as tf
 except ImportError:
     TFRecordSerializer = create_dummy_class('TFRecordSerializer', 'tensorflow')   # noqa
 
