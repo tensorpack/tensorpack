@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Tensorpack Documentation
+    url: https://tensorpack.readthedocs.io/
+    about: Check if documentation has the answer
