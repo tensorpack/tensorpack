@@ -32,13 +32,13 @@ Note:
 
 1. This script does not support arbitrary detectron2 config.
    When run against an unsupported config, it may fail silently and produce
-   erroneous models.
+   erroneous models. Always verify the evaluation results.
 
 2. The above steps produces a TensorFlow's pb file without any inference-time optimization (such as fusion).
    Tensorpack is a training framework so it does not provide any such tools.
 	 It's up to the user to further optimize the final graph.
 
-3. There could be a small incompatibility for converted models.
+3. There could be a small inconsistency for converted models.
 	 For the implementation of RoIAlign,  there is no equivalence of `POOLER_SAMPLING_RATIO=0` in tensorpack or TensorFlow.
 	 Our RoIAlign only implements `POOLER_SAMPLING_RATIO=2`.
 	 The results are quite similar, and the final AP may be different by <0.5.
