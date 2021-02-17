@@ -53,7 +53,7 @@ So this assumption effectively puts no extra constraints.
 
 ### Built-in Trainers
 
-Tensorpack implements a few builtin trainers for __single-cost gradient-based optimization__,
+Tensorpack implements a few builtin trainers for __single-dataloader single-cost gradient-based optimization__,
 as this is the most common type of task.
 If your training follows this pattern, you only need to __select a trainer__,
 and use it with its [training interface](./training-interface.md).
@@ -76,10 +76,10 @@ It takes only one line of code change to use them, e.g. `trainer=SyncMultiGPUTra
 Note some __common confusions__ when using these trainers:
 
 1. In each iteration, instead of taking one input tensor for all GPUs and split,
-    tensorpack trainers let all GPUs take tensors from the input.
-	Therefore, the total batch size across all GPUs is ``(batch size of input source) * #GPU``.
-    You may want to change `steps_per_epoch` or learing rate appropriately according
-    to the total batch size.
+   tensorpack trainers let all GPUs take tensors from the input.
+	 Therefore, the total batch size across all GPUs is ``(batch size of input source) * #GPU``.
+   You may want to change `steps_per_epoch` or learing rate appropriately according
+   to the total batch size.
 
     ```eval_rst
     .. note::
@@ -99,8 +99,3 @@ Note some __common confusions__ when using these trainers:
 Distributed training needs the [horovod](https://github.com/horovod/horovod) library which offers high-performance allreduce implementation.
 To run distributed training, first install horovod properly, then refer to the
 documentation of [HorovodTrainer](../modules/train.html#tensorpack.train.HorovodTrainer).
-
-Tensorpack has implemented some other distributed trainers using TF's native API,
-but TensorFlow is not actively supporting its distributed training features, and
-its native distributed performance isn't very good even today.
-Therefore those trainers are not maintained and are __not recommended for use__.

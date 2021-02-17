@@ -90,7 +90,7 @@ follow these conventions and will need some workarounds if used within tensorpac
 
 ### Write a Trainer
 
-The existing trainers should be enough for data-parallel single-cost optimization tasks.
+The existing trainers should be enough for single-dataloader data-parallel single-cost optimization tasks.
 If you just want to do some extra work during training, first consider writing it as a callback,
 or write an issue to see if there is a better solution than creating new trainers.
 If your task is fundamentally different from single-cost optimization, you will need to write a trainer.

@@ -223,6 +223,7 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             return []
 
 
+# deprecated
 class DistributedTrainerBase(SingleCostTrainer):
 
     devices = None
