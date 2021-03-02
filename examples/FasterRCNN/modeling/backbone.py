@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 from contextlib import ExitStack, contextmanager
 
+from tensorpack import tfv1
 from tensorpack.models import BatchNorm, Conv2D, MaxPooling, layer_register
 from tensorpack.tfutils import argscope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
@@ -74,7 +75,7 @@ def backbone_scope(freeze):
 
     with argscope([Conv2D, MaxPooling, BatchNorm], data_format='channels_first'), \
             argscope(Conv2D, use_bias=False, activation=nonlin,
-                     kernel_initializer=tf.variance_scaling_initializer(
+                     kernel_initializer=tfv1.variance_scaling_initializer(
                          scale=2.0, mode='fan_out')), \
             ExitStack() as stack:
         if cfg.BACKBONE.NORM in ['FreezeBN', 'SyncBN']:
@@ -158,9 +159,9 @@ def resnet_bottleneck(l, ch_out, stride):
 
 
 def resnet_group(name, l, block_func, features, count, stride):
-    with tf.variable_scope(name):
+    with tfv1.variable_scope(name):
         for i in range(0, count):
-            with tf.variable_scope('block{}'.format(i)):
+            with tfv1.variable_scope('block{}'.format(i)):
                 l = block_func(l, features, stride if i == 0 else 1)
     return l
 
@@ -194,7 +195,7 @@ def resnet_fpn_backbone(image, num_blocks):
     freeze_at = cfg.BACKBONE.FREEZE_AT
     shape2d = tf.shape(image)[2:]
     mult = float(cfg.FPN.RESOLUTION_REQUIREMENT)
-    new_shape2d = tf.cast(tf.ceil(tf.cast(shape2d, tf.float32) / mult) * mult, tf.int32)
+    new_shape2d = tf.cast(tf.math.ceil(tf.cast(shape2d, tf.float32) / mult) * mult, tf.int32)
     pad_shape2d = new_shape2d - shape2d
     assert len(num_blocks) == 4, num_blocks
     with backbone_scope(freeze=freeze_at > 0):

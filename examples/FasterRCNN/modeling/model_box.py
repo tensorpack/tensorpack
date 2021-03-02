@@ -159,7 +159,7 @@ def roi_align(featuremap, boxes, resolution):
     # sample 4 locations per roi bin
     ret = crop_and_resize(
         featuremap, boxes,
-        tf.zeros([tf.shape(boxes)[0]], dtype=tf.int32),
+        tf.zeros(tf.shape(boxes)[0], dtype=tf.int32),
         resolution * 2)
     try:
         avgpool = tf.nn.avg_pool2d

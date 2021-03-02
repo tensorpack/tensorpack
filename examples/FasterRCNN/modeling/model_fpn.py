@@ -4,6 +4,7 @@ import itertools
 import numpy as np
 import tensorflow as tf
 
+from tensorpack import tfv1
 from tensorpack.models import Conv2D, FixedUnPooling, MaxPooling, layer_register
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
@@ -48,7 +49,7 @@ def fpn_model(features):
 
     with argscope(Conv2D, data_format='channels_first',
                   activation=tf.identity, use_bias=True,
-                  kernel_initializer=tf.variance_scaling_initializer(scale=1.)):
+                  kernel_initializer=tfv1.variance_scaling_initializer(scale=1.)):
         lat_2345 = [Conv2D('lateral_1x1_c{}'.format(i + 2), c, num_channel, 1)
                     for i, c in enumerate(features)]
         if use_gn:

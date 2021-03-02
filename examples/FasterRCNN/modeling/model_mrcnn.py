@@ -2,6 +2,7 @@
 
 import tensorflow as tf
 
+from tensorpack import tfv1
 from tensorpack.models import Conv2D, Conv2DTranspose, layer_register
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
@@ -66,7 +67,7 @@ def maskrcnn_upXconv_head(feature, num_category, num_convs, norm=None):
     assert norm in [None, 'GN'], norm
     l = feature
     with argscope([Conv2D, Conv2DTranspose], data_format='channels_first',
-                  kernel_initializer=tf.variance_scaling_initializer(
+                  kernel_initializer=tfv1.variance_scaling_initializer(
                       scale=2.0, mode='fan_out',
                       distribution='untruncated_normal')):
         # c2's MSRAFill is fan_out

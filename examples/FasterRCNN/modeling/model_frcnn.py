@@ -3,6 +3,7 @@
 
 import tensorflow as tf
 
+from tensorpack import tfv1
 from tensorpack.models import Conv2D, FullyConnected, layer_register
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import under_name_scope
@@ -31,7 +32,7 @@ def proposal_metrics(iou):
     with tf.device('/cpu:0'):
         for th in [0.3, 0.5]:
             recall = tf.truediv(
-                tf.count_nonzero(best_iou >= th),
+                tfv1.count_nonzero(best_iou >= th),
                 tf.size(best_iou, out_type=tf.int64),
                 name='recall_iou{}'.format(th))
             summaries.append(recall)
@@ -67,7 +68,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
     def sample_fg_bg(iou):
         fg_mask = tf.cond(tf.shape(iou)[1] > 0,
                           lambda: tf.reduce_max(iou, axis=1) >= cfg.FRCNN.FG_THRESH,
-                          lambda: tf.zeros([tf.shape(iou)[0]], dtype=tf.bool))
+                          lambda: tf.zeros(tf.shape(iou)[0], dtype=tf.bool))
 
         fg_inds = tf.reshape(tf.where(fg_mask), [-1])
         num_fg = tf.minimum(int(
@@ -89,7 +90,7 @@ def sample_fast_rcnn_targets(boxes, gt_boxes, gt_labels):
 
     best_iou_ind = tf.cond(tf.shape(iou)[1] > 0,
                            lambda: tf.argmax(iou, axis=1),   # #proposal, each in 0~m-1
-                           lambda: tf.zeros([tf.shape(iou)[0]], dtype=tf.int64))
+                           lambda: tf.zeros(tf.shape(iou)[0], dtype=tf.int64))
     fg_inds_wrt_gt = tf.gather(best_iou_ind, fg_inds)   # num_fg
 
     all_indices = tf.concat([fg_inds, bg_inds], axis=0)   # indices w.r.t all n+m proposal boxes
@@ -225,7 +226,7 @@ def fastrcnn_2fc_head(feature):
         2D head feature
     """
     dim = cfg.FPN.FRCNN_FC_HEAD_DIM
-    init = tf.variance_scaling_initializer()
+    init = tfv1.variance_scaling_initializer()
     hidden = FullyConnected('fc6', feature, dim, kernel_initializer=init, activation=tf.nn.relu)
     hidden = FullyConnected('fc7', hidden, dim, kernel_initializer=init, activation=tf.nn.relu)
     return hidden
@@ -246,7 +247,7 @@ def fastrcnn_Xconv1fc_head(feature, num_convs, norm=None):
     assert norm in [None, 'GN'], norm
     l = feature
     with argscope(Conv2D, data_format='channels_first',
-                  kernel_initializer=tf.variance_scaling_initializer(
+                  kernel_initializer=tfv1.variance_scaling_initializer(
                       scale=2.0, mode='fan_out',
                       distribution='untruncated_normal')):
         for k in range(num_convs):
@@ -254,7 +255,7 @@ def fastrcnn_Xconv1fc_head(feature, num_convs, norm=None):
             if norm is not None:
                 l = GroupNorm('gn{}'.format(k), l)
         l = FullyConnected('fc', l, cfg.FPN.FRCNN_FC_HEAD_DIM,
-                           kernel_initializer=tf.variance_scaling_initializer(), activation=tf.nn.relu)
+                           kernel_initializer=tfv1.variance_scaling_initializer(), activation=tf.nn.relu)
     return l
 
 

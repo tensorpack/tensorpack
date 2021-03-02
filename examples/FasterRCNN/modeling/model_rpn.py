@@ -3,6 +3,7 @@
 import tensorflow as tf
 import numpy as np
 
+from tensorpack import tfv1
 from tensorpack.models import Conv2D, layer_register
 from tensorpack.tfutils.argscope import argscope
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope, under_name_scope
@@ -53,8 +54,8 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     with tf.device('/cpu:0'):
         valid_mask = tf.stop_gradient(tf.not_equal(anchor_labels, -1))
         pos_mask = tf.stop_gradient(tf.equal(anchor_labels, 1))
-        nr_valid = tf.stop_gradient(tf.count_nonzero(valid_mask, dtype=tf.int32), name='num_valid_anchor')
-        nr_pos = tf.identity(tf.count_nonzero(pos_mask, dtype=tf.int32), name='num_pos_anchor')
+        nr_valid = tf.stop_gradient(tfv1.count_nonzero(valid_mask, dtype=tf.int32), name='num_valid_anchor')
+        nr_pos = tf.identity(tfv1.count_nonzero(pos_mask, dtype=tf.int32), name='num_pos_anchor')
         # nr_pos is guaranteed >0 in C4. But in FPN. even nr_valid could be 0.
 
         valid_anchor_labels = tf.boolean_mask(anchor_labels, valid_mask)
@@ -67,7 +68,7 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
             for th in [0.5, 0.2, 0.1]:
                 valid_prediction = tf.cast(valid_label_prob > th, tf.int32)
                 nr_pos_prediction = tf.reduce_sum(valid_prediction, name='num_pos_prediction')
-                pos_prediction_corr = tf.count_nonzero(
+                pos_prediction_corr = tfv1.count_nonzero(
                     tf.logical_and(
                         valid_label_prob > th,
                         tf.equal(valid_prediction, valid_anchor_labels)),
@@ -92,9 +93,9 @@ def rpn_losses(anchor_labels, anchor_boxes, label_logits, box_logits):
     pos_anchor_boxes = tf.boolean_mask(anchor_boxes, pos_mask)
     pos_box_logits = tf.boolean_mask(box_logits, pos_mask)
     delta = 1.0 / 9
-    box_loss = tf.losses.huber_loss(
+    box_loss = tfv1.losses.huber_loss(
         pos_anchor_boxes, pos_box_logits, delta=delta,
-        reduction=tf.losses.Reduction.SUM) / delta
+        reduction=tfv1.losses.Reduction.SUM) / delta
     box_loss = box_loss * (1. / cfg.RPN.BATCH_PER_IM)
     box_loss = tf.where(tf.equal(nr_pos, 0), placeholder, box_loss, name='box_loss')
 

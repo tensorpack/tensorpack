@@ -2,7 +2,7 @@
 # File: resnet_model.py
 
 import tensorflow as tf
-
+from tensorpack import tfv1
 from tensorpack.models import BatchNorm, BNReLU, Conv2D, FullyConnected, GlobalAvgPooling, MaxPooling
 from tensorpack.tfutils.argscope import argscope, get_arg_scope
 
@@ -53,9 +53,9 @@ def preact_bottleneck(l, ch_out, stride, preact):
 
 
 def preact_group(name, l, block_func, features, count, stride):
-    with tf.variable_scope(name):
+    with tfv1.variable_scope(name):
         for i in range(0, count):
-            with tf.variable_scope('block{}'.format(i)):
+            with tfv1.variable_scope('block{}'.format(i)):
                 # first block doesn't need activation
                 l = block_func(l, features,
                                stride if i == 0 else 1,
@@ -114,16 +114,16 @@ def resnext32x4d_bottleneck(l, ch_out, stride):
 
 
 def resnet_group(name, l, block_func, features, count, stride):
-    with tf.variable_scope(name):
+    with tfv1.variable_scope(name):
         for i in range(0, count):
-            with tf.variable_scope('block{}'.format(i)):
+            with tfv1.variable_scope('block{}'.format(i)):
                 l = block_func(l, features, stride if i == 0 else 1)
     return l
 
 
 def resnet_backbone(image, num_blocks, group_func, block_func):
     with argscope(Conv2D, use_bias=False,
-                  kernel_initializer=tf.variance_scaling_initializer(scale=2.0, mode='fan_out')):
+                  kernel_initializer=tfv1.variance_scaling_initializer(scale=2.0, mode='fan_out')):
         # Note that TF pads the image by [2, 3] instead of [3, 2].
         # Similar things happen in later stride=2 layers as well.
         l = Conv2D('conv0', image, 64, 7, strides=2, activation=BNReLU)
