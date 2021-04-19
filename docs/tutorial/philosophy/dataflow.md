@@ -2,7 +2,7 @@
 # Why DataFlow?
 
 There are many other data loading solutions for deep learning.
-Here we explain why you may want to use Tensorpack DataFlow for your own good:
+Here we explain why you may want to use Tensorpack DataFlow:
 **it's easy, and fast (enough)**.
 
 ### How Fast Do You Actually Need?
@@ -15,14 +15,16 @@ The method to do so is different in each training framework,
 and in tensorpack this is automatically done by the [InputSource](../extend/input-source.md)
 interface.
 
-Once you make sure the data pipeline runs async with your training,
+Once the data pipeline runs async with your training,
 the data pipeline only needs to be as fast as the training.
 **Getting faster brings no gains** to overall throughput.
 It only needs to be fast enough.
 
 If you have used other data loading libraries, you may doubt
 how easy it is to make data pipeline fast enough with pure Python.
-In fact, it is usually not hard with DataFlow, because it's carefully optimized.
+Python is hard to parallelize,
+but the DataFlow library has included best practices to squeeze the most
+performance out of Python.
 
 For example: if you train a ResNet-50 on ImageNet,
 DataFlow is fast enough for you unless you use
@@ -33,20 +35,17 @@ See the [Efficient DataFlow](../efficient-dataflow.md) tutorial on how
 to build a fast Python loader with DataFlow.
 
 There is no reason to try a more complicated solution,
-when you don't know whether a simple solution is fast enough.
-And for us, we may optimize DataFlow even more, but we just haven't found the reason to do so.
+when you don't know whether a simple Python solution like DataFlow is fast enough.
 
 ### Which Data Format?
 
 Certain libraries advocate for a new binary data format (e.g., TFRecords, RecordIO).
-Do you need to use them?
-We think you usually do not, at least not after you try DataFlow, because these
-formats are:
+We think you usually do not need them, because these formats are:
 
 1. **Not Easy**: To use the new binary format,
-	 you need to write a script, to process your data from its original format,
-	 to this new format. Then you read data from this format to training workers.
-	 It's a waste of your effort: the intermediate format does not have to exist.
+	 you need to process data from its original format to this new format.
+   Then you read data from this format to training workers.
+	 It's a waste of effort: the intermediate format does not have to exist.
 
 1. **Not Easy**: Even when you do need to use an intermediate format that's different from your
 	 original data format
@@ -61,32 +60,32 @@ formats are:
 	 * More functionalities.
 
 	 Different formats have their strength and weakness in the above aspects.
-	 Forcing a single binary format on users is certainly not ideal.
+	 Forcing a single binary format on users is not ideal.
 	 We should let users make the choice.
 
-1. **Not Necessarily Fast**:
-	There are cases when having an intermediate format is useful for performance reasons.
-	For example, to apply some one-time expensive preprocessing to your dataset.
+1. **Not Necessarily Faster**:
+	Having an intermediate format can be useful for performance reasons,
+	for example to apply some one-shot expensive preprocessing to your dataset.
 	But other formats are probably equally fast.
 
 	Formats like TFRecords and RecordIO are just as fast as your disk, and of course,
-	as fast as other libraries.
+	as fast as other similar libraries.
 	Decades of engineering in dataset systems have provided
 	many other competitive formats like LMDB, HDF5 that are:
-	* Equally fast (if not faster)
+	* Equally fast
 	* More generic (not tied to your training framework)
-	* Providing more features (e.g. random access)
+	* With more features (e.g. random access)
 
-    The only unique benefit a format like TFRecords or RecordIO may give you,
-    is the native integration with the training framework, which may bring a
-    small gain to speed.
+  The only unique benefit a format like TFRecords or RecordIO may give you,
+  is the native integration with the training framework, which may bring a
+  small performance gain.
 
 On the other hand, DataFlow is:
 
 1. **Easy**: Any Python function that produces data can be made a DataFlow and
-   used for training. No need for intermediate format when you don't.
-1. **Flexible**: Since it is in pure Python, you can use any data format.
-   When you need, you can still easily serialize your dataflow to a single-file
+   used for training. No need for a fixed format.
+1. **Flexible**: Since it is in pure Python, any data format can be used.
+   When needed, you can still easily serialize your dataflow to a single-file
    format with
    [a few lines of code](../../modules/dataflow.html#tensorpack.dataflow.LMDBSerializer).
 
@@ -95,29 +94,30 @@ On the other hand, DataFlow is:
 
 Some frameworks have also provided good framework-specific solutions for data loading.
 On the contrary, DataFlow is framework-agnostic: you can use it in any Python environment.
-In addition to this benefit, there are other reasons you might prefer DataFlow over the alternatives:
+In addition to this advantage, there are other reasons you might prefer DataFlow over the alternatives:
 
 #### tf.data and other graph operations
+
+`tf.data` loads data using computation graph.
+Generally speaking, a computation graph system is useful for the following reasons:
+
+* Automatic differentiation
+* Run the computation on different devices
+* Serialize the description of computation
+* Automatic performance optimization
+
+These are important for training neural networks, but **less for data loading**:
+Autodiff is never needed. The others are useful, but often not needed or not so effective
+for data loading.
 
 The huge disadvantage of loading data in a computation graph is obvious:
 __it's extremely inflexible__.
 
-Why would you ever want to do anything in a computation graph? Here are the possible reasons:
-
-* Automatic differentiation
-* Run the computation on different devices
-* Serialize the description of your computation
-* Automatic performance optimization
-
-They all make sense for training neural networks, but **not much for data loading**.
-
 Unlike running a neural network model, data processing is a complicated and poorly-structured task.
 You need to handle different formats, handle corner cases, noisy data, combination of data.
-Doing these requires condition operations, loops, data structures, sometimes even exception handling.
-These operations are __naturally not the right task for a symbolic graph__,
-and it's hard to debug since it's not Python.
-
-Let's take a look at what users are asking for `tf.data`:
+These require conditional operations, loops, data structures, even exception handling.
+These operations are __naturally difficult for a symbolic graph__.
+As a result, users are asking for many "trivial" TF data loading features that could've been achieved with __3 lines of code in Python__:
 * Different ways to [pad data](https://github.com/tensorflow/tensorflow/issues/13969), [shuffle data](https://github.com/tensorflow/tensorflow/issues/14518)
 * [Handle none values in data](https://github.com/tensorflow/tensorflow/issues/13865)
 * [Handle dataset that's not a multiple of batch size](https://github.com/tensorflow/tensorflow/issues/13745)
@@ -125,17 +125,9 @@ Let's take a look at what users are asking for `tf.data`:
 * [Sort/skip some data](https://github.com/tensorflow/tensorflow/issues/14250)
 * [Write data to files](https://github.com/tensorflow/tensorflow/issues/15014)
 
-To support all these features which could've been done with __3 lines of code in Python__, you need either a new TF
-API, or ask [Dataset.from_generator](https://www.tensorflow.org/versions/r1.4/api_docs/python/tf/contrib/data/Dataset#from_generator)
-(i.e. Python again) to the rescue.
-
-It only makes sense to use TF to read data, if your data is originally very clean and well-formatted.
+The flexibility issue of `tf.data` disappears only when the data is originally very clean and well-formatted.
 If not, you may feel like writing a Python script to reformat your data, but then you're
 almost writing a DataFlow (a DataFlow can be made from a Python iterator)!
-
-As for speed, when TF happens to support and optimize the operators you need,
-it does offer a similar or higher speed (it takes effort to tune, of course).
-But how do you make sure you'll not run into one of the unsupported situations listed above?
 
 #### torch.utils.data.{Dataset,DataLoader}
 
@@ -154,13 +146,12 @@ or when you need to filter your data on the fly.
    1. Indices are sufficient to determine which samples to batch together
    1. Multiprocessing is a better parallelization strategy than multithreading.
 
-   None of these are necessarily true.
+   They are often true, but not necessarily so.
 
 2. Its multiprocessing implementation is efficient on `torch.Tensor`,
    but inefficient for generic data type or numpy arrays.
-   Also, its implementation [does not always clean up the subprocesses correctly](https://github.com/pytorch/pytorch/issues/16608).
 
-PyTorch starts to improve on bad assumptions 1-3, (e.g., with IterableDataset).
+PyTorch starts to improve on bad assumptions (e.g., with IterableDataset).
 But the interface still bears the history of these assumptions.
 On the other hand, DataFlow:
 

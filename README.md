@@ -1,33 +1,33 @@
 ![Tensorpack](https://github.com/tensorpack/tensorpack/raw/master/.github/tensorpack.png)
 
-Tensorpack is a neural network training interface based on TensorFlow.
+Tensorpack is a neural network training interface based on TensorFlow v1.
 
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io)
 [![Gitter chat](https://img.shields.io/badge/chat-on%20gitter-46bc99.svg)](https://gitter.im/tensorpack/users)
 [![model-zoo](https://img.shields.io/badge/model-zoo-brightgreen.svg)](http://models.tensorpack.com)
 ## Features:
 
-It's Yet Another TF high-level API, with __speed__, and __flexibility__ built together.
+It's Yet Another TF high-level API, with the following notable features:
 
 1. Focus on __training speed__.
 	+ Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
 	  On common CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
 		Your training can probably gets faster if written with Tensorpack.
 
-	+ Data-parallel multi-GPU/distributed training strategy is off-the-shelf to use.
-    It scales as well as Google's [official benchmark](https://www.tensorflow.org/performance/benchmarks).
+	+ Scalable data-parallel multi-GPU / distributed training strategy is off-the-shelf to use.
+	  See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for more benchmarks.
 
-	+ See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for
-    some benchmark scripts.
+2. Squeeze the best data loading performance of Python with [`tensorpack.dataflow`](https://github.com/tensorpack/dataflow).
+	+ Symbolic programming (e.g. `tf.data`) [does not](https://tensorpack.readthedocs.io/tutorial/philosophy/dataflow.html#alternative-data-loading-solutions)
+    offer the data processing flexibility needed in research.
+	  Tensorpack squeezes the most performance out of __pure Python__ with various autoparallelization strategies.
 
-2. Focus on __large datasets__.
-	+ [You don't usually need `tf.data`](https://tensorpack.readthedocs.io/tutorial/philosophy/dataflow.html#alternative-data-loading-solutions).
-    Symbolic programming often makes data processing harder.
-	  Tensorpack helps you efficiently process large datasets (e.g. ImageNet) in __pure Python__ with autoparallelization.
+3. Focus on reproducible and flexible research:
+  + Built and used by researchers, we provide high-quality [reproducible implementation of papers](https://github.com/tensorpack/tensorpack#examples).
 
-3. It's not a model wrapper.
-	+ There are too many symbolic function wrappers in the world. Tensorpack includes only a few common models.
-	  But you can use any symbolic function library inside Tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
+4. It's not a model wrapper.
+	+ There are too many symbolic function wrappers already. Tensorpack includes only a few common layers.
+	  You can use any TF symbolic functions inside Tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
 
 See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials) to know more about these features.
 
@@ -46,12 +46,12 @@ demonstrating its __flexibility__ for actual research.
 + [Train ResNet](examples/ResNet) and [other models](examples/ImageNetModels) on ImageNet
 + [Train Mask/Faster R-CNN on COCO object detection](examples/FasterRCNN)
 + [Unsupervised learning with Momentum Contrast](https://github.com/ppwwyyxx/moco.tensorflow) (MoCo)
++ [Adversarial training with state-of-the-art robustness](https://github.com/facebookresearch/ImageNet-Adversarial-Training)
 + [Generative Adversarial Network(GAN) variants](examples/GAN), including DCGAN, InfoGAN, Conditional GAN, WGAN, BEGAN, DiscoGAN, Image to Image, CycleGAN
 + [DoReFa-Net: train binary / low-bitwidth CNN on ImageNet](examples/DoReFa-Net)
 + [Fully-convolutional Network for Holistically-Nested Edge Detection(HED)](examples/HED)
 + [Spatial Transformer Networks on MNIST addition](examples/SpatialTransformer)
 + [Visualize CNN saliency maps](examples/Saliency)
-+ [Similarity learning on MNIST](examples/SimilarityLearning)
 
 ### Reinforcement Learning:
 + [Deep Q-Network(DQN) variants on Atari games](examples/DeepQNetwork), including DQN, DoubleDQN, DuelingDQN.
@@ -70,7 +70,7 @@ Dependencies:
 + Python bindings for OpenCV. (Optional, but required by a lot of features)
 + TensorFlow ≥ 1.5, < 2
   * TF is not not required if you only want to use `tensorpack.dataflow` alone as a data processing library
-  * TF2 is supported if used in graph mode (and use `tf.compat.v1` when needed)
+  * TF2 is supported in some simple models if used in graph mode (and replace `tf` by `tf.compat.v1` when needed)
 ```
 pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories
