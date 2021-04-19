@@ -10,24 +10,24 @@ Tensorpack is a neural network training interface based on TensorFlow v1.
 It's Yet Another TF high-level API, with the following notable features:
 
 1. Focus on __training speed__.
-	+ Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
-	  On common CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
-		Your training can probably gets faster if written with Tensorpack.
+  + Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
+    On common CNNs, it runs training [1.2~5x faster](https://github.com/tensorpack/benchmarks/tree/master/other-wrappers) than the equivalent Keras code.
+    Your training can probably gets faster if written with Tensorpack.
 
-	+ Scalable data-parallel multi-GPU / distributed training strategy is off-the-shelf to use.
-	  See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for more benchmarks.
+  + Scalable data-parallel multi-GPU / distributed training strategy is off-the-shelf to use.
+    See [tensorpack/benchmarks](https://github.com/tensorpack/benchmarks) for more benchmarks.
 
 2. Squeeze the best data loading performance of Python with [`tensorpack.dataflow`](https://github.com/tensorpack/dataflow).
-	+ Symbolic programming (e.g. `tf.data`) [does not](https://tensorpack.readthedocs.io/tutorial/philosophy/dataflow.html#alternative-data-loading-solutions)
+  + Symbolic programming (e.g. `tf.data`) [does not](https://tensorpack.readthedocs.io/tutorial/philosophy/dataflow.html#alternative-data-loading-solutions)
     offer the data processing flexibility needed in research.
-	  Tensorpack squeezes the most performance out of __pure Python__ with various autoparallelization strategies.
+    Tensorpack squeezes the most performance out of __pure Python__ with various autoparallelization strategies.
 
 3. Focus on reproducible and flexible research:
   + Built and used by researchers, we provide high-quality [reproducible implementation of papers](https://github.com/tensorpack/tensorpack#examples).
 
 4. It's not a model wrapper.
-	+ There are too many symbolic function wrappers already. Tensorpack includes only a few common layers.
-	  You can use any TF symbolic functions inside Tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
+  + There are too many symbolic function wrappers already. Tensorpack includes only a few common layers.
+    You can use any TF symbolic functions inside Tensorpack, including tf.layers/Keras/slim/tflearn/tensorlayer/....
 
 See [tutorials and documentations](http://tensorpack.readthedocs.io/tutorial/index.html#user-tutorials) to know more about these features.
 
