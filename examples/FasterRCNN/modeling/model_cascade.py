@@ -89,7 +89,7 @@ class CascadeRCNNHead(object):
                 max_iou_per_box = tf.reduce_max(iou, axis=1)  # N
                 best_iou_ind = tf.cond(tf.shape(iou)[1] > 0,
                                        lambda: tf.argmax(iou, axis=1),   # #proposal, each in 0~m-1
-                                       lambda: tf.zeros([tf.shape(iou)[0]], dtype=tf.int64))
+                                       lambda: tf.zeros(tf.shape(iou)[0], dtype=tf.int64))
                 labels_per_box = tf.gather(self.gt_labels, best_iou_ind)
                 fg_mask = max_iou_per_box >= iou_threshold
                 fg_inds_wrt_gt = tf.boolean_mask(best_iou_ind, fg_mask)

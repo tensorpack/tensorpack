@@ -7,7 +7,7 @@ Tensorpack is a neural network training interface based on TensorFlow v1.
 [![model-zoo](https://img.shields.io/badge/model-zoo-brightgreen.svg)](http://models.tensorpack.com)
 ## Features:
 
-It's Yet Another TF high-level API, with the following notable features:
+It's Yet Another TF high-level API, with the following highlights:
 
 1. Focus on __training speed__.
   + Speed comes for free with Tensorpack -- it uses TensorFlow in the __efficient way__ with no extra overhead.
