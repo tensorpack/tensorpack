@@ -233,7 +233,7 @@ def get_all_checkpoints(dir: str, prefix: str = "model"):
     """
     def step_from_filename(name):
         name = os.path.basename(name)
-        name = name[len(f"{prefix}-"):-len(".index")]
+        name = name[len("{}-".format(prefix)):-len(".index")]
         return int(name)
 
     checkpoints = glob.glob(os.path.join(dir, "model-*.index"))
