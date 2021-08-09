@@ -243,7 +243,7 @@ class EvalCallback(Callback):
                 self.dataflow = get_eval_dataflow(self._eval_dataset,
                                                   shard=hvd.local_rank(), num_shards=hvd.local_size())
 
-            self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
+            self.barrier = hvd.allreduce(tf.random.normal(shape=[1])) if int(tf.__version__[0]) >= 2 else hvd.allreduce(tf.random_normal(shape=[1]))
 
     def _build_predictor(self, idx):
         return self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
