@@ -6,7 +6,6 @@ import json
 import numpy as np
 import os
 import sys
-import tensorflow as tf
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
