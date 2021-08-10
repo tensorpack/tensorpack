@@ -5,6 +5,7 @@ import multiprocessing as mp
 import os
 import sys
 import tensorflow as tf
+from tensorpack.compat import tfv1
 
 from ..callbacks import CallbackFactory, RunOp
 from ..graph_builder.distributed import DistributedParameterServerBuilder, DistributedReplicatedBuilder
@@ -487,7 +488,7 @@ class HorovodTrainer(SingleCostTrainer):
         # broadcast_op should be the last setup_graph: it needs to be created
         # "right before" the graph is finalized,
         # because it needs to capture all the variables (which may be created by callbacks).
-        self._num_global_variables = len(tf.global_variables())
+        self._num_global_variables = len(tfv1 .global_variables())
         self._broadcast_op = self.hvd.broadcast_global_variables(0)
 
         # it's important that our NewSessionCreator does not finalize the graph
