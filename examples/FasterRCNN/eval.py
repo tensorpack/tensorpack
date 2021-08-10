@@ -6,7 +6,6 @@ import json
 import numpy as np
 import os
 import sys
-import tensorflow as tf
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
@@ -23,6 +22,7 @@ from common import CustomResize, clip_boxes
 from config import config as cfg
 from data import get_eval_dataflow
 from dataset import DatasetRegistry
+from tensorpack.compat import tfv1
 
 try:
     import horovod.tensorflow as hvd
@@ -243,7 +243,7 @@ class EvalCallback(Callback):
                 self.dataflow = get_eval_dataflow(self._eval_dataset,
                                                   shard=hvd.local_rank(), num_shards=hvd.local_size())
 
-            self.barrier = hvd.allreduce(tf.random_normal(shape=[1]))
+            self.barrier = hvd.allreduce(tfv1.random_normal(shape=[1]))
 
     def _build_predictor(self, idx):
         return self.trainer.get_predictor(self._in_names, self._out_names, device=idx)
