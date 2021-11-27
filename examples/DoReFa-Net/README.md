@@ -7,7 +7,6 @@ It also contains an implementation of the following papers:
 + [Trained Ternary Quantization](https://arxiv.org/abs/1612.01064), with (W,A,G)=(t,32,32).
 + [Binarized Neural Networks](https://arxiv.org/abs/1602.02830), with (W,A,G)=(1,1,32).
 
-Alternative link to this page: [http://dorefa.net](http://dorefa.net)
 
 ## Results:
 This is a good set of baselines for research in model quantization.
