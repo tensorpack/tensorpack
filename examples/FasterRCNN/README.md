@@ -1,4 +1,7 @@
 # Faster R-CNN / Mask R-CNN on COCO
+
+![badge](https://img.shields.io/badge/compatible%20with-TF2-orange)
+
 This example provides a minimal (2k lines) and faithful implementation of the
 following object detection / instance segmentation papers,
 and __reproduce__ expected results:

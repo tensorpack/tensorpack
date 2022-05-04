@@ -70,7 +70,7 @@ Dependencies:
 + Python bindings for OpenCV. (Optional, but required by a lot of features)
 + TensorFlow ≥ 1.5, < 2
   * TF is not not required if you only want to use `tensorpack.dataflow` alone as a data processing library
-  * TF2 is supported in some simple models if used in graph mode (and replace `tf` by `tf.compat.v1` when needed)
+  * Most examples can still run with TF2 under compatibility mode (graph mode).
 ```
 pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories

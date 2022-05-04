@@ -42,7 +42,7 @@ def resize_keepdims(im, size):
 
 def get_player(viz=False, train=False):
     if USE_GYM:
-        env = gym.make(ENV_NAME)
+        env = gym.make(ENV_NAME, render_mode='human' if viz else None)
     else:
         from atari import AtariPlayer
         env = AtariPlayer(ENV_NAME, frame_skip=4, viz=viz,

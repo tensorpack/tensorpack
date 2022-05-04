@@ -1,3 +1,4 @@
+![badge](https://img.shields.io/badge/compatible%20with-TF2-orange)
 
 ImageNet training code of ResNet, ShuffleNet, DoReFa-Net, AlexNet, Inception, VGG with tensorpack.
 

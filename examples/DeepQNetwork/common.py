@@ -31,8 +31,6 @@ def play_one_episode(env, func, render=False):
     while True:
         act = predict(ob)
         ob, r, isOver, info = env.step(act)
-        if render:
-            env.render()
         sum_r += r
         if isOver:
             return sum_r

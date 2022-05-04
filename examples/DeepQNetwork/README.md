@@ -1,3 +1,5 @@
+![badge](https://img.shields.io/badge/compatible%20with-TF2-orange)
+
 ![breakout](breakout.jpg)
 
 [video demo](https://youtu.be/o21mddZtE5Y)
@@ -17,7 +19,7 @@ used a modified version where each batch contains transitions from different sim
 
 ## Usage:
 
-Install dependencies by `pip install 'gym[atari]'`.
+Install dependencies by `pip install 'gym[atari,accept-rom-license]'`.
 
 ### With ALE (paper's setting):
 
@@ -46,7 +48,7 @@ Evaluation of 50 episodes:
 
 ### With gym's Atari:
 
-Install gym and atari_py. Use `--env BreakoutDeterministic-v4` instead of the ROM file.
+Use `--env ALE/Breakout-v5` instead of the ROM file.
 
 ## Performance
 Claimed performance in the paper can be reproduced, on several games I've tested with.
