@@ -167,7 +167,7 @@ def save_checkpoint_vars(dic, path):
     Save variables in dic to path.
 
     Args:
-        dic: {name: value}
+        dic: {name: value}. values have to be numpy arrays
         path: save as npz if the name ends with '.npz', otherwise save as a checkpoint.
     """
     logger.info("Variables to save to {}:".format(path))

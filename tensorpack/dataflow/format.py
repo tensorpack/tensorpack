@@ -204,6 +204,26 @@ def CaffeLMDB(lmdb_path, shuffle=True, keys=None):
     return LMDBDataDecoder(lmdb_data, decoder)
 
 
+class DiskCacheData(RNGDataFlow):
+    def __init__(self, path, shuffle=True):
+        self._db = diskcache.Index(path)
+        self._shuffle = shuffle
+        self._size = len(self._db)
+
+    def __len__(self):
+        return self._size
+
+    def __iter__(self):
+        if not self._shuffle:
+            for k in range(self._size):
+                yield self._db[k]
+        else:
+            keys = list(range(self._size))
+            self.rng.shuffle(keys)
+            for k in keys:
+                yield self._db[k]
+
+
 class SVMLightData(RNGDataFlow):
     """ Read X,y from an SVMlight file, and produce [X_i, y_i] pairs. """
 
@@ -239,3 +259,8 @@ try:
 except ImportError:
     for klass in ['LMDBData', 'LMDBDataDecoder', 'CaffeLMDB']:
         globals()[klass] = create_dummy_class(klass, 'lmdb')
+
+try:
+    import diskcache
+except ImportError:
+    DiskCacheData = create_dummy_class('DiskCacheData', 'diskcache')   # noqa

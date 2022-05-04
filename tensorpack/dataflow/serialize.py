@@ -12,7 +12,7 @@ from ..utils.develop import create_dummy_class  # noqa
 from ..utils.utils import get_tqdm
 from .base import DataFlow
 from .common import FixedSizeData, MapData
-from .format import HDF5Data, LMDBData
+from .format import HDF5Data, LMDBData, DiskCacheData
 from .raw import DataFromGenerator, DataFromList
 
 __all__ = ['LMDBSerializer', 'NumpySerializer', 'TFRecordSerializer', 'HDF5Serializer']
@@ -117,6 +117,49 @@ class LMDBSerializer():
     @staticmethod
     def _deserialize_lmdb(dp):
         return loads(dp[1])
+
+
+class DiskCacheSerializer():
+    """
+    Serialize a Dataflow to a diskcache database, where the keys are indices and values
+    are serialized datapoints.
+
+    Example:
+
+    .. code-block:: python
+
+        DiskCacheSerializer.save(my_df, "output.diskcache")
+
+        new_df = DiskCacheSerializer.load("output.diskcache", shuffle=True)
+    """
+    @staticmethod
+    def save(df, path, write_frequency=5000):
+        """
+        Args:
+            df (DataFlow): the DataFlow to serialize.
+            path (str): output path. Either a directory or an lmdb file.
+        """
+        assert isinstance(df, DataFlow), type(df)
+        assert not os.path.isfile(path), "DiskCache path {} must be a directory!".format(path)
+        db = diskcache.Index(path)
+        size = _reset_df_and_get_size(df)
+
+        with get_tqdm(total=size) as pbar:
+            idx = -1
+
+            for idx, dp in enumerate(df):
+                db[idx] = dumps(dp)
+                pbar.update()
+
+    @staticmethod
+    def load(path, shuffle=True):
+        """
+        Note:
+            If you found deserialization being the bottleneck, you can use :class:`LMDBData` as the reader
+            and run deserialization as a mapper in parallel.
+        """
+        df = DiskCacheData(path, shuffle=shuffle)
+        return MapData(df, loads)
 
 
 class NumpySerializer():
@@ -240,11 +283,26 @@ try:
 except ImportError:
     HDF5Serializer = create_dummy_class('HDF5Serializer', 'h5py')   # noqa
 
+try:
+    import diskcache
+except ImportError:
+    DiskCacheSerializer = create_dummy_class('DiskCacheSerializer', 'diskcache')   # noqa
 
 if __name__ == '__main__':
     from .raw import FakeData
     import time
     ds = FakeData([[300, 300, 3], [1]], 1000)
+
+    print(time.time())
+    DiskCacheSerializer.save(ds, '/tmp/diskcache')
+    print(time.time())
+    df = DiskCacheSerializer.load('/tmp/diskcache')
+    df.reset_state()
+    assert len(df) == 1000, len(df)
+    for idx, dp in enumerate(df):
+        pass
+    print("DiskCache Finished, ", idx)
+    print(time.time())
 
     print(time.time())
     TFRecordSerializer.save(ds, 'out.tfrecords')

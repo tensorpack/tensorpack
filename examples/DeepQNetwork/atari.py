@@ -8,9 +8,8 @@ import threading
 import cv2
 import gym
 import six
-from atari_py.ale_python_interface import ALEInterface
+from ale_py import ALEInterface, Action, LoggerMode
 from gym import spaces
-from gym.envs.atari.atari_env import ACTION_MEANING
 
 from tensorpack.utils import logger, execute_only_once, get_rng
 from tensorpack.utils.fs import get_dataset_path
@@ -54,7 +53,7 @@ class AtariPlayer(gym.Env):
             "ROM {} not found. Please download at {}".format(rom_file, ROM_URL)
 
         try:
-            ALEInterface.setLoggerMode(ALEInterface.Logger.Error)
+            ALEInterface.setLoggerMode(LoggerMode.Error)
         except AttributeError:
             if execute_only_once():
                 logger.warn("You're not using latest ALE")
@@ -65,7 +64,6 @@ class AtariPlayer(gym.Env):
             self.rng = get_rng(self)
             self.ale.setInt(b"random_seed", self.rng.randint(0, 30000))
             self.ale.setInt(b"max_num_frames_per_episode", max_num_frames)
-            self.ale.setBool(b"showinfo", False)
 
             self.ale.setInt(b"frame_skip", 1)
             self.ale.setBool(b'color_averaging', False)
@@ -100,7 +98,11 @@ class AtariPlayer(gym.Env):
         self._restart_episode()
 
     def get_action_meanings(self):
-        return [ACTION_MEANING[i] for i in self.actions]
+        keys = Action.__members__.values()
+        values = Action.__members__.keys()
+        mapping = dict(zip(keys, values))
+        return [mapping[action] for action in self.actions]
+
 
     def _grab_raw_image(self):
         """

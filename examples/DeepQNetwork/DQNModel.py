@@ -3,9 +3,9 @@
 
 
 import abc
-import tensorflow as tf
 
 from tensorpack import ModelDesc
+from tensorpack.compat import tfv1 as tf
 from tensorpack.tfutils import gradproc, optimizer, summary, varreplace
 from tensorpack.tfutils.scope_utils import auto_reuse_variable_scope
 from tensorpack.utils import logger
@@ -107,12 +107,12 @@ class Model(ModelDesc):
     @staticmethod
     def update_target_param():
         vars = tf.global_variables()
+        vars_mapping = {x.name: x for x in vars}
         ops = []
-        G = tf.get_default_graph()
         for v in vars:
-            target_name = v.op.name
+            target_name = v.name
             if target_name.startswith('target'):
                 new_name = target_name.replace('target/', '')
                 logger.info("Target Network Update: {} <- {}".format(target_name, new_name))
-                ops.append(v.assign(G.get_tensor_by_name(new_name + ':0')))
+                ops.append(v.assign(vars_mapping[new_name]))
         return tf.group(*ops, name='update_target_network')
