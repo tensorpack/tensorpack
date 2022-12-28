@@ -77,6 +77,18 @@ To evaluate the performance of a model on COCO:
     --config SAME-AS-TRAINING
 ```
 
+To evaluate the performance of a model on COCO with MMEval:
+```
+# install MMEval
+pip install mmeval
+
+# run evaluation
+python coco_det_mmeval.py --load <model_path>
+
+# launch multi-gpus evaluation by mpirun (need to install mpi4py first)
+mpirun -np 8 python coco_det_mmeval.py --load <model_path>
+```
+
 Several trained models can be downloaded in the table below. Evaluation and
 prediction have to be run with the corresponding configs used in training.
 
