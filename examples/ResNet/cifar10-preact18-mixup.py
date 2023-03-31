@@ -6,9 +6,9 @@
 import argparse
 import numpy as np
 import os
-import tensorflow as tf
 
 from tensorpack import *
+from tensorpack.compat import tfv1 as tf
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import *
 

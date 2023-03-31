@@ -1,3 +1,4 @@
+![badge](https://img.shields.io/badge/compatible%20with-TF2-orange)
 
 ## [imagenet-resnet.py](imagenet-resnet.py)
 

@@ -5,8 +5,8 @@
 
 import argparse
 import os
-import tensorflow as tf
 
+from tensorpack import tfv1 as tf
 from tensorpack import *
 from tensorpack.dataflow import dataset
 from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
