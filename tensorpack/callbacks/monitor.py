@@ -156,7 +156,7 @@ class Monitors(Callback):
                 if val.tag.endswith(suffix):
                     val.tag = val.tag[:-len(suffix)]
 
-                self._dispatch(lambda m: m.process_scalar(val.tag, val.simple_value))
+                self._dispatch(lambda m: m.process_scalar(val.tag, val.simple_value))  # noqa: B023
 
         self._dispatch(lambda m: m.process_summary(summary))
 

@@ -70,6 +70,8 @@ class NewSessionCreator(tf.train.SessionCreator):
             return False
 
         def run(op):
+            if op is None:  # No such variables.
+                return
             try:
                 from tensorflow.contrib.graph_editor import get_backward_walk_ops  # deprecated
             except ImportError:

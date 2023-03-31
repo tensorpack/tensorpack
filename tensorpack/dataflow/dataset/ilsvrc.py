@@ -272,7 +272,7 @@ class ILSVRC12(ILSVRC12Files):
             size = map(int, [size[0].text, size[1].text])
 
             box = root.find('object').find('bndbox').getchildren()
-            box = map(lambda x: float(x.text), box)
+            box = [float(x.text) for x in box]
             return np.asarray(box, dtype='float32')
 
         with timed_operation('Loading Bounding Boxes ...'):

@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import unittest
-import tensorflow as tf
+from ..compat import tfv1 as tf
 
 from ..utils import logger
 from ..train.trainers import NoOpTrainer
+from ..input_source import DummyConstantInput
 from .param import ScheduledHyperParamSetter, ObjAttrParam
+
+tf.disable_eager_execution()
 
 
 class ParamObject(object):
@@ -36,7 +39,12 @@ class ScheduledHyperParamSetterTest(unittest.TestCase):
     def _create_trainer_with_scheduler(self, scheduler,
                                        steps_per_epoch, max_epoch, starting_epoch=1):
         trainer = NoOpTrainer()
-        tf.get_variable(name='test_var', shape=[])
+        trainer.setup_graph(
+            [tf.TensorSpec([1], name='input')],
+            DummyConstantInput([[1]]),
+            lambda input: tf.reduce_sum(input) + tf.get_variable(name='test_var', shape=[]),
+            lambda: tf.train.GradientDescentOptimizer(0.1)
+        )
         self._param_obj.trainer = trainer
         trainer.train_with_defaults(
             callbacks=[scheduler],

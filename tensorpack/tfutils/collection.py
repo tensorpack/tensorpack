@@ -148,8 +148,7 @@ class CollectionGuard(object):
             logger.info(
                 "Size of these collections were changed in {}: {}".format(
                     self._name, ', '.join(
-                        map(lambda t: "({}: {}->{})".format(*t),
-                            size_change))))
+                        "({}: {}->{})".format(*t) for t in size_change)))
 
     def _restore_freeze(self, new):
         size_change = []
@@ -161,8 +160,7 @@ class CollectionGuard(object):
             logger.info(
                 "These collections were modified but restored in {}: {}".format(
                     self._name, ', '.join(
-                        map(lambda t: "({}: {}->{})".format(*t),
-                            size_change))))
+                        "({}: {}->{})".format(*t) for t in size_change)))
         restore_collection(self._freeze_backup)
 
     def get_collection_in_tower(self, key):

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import tensorflow as tf
-
+from ..compat import tfv1 as tf
 from ..utils import logger
 from .scope_utils import under_name_scope
+
+tf.disable_eager_execution()
 
 
 class ScopeUtilsTest(unittest.TestCase):

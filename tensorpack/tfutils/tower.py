@@ -273,6 +273,10 @@ class TowerFunc(object):
         self._inputs_names = [k.name for k in input_signature]
         assert len(set(self._inputs_names)) == len(self._inputs_names), \
             "Duplicated names in input_signature! " + str(self._inputs_names)
+        if any(x is None for x in self._inputs_names):
+            raise ValueError(
+                "Input signature cannot have empty names! Got " +
+                str(self._inputs_names))
         for name in self._inputs_names:
             if any(k in name for k in [':', '/', ' ']):
                 raise ValueError("Invalid input name: '{}'".format(name))

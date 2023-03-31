@@ -484,8 +484,7 @@ class RandomMixData(RNGDataFlow):
         sums = np.cumsum(self.sizes)
         idxs = np.arange(self.__len__())
         self.rng.shuffle(idxs)
-        idxs = np.array(list(map(
-            lambda x: np.searchsorted(sums, x, 'right'), idxs)))
+        idxs = np.array([np.searchsorted(sums, x, 'right') for x in idxs])
         itrs = [k.__iter__() for k in self.df_lists]
         assert idxs.max() == len(itrs) - 1, "{}!={}".format(idxs.max(), len(itrs) - 1)
         for k in idxs:

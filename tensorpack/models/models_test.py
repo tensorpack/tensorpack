@@ -4,18 +4,24 @@
 
 import logging
 import unittest
-import tensorflow as tf
+
 import numpy as np
 
+from ..compat import tfv1 as tf
 from .conv2d import Conv2DTranspose
 from .pool import FixedUnPooling
+
+
+tf.disable_eager_execution()
 
 
 class TestModel(unittest.TestCase):
 
     def eval(self, x, feed_dict=None):
         sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        op = tf.global_variables_initializer()
+        if op:
+            sess.run(op)
         if isinstance(x, list):
             return sess.run(x, feed_dict=feed_dict)
         else:

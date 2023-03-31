@@ -117,7 +117,7 @@ class LMDBData(RNGDataFlow):
             else:
                 # check if key-format like '{:0>8d}' was given
                 if isinstance(keys, six.string_types):
-                    self.keys = map(lambda x: keys.format(x), list(np.arange(self._size)))
+                    self.keys = [keys.format(x) for x in np.arange(self._size)]
                 else:
                     self.keys = keys
 

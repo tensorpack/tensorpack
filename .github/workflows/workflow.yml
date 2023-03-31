@@ -30,7 +30,7 @@ jobs:
       max-parallel: 6
       matrix:
         python-version: [3.8]
-        TF-version: [tensorflow==1.5.0, tensorflow-cpu==1.15.0]
+        TF-version: [tensorflow==2.12.0, tensorflow==2.2.0]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -55,7 +55,7 @@ jobs:
       - name: Install TF
         run: |
           python -m pip install ${{ matrix.TF-version }}
-          python -c "import tensorflow as tf; print(tf.VERSION, tf.GIT_VERSION)"
+          python -c "import tensorflow as tf; print(tf.__version__)
 
       - name: Run Tests
         env:

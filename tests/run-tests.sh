@@ -20,7 +20,6 @@ python -m unittest tensorpack.tfutils.unit_tests
 python -m unittest tensorpack.dataflow.imgaug.imgaug_test
 python -m unittest tensorpack.models.models_test
 
-# use pyarrow after we organize the serializers.
 # TENSORPACK_SERIALIZE=pyarrow python ...
 python -m unittest tensorpack.dataflow.serialize_test
 
