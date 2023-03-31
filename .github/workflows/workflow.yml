@@ -7,7 +7,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v1
       - name: Set up Python ${{ matrix.python-version }}
@@ -29,7 +29,7 @@ jobs:
     strategy:
       max-parallel: 6
       matrix:
-        python-version: [3.6]
+        python-version: [3.8]
         TF-version: [tensorflow==1.5.0, tensorflow-cpu==1.15.0]
     steps:
       - uses: actions/checkout@v2
@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            ${{ env.pythonLocation }}/lib/python3.6/site-packages
+            ${{ env.pythonLocation }}/lib/python3.8/site-packages
           key: ${{ runner.os }}-${{ matrix.TF-version }}-20200711
 
       - name: Install dependencies
