@@ -1,6 +1,6 @@
 ![Tensorpack](https://github.com/tensorpack/tensorpack/raw/master/.github/tensorpack.png)
 
-Tensorpack is a neural network training interface based on TensorFlow v1.
+Tensorpack is a neural network training interface based on graph-mode TensorFlow.
 
 [![ReadTheDoc](https://readthedocs.org/projects/tensorpack/badge/?version=latest)](http://tensorpack.readthedocs.io)
 [![Gitter chat](https://img.shields.io/badge/chat-on%20gitter-46bc99.svg)](https://gitter.im/tensorpack/users)
@@ -68,9 +68,9 @@ Dependencies:
 
 + Python 3.3+.
 + Python bindings for OpenCV. (Optional, but required by a lot of features)
-+ TensorFlow ≥ 1.5, < 2
++ TensorFlow ≥ 1.5
   * TF is not not required if you only want to use `tensorpack.dataflow` alone as a data processing library
-  * Most examples can still run with TF2 under compatibility mode (graph mode).
+  * When using TF2, tensorpack uses its TF1 compatibility mode. Note that a few examples in the repo are not yet migrated to support TF2.
 ```
 pip install --upgrade git+https://github.com/tensorpack/tensorpack.git
 # or add `--user` to install to user's local directories
